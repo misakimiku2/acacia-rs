@@ -5,7 +5,7 @@
 
 ![preview](/docs/preview.png)
 
-A server emulator for the game WHITE DUST II
+A server emulator for the game WHITEDUSTII
 
 ## Docs
 
