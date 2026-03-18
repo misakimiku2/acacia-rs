@@ -1,0 +1,12 @@
+[package]
+name = "acacia-game-msg"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+prost.workspace = true
+
+[build-dependencies]
+prost-build.workspace = true
+prost-types.workspace = true
+prost.workspace = true

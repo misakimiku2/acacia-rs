@@ -1,0 +1,3 @@
+**/target
+/acacia-game-msg/generated
+/acacia-game-server/gameserver.toml
