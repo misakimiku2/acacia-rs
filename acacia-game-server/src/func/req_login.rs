@@ -2,17 +2,17 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
-use crate::base::dispatcher::HandlerResult;
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqLogin)]
-async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<HandlerResult> {
+async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<()> {
     conn.bind_uid(10000);
     let mut rsp = protocol::RspLogin {
         session_id: "123456".into(),
         data: Some(core::Player {
             pid: conn.uid().unwrap(),
+            sign: String::from("telegram @acacia_rs"),
             attrs: HashMap::from([(262144, 5), (273211, 4), (272327, 2)]),
             ..Default::default()
         }),
@@ -26,5 +26,5 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
         rsp.error_code = 304;
     }
     conn.send_msg(Pf::RspLogin as u32, &rsp, 0).await?;
-    Ok(HandlerResult::Ok)
+    Ok(())
 }

@@ -14,7 +14,7 @@ pub fn func_reg(attr: TokenStream, item: TokenStream) -> TokenStream {
         inventory::submit! {
             crate::base::dispatcher::HandlerRegistration {
                 msg_id: #msg_id_expr as i32,
-                func: |conn: std::sync::Arc<crate::base::conn::Conn>, buf: Vec<u8>| -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<crate::base::dispatcher::HandlerResult>> + Send>> {
+                func: |conn: std::sync::Arc<crate::base::conn::Conn>, buf: Vec<u8>| -> std::pin::Pin<Box<dyn std::future::Future<Output = anyhow::Result<()>> + Send>> {
                     Box::pin(async move {
                         use prost::Message as _;
                         let msgdata = <#msg_type>::decode(buf.as_slice())?;

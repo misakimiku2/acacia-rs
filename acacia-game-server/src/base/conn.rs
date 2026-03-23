@@ -7,7 +7,7 @@ use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tracing::{debug, error};
 
-use super::dispatcher::{DISPATCHER, HandlerResult};
+use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
 use acacia_game_msg::protocol;
 
@@ -101,11 +101,8 @@ impl Conn {
                         let msg_id = packet.msg_id as i32;
 
                         tokio::spawn(async move {
-                            match DISPATCHER.dispatch(&conn, msg_id, &body).await {
-                                Ok(HandlerResult::Ok) => {}
-                                Err(e) => {
-                                    error!("msgid {} dispatch error: {}", msg_id, e);
-                                }
+                            if let Err(e) = DISPATCHER.dispatch(&conn, msg_id, &body).await {
+                                error!("msgid {} dispatch error: {}", msg_id, e);
                             }
                         });
                     }

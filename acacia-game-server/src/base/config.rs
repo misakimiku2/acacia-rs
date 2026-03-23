@@ -13,12 +13,26 @@ pub struct Config {
     pub port: u16,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            log: "info".to_string(),
+            host: "127.0.0.1".to_string(),
+            port: 5200,
+        }
+    }
+}
+
 impl Config {
     pub fn load() -> Self {
-        let path = if std::path::Path::new("./gameserver.toml").exists() {
+        let path: &str = if std::path::Path::new("./gameserver.toml").exists() {
             "./gameserver.toml"
-        } else {
+        } else if std::path::Path::new("./acacia-game-server/gameserver.toml").exists() {
             "./acacia-game-server/gameserver.toml"
+        } else if std::path::Path::new("./data/gameserver.toml").exists() {
+            "./data/gameserver.toml"
+        } else {
+            return Self::default();
         };
         let content = fs::read_to_string(path).expect("Failed to read gameserver.toml");
         toml::from_str(&content).expect("Failed to parse gameserver.toml")

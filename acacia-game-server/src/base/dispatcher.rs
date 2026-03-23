@@ -6,13 +6,7 @@ use tracing::warn;
 
 use super::conn::Conn;
 
-#[derive(Debug, Default)]
-pub enum HandlerResult {
-    #[default]
-    Ok,
-}
-
-type BoxFuture = Pin<Box<dyn Future<Output = anyhow::Result<HandlerResult>> + Send>>;
+type BoxFuture = Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
 type HandlerFn = fn(Arc<Conn>, Vec<u8>) -> BoxFuture;
 
 pub struct HandlerRegistration {
@@ -43,18 +37,14 @@ impl Dispatcher {
         Self { handlers }
     }
 
-    pub async fn dispatch(&self, conn: &Arc<Conn>, msg_id: i32, buf: &[u8]) -> anyhow::Result<HandlerResult> {
+    pub async fn dispatch(&self, conn: &Arc<Conn>, msg_id: i32, buf: &[u8]) -> anyhow::Result<()> {
         if let Some(entries) = self.handlers.get(&msg_id) {
             for entry in entries {
-                let result = (entry.func)(conn.clone(), buf.to_vec()).await?;
-                match result {
-                    HandlerResult::Ok => {}
-                }
+                (entry.func)(conn.clone(), buf.to_vec()).await?;
             }
-            Ok(HandlerResult::Ok)
         } else {
             warn!("No handler for msg_id={}", msg_id);
-            Ok(HandlerResult::Ok)
         }
+        Ok(())
     }
 }

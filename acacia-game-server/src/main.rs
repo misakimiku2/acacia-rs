@@ -10,7 +10,9 @@ mod handler {
 mod func {
     mod none;
     mod req_login;
+    mod req_reconnect;
     mod req_callgs;
+    mod ntf_logout;
     mod ntf_setattr;
 }
 
