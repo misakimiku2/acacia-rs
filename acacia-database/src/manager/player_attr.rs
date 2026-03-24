@@ -51,11 +51,15 @@ impl PlayerAttrManager {
         Ok(())
     }
 
-    pub async fn get_attr(&self, gid: u32, sid: u32) -> anyhow::Result<u32> {
-        self.get(set_attribute(gid, sid)?).await
+    pub async fn get_attr(&self, gid: u32, sid: u32) -> anyhow::Result<(u32, u32)> {
+        let key = set_attribute(gid, sid)?;
+        let value = self.get(key).await?;
+        Ok((key, value))
     }
 
-    pub async fn set_attr(&self, gid: u32, sid: u32, value: u32) -> anyhow::Result<()> {
-        self.set(set_attribute(gid, sid)?, value).await
+    pub async fn set_attr(&self, gid: u32, sid: u32, value: u32) -> anyhow::Result<(u32, u32)> {
+        let key = set_attribute(gid, sid)?;
+        self.set(key, value).await?;
+        Ok((key, value))
     }
 }

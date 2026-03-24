@@ -14,6 +14,7 @@ mod handler {
 }
 mod func {
     mod callgs {
+        mod general;
         mod girl_skin;
         mod player_setting;
     }
