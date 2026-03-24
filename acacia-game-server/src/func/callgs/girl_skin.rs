@@ -1,12 +1,12 @@
+use serde_json::Value;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
-use serde_json::Value;
 
 #[callgs_reg("GirlSkin_Change")]
-async fn girlskin_change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let manager = conn.manager().await;
     let mut girl = manager.items.get(param["CardId"].as_u64().unwrap()).await?.unwrap();
     girl.slots.insert(5, param["Id"].as_u64().unwrap());

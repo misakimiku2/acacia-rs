@@ -14,7 +14,8 @@ mod handler {
 }
 mod func {
     mod callgs {
-        mod girl;
+        mod girl_skin;
+        mod player_setting;
     }
     mod none;
     mod ntf_logout;
