@@ -4,7 +4,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tracing::warn;
 
-use super::conn::Conn;
+use crate::base::conn::Conn;
 
 type BoxFuture = Pin<Box<dyn Future<Output = anyhow::Result<()>> + Send>>;
 type HandlerFn = fn(Arc<Conn>, Vec<u8>) -> BoxFuture;
@@ -25,6 +25,7 @@ pub struct Dispatcher {
 
 struct HandlerEntry {
     func: HandlerFn,
+    #[allow(dead_code)]
     name: &'static str,
 }
 

@@ -10,7 +10,7 @@ use tracing::{debug, error};
 use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
 use acacia_database::manager::player::PlayerManager;
-use acacia_game_msg::protocol;
+use acacia_game_msg::protocol::Pf;
 
 static CONN_ID_SEQ: AtomicU64 = AtomicU64::new(1);
 pub static CONNS: std::sync::LazyLock<Conns> = std::sync::LazyLock::new(Conns::new);
@@ -80,11 +80,11 @@ impl Conn {
         }
     }
 
-    pub async fn send_msg<M: Message>(&self, msg_id: u32, msg: &M, seq: u64) -> anyhow::Result<()> {
+    pub async fn send_msg<M: Message>(&self, msg_id: Pf, msg: &M, seq: u64) -> anyhow::Result<()> {
         let body = msg.encode_to_vec();
-        debug!("<- {:?} {:?}", protocol::Pf::try_from(msg_id as i32).unwrap_or(protocol::Pf::None), msg);
+        debug!("<- {:?} {:?}", msg_id, msg);
 
-        let packet = PacketBuilder::build(msg_id, &body, seq);
+        let packet = PacketBuilder::build(msg_id as u32, &body, seq);
         let mut writer = self.writer.lock().await;
         writer.write_all(&packet).await?;
         writer.flush().await?;

@@ -7,8 +7,8 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqReconnect)]
 async fn req_reconnect(conn: Arc<Conn>, msgdata: protocol::ReqReconnect) -> anyhow::Result<()> {
+    conn.uid().unwrap();
     /*
-    conn.bind_uid(10000);
     let mut rsp = protocol::RspReconnect {
         session_id: "123456".into(),
         data: Some(core::Player {

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
@@ -37,7 +36,7 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
         rsp.error_code = 304;
     }
 
-    conn.send_msg(Pf::RspLogin as u32, &rsp, 0).await?;
+    conn.send_msg(Pf::RspLogin, &rsp, 0).await?;
     Ok(())
 }
 

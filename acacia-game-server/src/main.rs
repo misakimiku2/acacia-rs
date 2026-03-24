@@ -1,13 +1,21 @@
 mod base {
+    pub mod dispatcher {
+        mod callgs_handler;
+        mod msg_handler;
+        pub use callgs_handler::{CALLGS_DISPATCHER, CallGsHandlerRegistration};
+        pub use msg_handler::{DISPATCHER, HandlerRegistration};
+    }
     pub mod config;
     pub mod conn;
-    pub mod dispatcher;
     pub mod packet;
 }
 mod handler {
     pub mod game_server;
 }
 mod func {
+    mod callgs {
+        mod girl;
+    }
     mod none;
     mod ntf_logout;
     mod ntf_setattr;
