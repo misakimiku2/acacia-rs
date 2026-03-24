@@ -1,0 +1,16 @@
+[package]
+name = "acacia-database"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+tokio.workspace = true
+surrealdb.workspace = true
+surrealdb-types.workspace = true
+
+acacia-commons.workspace = true
+acacia-game-msg.workspace = true
+
+[dev-dependencies]
+surrealdb = { workspace = true, features = ["kv-mem"] }

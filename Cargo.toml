@@ -2,6 +2,7 @@
 members = [
     "acacia-commons",
     "acacia-data",
+    "acacia-database",
     "acacia-derive",
     "acacia-game-msg",
     "acacia-game-server",
@@ -33,6 +34,8 @@ inventory = "0.3.21"
 prost = "0.13"
 prost-types = "0.13"
 prost-build = "0.13"
+surrealdb = { version = "3", features = ["kv-surrealkv", "protocol-http"] }
+surrealdb-types = "3"
 
 proc-macro2 = "1.0"
 quote = "1.0.43"
@@ -40,18 +43,13 @@ syn = { version = "2.0.114", features = ["full"] }
 
 acacia-commons = { path = "acacia-commons" }
 acacia-data = { path = "acacia-data" }
+acacia-database = { path = "acacia-database" }
 acacia-derive = { path = "acacia-derive" }
 acacia-game-msg = { path = "acacia-game-msg" }
 
 [profile.release]
-opt-level = 3
-debug = false
-strip = "symbols"
-debug-assertions = false
-overflow-checks = false
 lto = "fat"
+strip = "symbols"
+opt-level = 3
 panic = "abort"
-incremental = false
 codegen-units = 1
-rpath = false
-

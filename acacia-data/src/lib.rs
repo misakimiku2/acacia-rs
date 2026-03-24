@@ -1,35 +1,15 @@
-mod manager;
-use manager::DataTable;
+use acacia_game_msg::core::Player;
+use prost::Message;
+use std::sync::OnceLock;
 
-#[cfg(test)]
-mod tests;
+static DATA: OnceLock<Player> = OnceLock::new();
 
-use anyhow::Result;
-use lazy_static::lazy_static;
-use serde_json::Value;
-
-lazy_static! {
-    pub static ref TABLES: Tables = Tables::new().expect("Failed to load tables");
+pub fn data() -> &'static Player {
+    DATA.get().expect("Failed to use data")
 }
 
-pub struct Tables {
-    pub card_data: DataTable<Value>,
-    pub skill: DataTable<Value>,
+pub async fn init_data() -> anyhow::Result<()> {
+    let data = Player::decode(&include_bytes!("../data/data.pb")[..])?;
+    DATA.set(data).expect("Failed to initialize data");
+    Ok(())
 }
-
-impl Tables {
-    fn new() -> Result<Self> {
-        let mut card_data = DataTable::<Value>::load("CardData")?;
-        card_data.create_index(vec!["id".to_string()], |v| {
-            vec![v.get("id").cloned().unwrap_or(Value::Null)]
-        });
-
-        let mut skill = DataTable::<Value>::load("Skill")?;
-        skill.create_index(vec!["id".to_string()], |v| {
-            vec![v.get("id").cloned().unwrap_or(Value::Null)]
-        });
-
-        Ok(Tables { card_data, skill })
-    }
-}
-

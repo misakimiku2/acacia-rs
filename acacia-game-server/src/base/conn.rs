@@ -9,52 +9,11 @@ use tracing::{debug, error};
 
 use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
+use acacia_database::manager::player::PlayerManager;
 use acacia_game_msg::protocol;
 
 static CONN_ID_SEQ: AtomicU64 = AtomicU64::new(1);
 pub static CONNS: std::sync::LazyLock<Conns> = std::sync::LazyLock::new(Conns::new);
-
-pub struct Conns {
-    map: DashMap<u64, Arc<Conn>>,
-    uid_map: DashMap<u64, Arc<Conn>>,
-}
-
-impl Conns {
-    fn new() -> Self {
-        Self {
-            map: DashMap::new(),
-            uid_map: DashMap::new(),
-        }
-    }
-
-    pub fn add(&self, conn: Arc<Conn>) {
-        self.map.insert(conn.id, conn);
-    }
-
-    pub fn remove(&self, conn: &Conn) {
-        self.map.remove(&conn.id);
-        if let Some(uid) = conn.uid() {
-            self.uid_map.remove(&uid);
-        }
-    }
-
-    pub fn bind_uid(&self, conn: &Arc<Conn>, uid: u64) {
-        conn.bind_uid(uid);
-        self.uid_map.insert(uid, conn.clone());
-    }
-
-    pub fn get_by_uid(&self, uid: u64) -> Option<Arc<Conn>> {
-        self.uid_map.get(&uid).map(|r| r.value().clone())
-    }
-
-    pub fn count(&self) -> usize {
-        self.map.len()
-    }
-
-    pub fn all(&self) -> Vec<Arc<Conn>> {
-        self.map.iter().map(|r| r.value().clone()).collect()
-    }
-}
 
 pub struct Conn {
     pub id: u64,
@@ -80,10 +39,16 @@ impl Conn {
         self.uid.try_lock().ok().and_then(|g| *g)
     }
 
-    pub fn bind_uid(&self, uid: u64) {
-        if let Ok(mut g) = self.uid.try_lock() {
+    pub async fn bind_uid(&self, uid: u64) {
+        {
+            let mut g = self.uid.lock().await;
             *g = Some(uid);
         }
+    }
+
+    pub async fn manager(&self) -> PlayerManager {
+        let uid = *self.uid.lock().await;
+        PlayerManager::new(uid.expect("conn.manager() called before uid was bound"))
     }
 
     pub async fn recv_loop(self: &Arc<Self>, mut reader: tokio::net::tcp::OwnedReadHalf) {
@@ -115,7 +80,7 @@ impl Conn {
         }
     }
 
-    pub async fn send_msg<M: Message>(&self, msg_id: u32, msg: &M, seq: u64) -> std::io::Result<()> {
+    pub async fn send_msg<M: Message>(&self, msg_id: u32, msg: &M, seq: u64) -> anyhow::Result<()> {
         let body = msg.encode_to_vec();
         debug!("<- {:?} {:?}", protocol::Pf::try_from(msg_id as i32).unwrap_or(protocol::Pf::None), msg);
 
@@ -130,5 +95,42 @@ impl Conn {
 impl std::fmt::Display for Conn {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Conn(id={}, addr={})", self.id, self.addr)
+    }
+}
+
+pub struct Conns {
+    map: DashMap<u64, Arc<Conn>>,
+    uid_map: DashMap<u64, Arc<Conn>>,
+}
+
+impl Conns {
+    fn new() -> Self {
+        Self {
+            map: DashMap::new(),
+            uid_map: DashMap::new(),
+        }
+    }
+
+    pub fn add(&self, conn: Arc<Conn>) {
+        self.map.insert(conn.id, conn);
+    }
+
+    pub fn remove(&self, conn: &Conn) {
+        self.map.remove(&conn.id);
+        if let Some(uid) = conn.uid() {
+            self.uid_map.remove(&uid);
+        }
+    }
+
+    pub fn get_by_uid(&self, uid: u64) -> Option<Arc<Conn>> {
+        self.uid_map.get(&uid).map(|r| r.value().clone())
+    }
+
+    pub fn count(&self) -> usize {
+        self.map.len()
+    }
+
+    pub fn all(&self) -> Vec<Arc<Conn>> {
+        self.map.iter().map(|r| r.value().clone()).collect()
     }
 }

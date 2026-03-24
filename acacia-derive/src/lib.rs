@@ -7,7 +7,7 @@ pub fn func_reg(attr: TokenStream, item: TokenStream) -> TokenStream {
     let msg_id_expr = parse_macro_input!(attr as Expr);
     let input = parse_macro_input!(item as ItemFn);
     let fn_name = &input.sig.ident;
-    let msg_type = extract_msg_type(&input.sig).expect("func_reg: expected protocol::PF::?");
+    let msg_type = extract_msg_type(&input.sig).expect("func_reg: expected protocol::?");
 
     let expanded = quote! {
         #input

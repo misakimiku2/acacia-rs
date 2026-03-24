@@ -11,6 +11,7 @@ pub struct Config {
     pub log: String,
     pub host: String,
     pub port: u16,
+    pub database: DatabaseConfig,
 }
 
 impl Default for Config {
@@ -19,6 +20,28 @@ impl Default for Config {
             log: "info".to_string(),
             host: "127.0.0.1".to_string(),
             port: 5200,
+            database: DatabaseConfig::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DatabaseConfig {
+    pub mode: String,
+    pub local: String,
+    pub address: String,
+    pub username: String,
+    pub password: String,
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            mode: "local".to_string(),
+            local: "surrealkv://data/database".to_string(),
+            address: "http://127.0.0.1:8000".to_string(),
+            username: "root".to_string(),
+            password: "root".to_string(),
         }
     }
 }

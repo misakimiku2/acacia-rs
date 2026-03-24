@@ -2,22 +2,33 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
+use acacia_commons::time::ServerTime;
+use acacia_data::data;
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqLogin)]
 async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<()> {
-    conn.bind_uid(10000);
+    conn.bind_uid(10000).await;
+    init_userdata(&conn).await?;
+
+    let manager = conn.manager().await;
     let mut rsp = protocol::RspLogin {
         session_id: "123456".into(),
         data: Some(core::Player {
+            level: 100,
             pid: conn.uid().unwrap(),
             sign: String::from("telegram @acacia_rs"),
-            attrs: HashMap::from([(262144, 5), (273211, 4), (272327, 2)]),
+            items: manager.items.get_all().await?,
+            solutions: manager.solutions.get_all().await?,
+            attrs: manager.attrs.get_all().await?,
+            str_attrs: manager.str_attrs.get_all().await?,
             ..Default::default()
         }),
+        timestamp: ServerTime::now() as u32,
         ..Default::default()
     };
+
     if let Some(ref client_profile) = msgdata.client_profile {
         if !client_profile.resource_version.starts_with("3.5.") {
             rsp.error_code = 108;
@@ -25,6 +36,21 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
     } else {
         rsp.error_code = 304;
     }
+
     conn.send_msg(Pf::RspLogin as u32, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
+    let manager = conn.manager().await;
+    if manager.attrs.get_all().await?.len() == 0 {
+        for (key, value) in &data().attrs {
+            manager.attrs.set(*key, *value).await?;
+        }
+        for item in &data().items {
+            manager.items.update(item.clone()).await?;
+        }
+    }
+    manager.attrs.set_attr(4, 0, 5).await?;
     Ok(())
 }

@@ -9,11 +9,11 @@ mod handler {
 }
 mod func {
     mod none;
-    mod req_login;
-    mod req_reconnect;
-    mod req_callgs;
     mod ntf_logout;
     mod ntf_setattr;
+    mod req_callgs;
+    mod req_login;
+    mod req_reconnect;
 }
 
 #[tokio::main]
@@ -25,10 +25,22 @@ async fn main() -> anyhow::Result<()> {
         .with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&base::config::CONFIG.log)))
         .init();
 
+    acacia_data::init_data().await?;
+
+    if base::config::CONFIG.database.mode == "http" {
+        acacia_database::db::init_db_by_auth(
+            &base::config::CONFIG.database.address,
+            base::config::CONFIG.database.username.clone(),
+            base::config::CONFIG.database.password.clone(),
+        )
+        .await?;
+    } else {
+        acacia_database::db::init_db(&base::config::CONFIG.database.local).await?;
+    }
+
     let addr = format!("{}:{}", base::config::CONFIG.host, base::config::CONFIG.port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     tracing::info!("GameServer listening on {}", addr);
-
     loop {
         let (socket, addr) = listener.accept().await?;
         tokio::spawn(async move {
