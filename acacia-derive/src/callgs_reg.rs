@@ -19,6 +19,7 @@ pub fn impl_callgs_reg(attr: TokenStream, item: TokenStream) -> TokenStream {
                     Box::pin(async move {
                         let param: serde_json::Value = serde_json::from_str(&msgdata.param)
                             .unwrap_or(serde_json::Value::Null);
+                        tracing::debug!("-> callgs api={} param={}", #api_name, param);
                         #fn_name(conn, msgdata, param).await
                     })
                 },

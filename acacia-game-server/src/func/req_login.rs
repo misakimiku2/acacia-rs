@@ -18,6 +18,7 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
             level: 100,
             pid: conn.uid().unwrap(),
             sign: String::from("telegram @acacia_rs"),
+            vigor: 240,
             items: manager.items.get_all().await?,
             solutions: manager.solutions.get_all().await?,
             attrs: manager.attrs.get_all().await?,
