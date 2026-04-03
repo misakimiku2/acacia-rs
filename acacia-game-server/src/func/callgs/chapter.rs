@@ -28,6 +28,16 @@ async fn deal_level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
     };
     conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
 
+    let level_star = param["tbParam"]["nID"].as_i64().unwrap() as i32;
+    if level_star > 0 {
+        let attr = manager.attrs.set_attr(21, level_id, level_star as u32).await?;
+        let rsp = protocol::NtfSyncPlayer {
+            custom: HashMap::<u32, u32>::from([attr]),
+            ..protocol::NtfSyncPlayer::default()
+        };
+        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+    }
+
     let rsp = protocol::NtfCallScript {
         api: "Chapter_DealLevelSettlement".to_string(),
         arg: json!({
