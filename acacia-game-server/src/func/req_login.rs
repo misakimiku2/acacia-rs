@@ -22,6 +22,7 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
             solutions: manager.solutions.get_all().await?,
             attrs: manager.attrs.get_all().await?,
             str_attrs: manager.str_attrs.get_all().await?,
+            show_items: vec![0, 0, 0, 10040101],
             ..Default::default()
         }),
         timestamp: ServerTime::now() as u32,
@@ -43,12 +44,8 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
 async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
     let manager = conn.manager().await;
     if manager.attrs.get_all().await?.len() == 0 {
-        for (key, value) in &data().attrs {
-            manager.attrs.set(*key, *value).await?;
-        }
-        for item in &data().items {
-            manager.items.update(item.clone()).await?;
-        }
+        manager.attrs.set_many(data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
+        manager.items.set_many(data().items.iter().cloned()).await?;
     }
     manager.attrs.set_attr(4, 0, 5).await?;
     Ok(())

@@ -10,7 +10,7 @@ async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow
     let manager = conn.manager().await;
     let mut girl = manager.items.get(param["CardId"].as_u64().unwrap()).await?.unwrap();
     girl.slots.insert(5, param["Id"].as_u64().unwrap());
-    let girl = manager.items.update(girl).await?;
+    manager.items.set(girl.clone()).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         items: vec![girl],

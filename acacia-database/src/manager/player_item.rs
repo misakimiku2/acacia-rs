@@ -40,17 +40,30 @@ impl PlayerItemManager {
         Ok(result)
     }
 
-    pub async fn update(&self, src_item: core::Item) -> Result<core::Item> {
-        let sid = if src_item.id == 0 { self.new_id().await? } else { src_item.id };
-        let mut resp = db()
-            .query("UPSERT type::record('player_item', [$pid, $sid]) MERGE object::extend($item, { pid: $pid, sid: $sid })")
+    pub async fn set(&self, src_item: core::Item) -> Result<()> {
+        let src_item: core::Item = src_item.into();
+        db().query("UPSERT type::record('player_item', [$pid, $item.sid]) MERGE object::extend({ pid: $pid }, $item)")
             .bind(("pid", self.pid))
-            .bind(("sid", sid))
             .bind(("item", PlayerItem::from_prost(src_item)))
             .await?;
-        let item: Option<PlayerItem> = resp.take(0)?;
-        let result = PlayerItem::to_prost(item.unwrap());
-        Ok(result)
+        Ok(())
+    }
+
+    pub async fn set_many(&self, src_items: impl IntoIterator<Item: Into<core::Item>>) -> Result<()> {
+        let mut player_items = Vec::new();
+        for src_item in src_items {
+            let src_item: core::Item = src_item.into();
+            player_items.push(PlayerItem::from_prost(src_item));
+        }
+        db().query(
+            "FOR $item IN $items {
+                UPSERT type::record('player_item', [$pid, $item.sid]) MERGE object::extend({ pid: $pid }, $item);
+            }",
+        )
+        .bind(("pid", self.pid))
+        .bind(("items", player_items))
+        .await?;
+        Ok(())
     }
 
     pub async fn del(&self, sid: u64) -> Result<()> {

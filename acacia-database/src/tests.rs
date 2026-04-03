@@ -20,7 +20,7 @@ async fn test_player_item(player: &PlayerManager) -> anyhow::Result<()> {
         ..core::Item::default()
     };
     println!("item_1: {:?}", item_1);
-    player.items.update(item_1).await?;
+    player.items.set(item_1).await?;
 
     let item_2 = core::Item {
         id: 0,
@@ -28,7 +28,7 @@ async fn test_player_item(player: &PlayerManager) -> anyhow::Result<()> {
         ..core::Item::default()
     };
     println!("item_2: {:?}", item_2);
-    player.items.update(item_2).await?;
+    player.items.set(item_2).await?;
 
     let items = player.items.get_all().await?;
     println!("{:?}", items);

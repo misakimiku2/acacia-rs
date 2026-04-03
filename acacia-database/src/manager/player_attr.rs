@@ -41,6 +41,19 @@ impl PlayerAttrManager {
         Ok(())
     }
 
+    pub async fn set_many(&self, attrs: impl IntoIterator<Item = (u32, u32)>) -> Result<()> {
+        let attrs: Vec<_> = attrs.into_iter().map(|(key, value)| PlayerAttr { key, value }).collect();
+        db().query(
+            "FOR $attr IN $attrs {
+                UPSERT type::record('player_attr', [$pid, $attr.key]) MERGE object::extend({ pid: $pid }, $attr);
+            }",
+        )
+        .bind(("pid", self.pid))
+        .bind(("attrs", attrs))
+        .await?;
+        Ok(())
+    }
+
     pub async fn del(&self, key: u32) -> Result<()> {
         db().query("DELETE ONLY type::record('player_attr', [$pid, $key])").bind(("pid", self.pid)).bind(("key", key)).await?;
         Ok(())
