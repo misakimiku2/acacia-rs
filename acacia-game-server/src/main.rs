@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
         )
         .await?;
     } else {
-        acacia_database::db::init_db(&base::config::CONFIG.database.local).await?;
+        acacia_database::db::init_db("surrealkv://data/database").await?;
     }
 
     let addr = format!("{}:{}", base::config::CONFIG.host, base::config::CONFIG.port);

@@ -1,3 +1,9 @@
 log = "info"
 host = "127.0.0.1"
 port = 5200
+
+[database]
+mode = "local"
+address = "http://127.0.0.1:8000"
+username = "root"
+password = "root"
