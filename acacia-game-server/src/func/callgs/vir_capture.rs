@@ -43,6 +43,7 @@ async fn switch_day_night(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
     let map_base_id = 10000 + (map_index - 1) * 3000;
     let mut attr = manager.attrs.get_attr(128, map_base_id + 7).await?;
     attr.1 = match attr.1 {
+        0 => 2,
         1 => 2,
         2 => 1,
         _ => 1,
