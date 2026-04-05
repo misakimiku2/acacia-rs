@@ -9,11 +9,12 @@ use acacia_game_msg::{protocol, protocol::Pf};
 async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let manager = conn.manager().await;
     let mut girl = manager.items.get(param["CardId"].as_u64().unwrap()).await?.unwrap();
+    let skin = manager.items.get(*girl.slots.get(&5).unwrap()).await?.unwrap();
     girl.slots.insert(5, param["Id"].as_u64().unwrap());
     manager.items.set(girl.clone()).await?;
 
     let rsp = protocol::NtfSyncPlayer {
-        items: vec![girl],
+        items: vec![skin, girl],
         ..protocol::NtfSyncPlayer::default()
     };
     conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
