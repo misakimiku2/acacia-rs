@@ -20,6 +20,7 @@ mod func {
         mod girl_weapon_skin;
         mod lineup;
         mod player_setting;
+        mod vir_capture;
     }
     mod none;
     mod ntf_logout;
