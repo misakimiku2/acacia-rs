@@ -21,6 +21,7 @@ mod func {
         mod lineup;
         mod player_setting;
         mod vir_capture;
+        mod vir_capture_level;
     }
     mod none;
     mod ntf_logout;
