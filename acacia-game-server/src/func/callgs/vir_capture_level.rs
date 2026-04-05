@@ -16,7 +16,24 @@ async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> an
     Ok(())
 }
 
-#[callgs_reg("VirCaptureLevel_SaveCapture")]
+#[callgs_reg("VirCaptureLevel_ChangeFlag")]
+async fn change_flag(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "VirCaptureLevel_SaveCapture".to_string(),
+        arg: json!({
+            "nRegionId": param["nRegionId"],
+            "bClean": param["bClean"],
+            "nSeed": param["nSeed"],
+            "nLevelID": param["nLevelID"],
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+#[callgs_reg("VirCaptureLevel_SaveCapture")] // WIP
 async fn save_capture(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     let rsp = protocol::NtfCallScript {
         api: "VirCaptureLevel_SaveCapture".to_string(),
