@@ -15,3 +15,14 @@ async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> an
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+#[callgs_reg("VirCaptureLevel_SaveCapture")]
+async fn save_capture(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "VirCaptureLevel_SaveCapture".to_string(),
+        arg: json!({}).to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
