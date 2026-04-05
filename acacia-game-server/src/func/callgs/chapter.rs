@@ -19,23 +19,25 @@ async fn enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
 #[callgs_reg("Chapter_DealLevelSettlement")]
 async fn deal_level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let manager = conn.manager().await;
-    let level_id = param["tbParam"]["nID"].as_u64().unwrap() as u32;
-    let level_times = manager.attrs.get_attr(22, level_id).await?.0 + 1;
-    let attr = manager.attrs.set_attr(22, level_id, level_times).await?;
-    let rsp = protocol::NtfSyncPlayer {
-        custom: HashMap::<u32, u32>::from([attr]),
-        ..protocol::NtfSyncPlayer::default()
-    };
-    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
-
-    let level_star = param["tbParam"]["nID"].as_i64().unwrap() as i32;
-    if level_star > 0 {
-        let attr = manager.attrs.set_attr(21, level_id, level_star as u32).await?;
+    let level_id = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
+    if level_id > 0 {
+        let level_times = manager.attrs.get_attr(22, level_id as u32).await?.0 + 1;
+        let attr = manager.attrs.set_attr(22, level_id as u32, level_times).await?;
         let rsp = protocol::NtfSyncPlayer {
             custom: HashMap::<u32, u32>::from([attr]),
             ..protocol::NtfSyncPlayer::default()
         };
         conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+        let level_star = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
+        if level_star > 0 {
+            let attr = manager.attrs.set_attr(21, level_id as u32, level_star as u32).await?;
+            let rsp = protocol::NtfSyncPlayer {
+                custom: HashMap::<u32, u32>::from([attr]),
+                ..protocol::NtfSyncPlayer::default()
+            };
+            conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+        }
     }
 
     let rsp = protocol::NtfCallScript {
