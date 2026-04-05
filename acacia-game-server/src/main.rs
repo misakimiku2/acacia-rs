@@ -22,6 +22,7 @@ mod func {
         mod player_setting;
         mod vir_capture;
         mod vir_capture_level;
+        mod weapon;
     }
     mod none;
     mod ntf_logout;

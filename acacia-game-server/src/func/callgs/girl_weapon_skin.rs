@@ -12,7 +12,7 @@ async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow
 
     let skin_id = param["nSkinId"].as_i64().unwrap();
     if skin_id == -1 {
-        girl.slots.insert(6, 0);
+        girl.slots.remove(&6);
     } else {
         girl.slots.insert(6, skin_id as u64);
     }
