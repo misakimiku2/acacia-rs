@@ -3,7 +3,7 @@ host = "127.0.0.1"
 port = 5200
 
 [database]
-mode = "local"
-address = "http://127.0.0.1:8000"
-username = "root"
-password = "root"
+mode = "local"                    # "local" | "remote"
+address = "http://127.0.0.1:8000" # "remote" mode only
+username = "root"                 # "remote" mode only
+password = "root"                 # "remote" mode only

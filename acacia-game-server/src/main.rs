@@ -17,6 +17,7 @@ mod func {
         mod chapter;
         mod general;
         mod girl_skin;
+        mod girl_weapon_skin;
         mod lineup;
         mod player_setting;
     }
