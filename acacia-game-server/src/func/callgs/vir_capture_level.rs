@@ -74,7 +74,6 @@ async fn save_fight_data(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) 
             custom: HashMap::from([attr]),
             ..protocol::NtfSyncPlayer::default()
         }),
-        ..protocol::NtfCallScript::default()
     };
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())

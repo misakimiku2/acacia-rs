@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
 
     acacia_data::init_data().await?;
 
-    if base::config::CONFIG.database.mode == "http" {
+    if base::config::CONFIG.database.mode == "remote" {
         acacia_database::db::init_db_by_auth(
             &base::config::CONFIG.database.address,
             base::config::CONFIG.database.username.clone(),
