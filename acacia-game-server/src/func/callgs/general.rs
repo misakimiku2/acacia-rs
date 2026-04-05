@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
@@ -19,6 +19,22 @@ async fn change_main_scene(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value
     let rsp = protocol::NtfCallScript {
         api: "ChangeMainScene".to_string(),
         arg: "[]".to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+#[callgs_reg("EnterGirlRoom")]
+async fn enter_girl_room(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "EnterGirlRoom".to_string(),
+        arg: json!({
+            "bOpen": true,
+            "nCardId": param["nCardId"],
+            "nSkinId": param["nSkinId"],
+        })
+        .to_string(),
         ..protocol::NtfCallScript::default()
     };
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
