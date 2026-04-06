@@ -13,7 +13,7 @@ impl PlayerItemManager {
         Self { pid }
     }
 
-    async fn new_id(&self) -> Result<u64> {
+    pub async fn new_id(&self) -> Result<u64> {
         let mut resp: surrealdb::IndexedResults = db()
             .query("UPSERT type::record('counter', $pid) SET player_item_counter += 1 RETURN player_item_counter")
             .bind(("pid", self.pid))
@@ -38,6 +38,16 @@ impl PlayerItemManager {
         let item: Option<PlayerItem> = resp.take(0)?;
         let result = item.map(PlayerItem::to_prost);
         Ok(result)
+    }
+
+    pub async fn get_from_template(&self, template_id: u64) -> Result<Option<core::Item>> {
+        let mut resp = db()
+            .query("SELECT * FROM player_item WHERE pid = $pid AND template_id = $template_id LIMIT 1")
+            .bind(("pid", self.pid))
+            .bind(("template_id", template_id))
+            .await?;
+        let item = resp.take::<Vec<PlayerItem>>(0)?.into_iter().next().map(|i| i.to_prost());
+        Ok(item)
     }
 
     pub async fn set(&self, src_item: core::Item) -> Result<()> {

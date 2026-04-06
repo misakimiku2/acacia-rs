@@ -2,7 +2,8 @@ use std::sync::Arc;
 use tracing::warn;
 
 use crate::base::conn::Conn;
-use acacia_commons::lua_parser;
+use acacia_commons::{bits::set_template, lua_parser};
+use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[derive(Debug)]
 pub enum GMScriptAdd {
@@ -95,25 +96,46 @@ impl GMScriptAddVigor {
 
 #[derive(Debug)]
 pub struct GMScriptAddItem {
-    pub g: i64,
-    pub d: i64,
-    pub p: i64,
-    pub l: i64,
-    pub count: i64,
+    pub g: u16,
+    pub d: u16,
+    pub p: u16,
+    pub l: u16,
+    pub count: u32,
 }
 
 impl GMScriptAddItem {
     fn from_args(args: &[String]) -> Self {
         Self {
-            g: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
-            d: args.get(1).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
-            p: args.get(2).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
-            l: args.get(3).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
-            count: args.get(4).and_then(|s| s.parse::<i64>().ok()).unwrap_or(1),
+            g: args.get(0).and_then(|s| s.parse::<u16>().ok()).unwrap_or(0),
+            d: args.get(1).and_then(|s| s.parse::<u16>().ok()).unwrap_or(0),
+            p: args.get(2).and_then(|s| s.parse::<u16>().ok()).unwrap_or(0),
+            l: args.get(3).and_then(|s| s.parse::<u16>().ok()).unwrap_or(0),
+            count: args.get(4).and_then(|s| s.parse::<u32>().ok()).unwrap_or(1),
         }
     }
 
-    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+    pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
+        let template_id = set_template(self.g, self.d, self.p, self.l)?;
+        let manager = conn.manager().await;
+
+        let item = if let Some(mut item) = manager.items.get(template_id).await? {
+            item.count += &self.count;
+            item
+        } else {
+            core::Item {
+                id: manager.items.new_id().await?,
+                template: template_id,
+                count: self.count,
+                ..core::Item::default()
+            }
+        };
+
+        manager.items.set(item.clone()).await?;
+        let rsp = protocol::NtfSyncPlayer {
+            items: vec![item],
+            ..protocol::NtfSyncPlayer::default()
+        };
+        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
         Ok(())
     }
 }
