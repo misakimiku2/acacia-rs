@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -7,14 +8,16 @@ use acacia_game_msg::{protocol, protocol::Pf};
 
 #[callgs_reg("GirlWeaponSkin_Change")]
 async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let manager = conn.manager().await;
-    let mut girl = manager.items.get(param["nCardId"].as_u64().unwrap()).await?.unwrap();
+    let ncard_id = param["nCardId"].as_u64().with_context(|| format!("Expected 'nCardId' but not found in param {:?}", param))?;
+    let nskin_id = param["nSkinId"].as_i64().with_context(|| format!("Expected 'nSkinId' but not found in param {:?}", param))?;
 
-    let skin_id = param["nSkinId"].as_i64().unwrap();
-    if skin_id == -1 {
+    let manager = conn.manager().await;
+    let mut girl = manager.items.get(ncard_id).await?.with_context(|| format!("Girl not found {}", ncard_id))?;
+
+    if nskin_id == -1 {
         girl.slots.remove(&6);
     } else {
-        girl.slots.insert(6, skin_id as u64);
+        girl.slots.insert(6, nskin_id as u64);
     }
     manager.items.set(girl.clone()).await?;
 

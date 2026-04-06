@@ -68,10 +68,11 @@ impl Conn {
                         let conn = self.clone();
                         let body = packet.body;
                         let msg_id = packet.msg_id as i32;
+                        let msg_desc = Pf::try_from(msg_id).map(|pf| format!("{:?}", pf)).unwrap_or_else(|_| format!("Pf({})", msg_id));
 
                         tokio::spawn(async move {
                             if let Err(e) = DISPATCHER.dispatch(&conn, msg_id, &body).await {
-                                error!("msgid {} dispatch error: {}", msg_id, e);
+                                error!("msgid {} dispatch error: {}", msg_desc, e);
                             }
                         });
                     }

@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
@@ -7,8 +8,9 @@ use acacia_game_msg::{protocol, protocol::Pf};
 
 #[callgs_reg("ChangeMainScene")]
 async fn change_main_scene(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let nid = param["nId"].as_u64().with_context(|| format!("Expected 'nId' but not found in param {:?}", param))?;
     let manager = conn.manager().await;
-    let attr = manager.attrs.set_attr(132, 1, param["nId"].as_u64().unwrap() as u32).await?;
+    let attr = manager.attrs.set_attr(132, 1, nid as u32).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         custom: HashMap::from([attr]),

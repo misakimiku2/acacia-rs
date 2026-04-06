@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
@@ -32,7 +33,7 @@ async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> an
 
 #[callgs_reg("VirCapture_SwitchDayNight")]
 async fn switch_day_night(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let map_id = param["nMapId"].as_i64().unwrap();
+    let map_id = param["nMapId"].as_i64().with_context(|| format!("Expected 'nMapId' but not found in param {:?}", param))?;
     let map_index = if map_id == 5810 {
         1
     } else {

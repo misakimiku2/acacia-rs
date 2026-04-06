@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -8,10 +9,11 @@ use acacia_game_msg::{protocol, protocol::Pf};
 #[callgs_reg("Weapon_ReplacePart")]
 async fn replace_part(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let manager = conn.manager().await;
-    let slot_id = param["Type"].as_i64().unwrap() as u32;
-    let part_id = param["PartId"].as_i64().unwrap();
+    let slot_id = param["Type"].as_i64().with_context(|| format!("Expected 'Type' but not found in param {:?}", param))? as u32;
+    let part_id = param["PartId"].as_i64().with_context(|| format!("Expected 'PartId' but not found in param {:?}", param))?;
+    let weapon_id = param["Id"].as_u64().with_context(|| format!("Expected 'Id' but not found in param {:?}", param))?;
 
-    let mut weapon = manager.items.get(param["Id"].as_u64().unwrap()).await?.unwrap();
+    let mut weapon = manager.items.get(weapon_id).await?.with_context(|| format!("Weapon not found {}", weapon_id))?;
     if part_id == -1 {
         weapon.slots.remove(&slot_id);
     } else {

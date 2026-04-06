@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -9,11 +10,11 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 async fn update(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let manager = conn.manager().await;
     let solution = core::Lineup {
-        index: param["index"].as_u64().unwrap() as u32,
-        name: param["name"].as_str().unwrap().to_string(),
-        member1: param["member1"].as_u64().unwrap(),
-        member2: param["member2"].as_u64().unwrap(),
-        member3: param["member3"].as_u64().unwrap(),
+        index: param["index"].as_u64().with_context(|| format!("Expected 'index' but not found in param {:?}", param))? as u32,
+        name: param["name"].as_str().with_context(|| format!("Expected 'name' but not found in param {:?}", param))?.to_string(),
+        member1: param["member1"].as_u64().with_context(|| format!("Expected 'member1' but not found in param {:?}", param))?,
+        member2: param["member2"].as_u64().with_context(|| format!("Expected 'member2' but not found in param {:?}", param))?,
+        member3: param["member3"].as_u64().with_context(|| format!("Expected 'member3' but not found in param {:?}", param))?,
     };
     manager.solutions.update(solution.clone()).await?;
     let rsp = protocol::NtfSyncLineup {

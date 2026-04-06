@@ -8,8 +8,8 @@ use acacia_game_msg::{protocol, protocol::Pf};
 
 #[callgs_reg("Gacha_Launch")]
 async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nid = param["nId"].as_i64().with_context(|| format!("Gacha_Launch: nId not found in param {:?}", param))?;
-    let ntime = param["nTime"].as_u64().with_context(|| format!("Gacha_Launch: nTime not found in param {:?}", param))?;
+    let nid = param["nId"].as_i64().with_context(|| format!("Expected 'nId' but not found in param {:?}", param))?;
+    let ntime = param["nTime"].as_u64().with_context(|| format!("Expected 'nTime' but not found in param {:?}", param))?;
     let tb_award = match nid {
         79 | 179 => vec![1, 8, 4, 1],
         80 | 180 => vec![2, 1, 33, 1],

@@ -1,4 +1,4 @@
-use anyhow::Ok;
+use anyhow::Context;
 use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
@@ -47,8 +47,8 @@ async fn save_capture(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyh
 
 #[callgs_reg("VirCaptureLevel_SaveFightData")]
 async fn save_fight_data(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let level_id = param["nLevelID"].as_i64().unwrap();
-    let point_id = param["nRegionId"].as_i64().unwrap() as u32;
+    let level_id = param["nLevelID"].as_i64().with_context(|| format!("Expected 'nLevelID' but not found in param {:?}", param))?;
+    let point_id = param["nRegionId"].as_i64().with_context(|| format!("Expected 'nRegionId' but not found in param {:?}", param))? as u32;
     let map_index = if level_id == 5810 {
         1
     } else {
@@ -81,16 +81,17 @@ async fn save_fight_data(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) 
 
 #[callgs_reg("VirCaptureLevel_SavePos")]
 async fn save_pos(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let level_id = param["nLevelID"].as_i64().unwrap();
+    let level_id = param["nLevelID"].as_i64().with_context(|| format!("Expected 'nLevelID' but not found in param {:?}", param))?;
+    let pos_x = param["nPosX"].as_i64().with_context(|| format!("Expected 'nPosX' but not found in param {:?}", param))? as u32;
+    let pos_y = param["nPosY"].as_i64().with_context(|| format!("Expected 'nPosY' but not found in param {:?}", param))? as u32;
+    let pos_z = param["nPosZ"].as_i64().with_context(|| format!("Expected 'nPosZ' but not found in param {:?}", param))? as u32;
+    let toward = param["nToward"].as_i64().with_context(|| format!("Expected 'nToward' but not found in param {:?}", param))? as u32;
+
     let map_index = if level_id == 5810 {
         1
     } else {
         return Ok(());
     };
-    let pos_x = param["nPosX"].as_i64().unwrap() as u32;
-    let pos_y = param["nPosY"].as_i64().unwrap() as u32;
-    let pos_z = param["nPosZ"].as_i64().unwrap() as u32;
-    let toward = param["nToward"].as_i64().unwrap() as u32;
 
     let manager = conn.manager().await;
     let map_base_id = 10000 + (map_index - 1) * 3000;
