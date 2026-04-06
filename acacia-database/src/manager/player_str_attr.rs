@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use crate::db::db;
 use crate::models::PlayerStrAttr;
+use acacia_commons::bits::set_attribute;
 
 pub struct PlayerStrAttrManager {
     pid: u64,
@@ -51,5 +52,17 @@ impl PlayerStrAttrManager {
     pub async fn del_all(&self) -> Result<()> {
         db().query("DELETE FROM player_str_attr WHERE pid = $pid").bind(("pid", self.pid)).await?;
         Ok(())
+    }
+
+    pub async fn get_attr(&self, gid: u32, sid: u32) -> anyhow::Result<(u32, String)> {
+        let key = set_attribute(gid, sid)?;
+        let value = self.get(key).await?;
+        Ok((key, value))
+    }
+
+    pub async fn set_attr(&self, gid: u32, sid: u32, value: String) -> anyhow::Result<(u32, String)> {
+        let key = set_attribute(gid, sid)?;
+        self.set(key, value.clone()).await?;
+        Ok((key, value))
     }
 }

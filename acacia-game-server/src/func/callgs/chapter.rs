@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
@@ -18,25 +19,59 @@ async fn enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
 
 #[callgs_reg("Chapter_DealLevelSettlement")]
 async fn deal_level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let cmd = param["sCmd"].as_str().with_context(|| format!("Expected 'sCmd' but not found in param {:?}", param))?;
     let manager = conn.manager().await;
-    let level_id = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
-    if level_id > 0 {
-        let level_times = manager.attrs.get_attr(22, level_id as u32).await?.0 + 1;
-        let attr = manager.attrs.set_attr(22, level_id as u32, level_times).await?;
-        let rsp = protocol::NtfSyncPlayer {
-            custom: HashMap::<u32, u32>::from([attr]),
-            ..protocol::NtfSyncPlayer::default()
-        };
-        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
 
-        let level_star = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
-        if level_star > 0 {
-            let attr = manager.attrs.set_attr(21, level_id as u32, level_star as u32).await?;
+    match cmd {
+        "BossPvpLogic_LevelSettlement" => {
+            let level_id = param["tbParam"]["nID"].as_u64().with_context(|| format!("Expected 'tbParam.nID' but not found in param {:?}", param))?;
+            let time = param["tbParam"]["nTime"]
+                .as_f64()
+                .with_context(|| format!("Expected 'tbParam.nTime' but not found in param {:?}", param))?;
+            let score = 40000 - ((time * 100.0) as u32);
+            let attr_1 = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 4, score.to_string()).await?;
+            let attr_2 = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 5, time.to_string()).await?;
             let rsp = protocol::NtfSyncPlayer {
-                custom: HashMap::<u32, u32>::from([attr]),
+                custom_str: HashMap::<u32, String>::from([attr_1, attr_2]),
                 ..protocol::NtfSyncPlayer::default()
             };
             conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+        }
+        "BossPvpLogic_LevelFail" => {
+            let level_id = param["tbParam"]["nID"].as_u64().with_context(|| format!("Expected 'tbParam.nID' but not found in param {:?}", param))?;
+            let health_percentage = param["tbParam"]["HealthPercentage"]
+                .as_u64()
+                .with_context(|| format!("Expected 'tbParam.HealthPercentage' but not found in param {:?}", param))?;
+            let score = (100 - health_percentage) * 80;
+            let attr = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 4, score.to_string()).await?;
+            let rsp = protocol::NtfSyncPlayer {
+                custom_str: HashMap::<u32, String>::from([attr]),
+                ..protocol::NtfSyncPlayer::default()
+            };
+            conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+        }
+        _ => {
+            let level_id = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
+
+            if level_id > 0 {
+                let level_times = manager.attrs.get_attr(22, level_id as u32).await?.0 + 1;
+                let attr = manager.attrs.set_attr(22, level_id as u32, level_times).await?;
+                let rsp = protocol::NtfSyncPlayer {
+                    custom: HashMap::<u32, u32>::from([attr]),
+                    ..protocol::NtfSyncPlayer::default()
+                };
+                conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+                let level_star = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
+                if level_star > 0 {
+                    let attr = manager.attrs.set_attr(21, level_id as u32, level_star as u32).await?;
+                    let rsp = protocol::NtfSyncPlayer {
+                        custom: HashMap::<u32, u32>::from([attr]),
+                        ..protocol::NtfSyncPlayer::default()
+                    };
+                    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+                }
+            }
         }
     }
 
