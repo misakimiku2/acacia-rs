@@ -17,6 +17,7 @@ mod listeners {
 }
 mod func {
     mod callgs {
+        mod boss_logic;
         mod boss_pvp_logic;
         mod chapter;
         mod gacha;
