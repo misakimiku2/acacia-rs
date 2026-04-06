@@ -26,3 +26,14 @@ async fn get_opem_id(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+#[callgs_reg("BossPvpLogic_EnterLevel")]
+async fn enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "BossPvpLogic_EnterLevel".to_string(),
+        arg: "{\"nSeed\": 0}".to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
