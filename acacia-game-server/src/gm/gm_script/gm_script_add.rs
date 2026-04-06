@@ -16,7 +16,11 @@ pub enum GMScriptAdd {
 impl GMScriptAdd {
     pub fn from_args(args: &[String]) -> Option<Self> {
         let sub_fn = args.get(0).map(String::as_str);
-        let sub_args = lua_parser::parse_function_args(args.get(1).map(String::as_str).unwrap_or(""));
+        let sub_args = if let Some(sub_args_str) = args.get(1) {
+            lua_parser::parse_function_args(sub_args_str.trim_start_matches('{').trim_end_matches('}'))
+        } else {
+            Vec::new()
+        };
 
         let add_action = match sub_fn {
             Some("GM.AddExp") => Self::AddExp(GMScriptAddExp::from_args(&sub_args)),
@@ -118,7 +122,7 @@ impl GMScriptAddItem {
         let template_id = set_template(self.g, self.d, self.p, self.l)?;
         let manager = conn.manager().await;
 
-        let item = if let Some(mut item) = manager.items.get(template_id).await? {
+        let item = if let Some(mut item) = manager.items.get_from_template(template_id).await? {
             item.count += &self.count;
             item
         } else {

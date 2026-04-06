@@ -40,11 +40,11 @@ impl PlayerItemManager {
         Ok(result)
     }
 
-    pub async fn get_from_template(&self, template_id: u64) -> Result<Option<core::Item>> {
+    pub async fn get_from_template(&self, template: u64) -> Result<Option<core::Item>> {
         let mut resp = db()
-            .query("SELECT * FROM player_item WHERE pid = $pid AND template_id = $template_id LIMIT 1")
+            .query("SELECT * FROM player_item WHERE pid = $pid AND template = $template LIMIT 1")
             .bind(("pid", self.pid))
-            .bind(("template_id", template_id))
+            .bind(("template", template))
             .await?;
         let item = resp.take::<Vec<PlayerItem>>(0)?.into_iter().next().map(|i| i.to_prost());
         Ok(item)
