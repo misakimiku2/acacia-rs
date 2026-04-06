@@ -30,7 +30,14 @@ impl GMScriptAdd {
         Some(add_action)
     }
 
-    pub fn run(&self, _: Arc<Conn>) {}
+    pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
+        match self {
+            Self::AddExp(s) => s.run(conn).await,
+            Self::AddMoney(s) => s.run(conn).await,
+            Self::AddVigor(s) => s.run(conn).await,
+            Self::AddItem(s) => s.run(conn).await,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -43,6 +50,10 @@ impl GMScriptAddExp {
         Self {
             count: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
         }
+    }
+
+    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+        Ok(())
     }
 }
 
@@ -59,6 +70,10 @@ impl GMScriptAddMoney {
             count: args.get(1).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
         }
     }
+
+    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -71,6 +86,10 @@ impl GMScriptAddVigor {
         Self {
             count: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
         }
+    }
+
+    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+        Ok(())
     }
 }
 
@@ -92,5 +111,9 @@ impl GMScriptAddItem {
             l: args.get(3).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
             count: args.get(4).and_then(|s| s.parse::<i64>().ok()).unwrap_or(1),
         }
+    }
+
+    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+        Ok(())
     }
 }

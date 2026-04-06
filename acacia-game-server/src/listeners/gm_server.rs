@@ -1,4 +1,5 @@
 use axum::{Json, Router, http::StatusCode, routing::post};
+use tracing::debug;
 
 use crate::base::config::CONFIG;
 use crate::base::conn::CONNS;
@@ -24,8 +25,8 @@ struct GmScriptPayload {
 async fn handle_gm_script(Json(payload): Json<GmScriptPayload>) -> (StatusCode, &'static str) {
     if let Some(conn) = CONNS.get_by_uid(payload.pid) {
         if let Some(gm_script) = GMScript::from_code(&payload.code) {
-            println!("GMScript: {:?} {:?}", conn.uid(), gm_script);
-            gm_script.run(conn);
+            debug!("GMScript: {:?} {:?}", conn.uid(), gm_script);
+            gm_script.run(conn).await.expect("Failed to run GMScript");
         }
     }
     (StatusCode::OK, "success")

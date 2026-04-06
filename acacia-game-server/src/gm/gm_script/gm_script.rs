@@ -35,11 +35,11 @@ impl GMScript {
         Some(gm_script)
     }
 
-    pub fn run(&self, conn: Arc<Conn>) {
+    pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         match self {
-            Self::UnLockAllLevel(s) => s.run(conn),
-            Self::UnLockLevel(s) => s.run(conn),
-            Self::Add(s) => s.run(conn),
+            Self::UnLockAllLevel(s) => s.run(conn).await,
+            Self::UnLockLevel(s) => s.run(conn).await,
+            Self::Add(s) => s.run(conn).await,
         }
     }
 }

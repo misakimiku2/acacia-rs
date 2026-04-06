@@ -14,5 +14,7 @@ impl GMScriptUnLockAllLevel {
         }
     }
 
-    pub fn run(&self, _: Arc<Conn>) {}
+    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+        Ok(())
+    }
 }
