@@ -1,3 +1,5 @@
+use anyhow::Ok;
+
 mod base {
     pub mod dispatcher {
         mod callgs_handler;
@@ -9,8 +11,9 @@ mod base {
     pub mod conn;
     pub mod packet;
 }
-mod handler {
+mod listeners {
     pub mod game_server;
+    pub mod gm_server;
 }
 mod func {
     mod callgs {
@@ -30,6 +33,14 @@ mod func {
     mod req_callgs;
     mod req_login;
     mod req_reconnect;
+}
+pub mod gm {
+    pub mod gm_script {
+        pub mod gm_script;
+        pub mod gm_script_un_lock_all_level;
+        pub mod gm_script_un_lock_level;
+        pub mod gm_script_add;
+    }
 }
 
 #[tokio::main]
@@ -54,15 +65,15 @@ async fn main() -> anyhow::Result<()> {
         acacia_database::db::init_db("surrealkv://data/database").await?;
     }
 
-    let addr = format!("{}:{}", base::config::CONFIG.host, base::config::CONFIG.port);
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    tracing::info!("GameServer listening on {}", addr);
-    loop {
-        let (socket, addr) = listener.accept().await?;
-        tokio::spawn(async move {
-            if let Err(e) = handler::game_server::handle_game_server(socket, addr).await {
-                tracing::error!("Error handling connection from {}: {}", addr, e);
-            }
-        });
+    let game_server_task = tokio::spawn(listeners::game_server::listen_game_server());
+    let gm_server_task = tokio::spawn(listeners::gm_server::listen_gm_server());
+    tokio::select! {
+        ret = game_server_task => {
+            tracing::error!("GameServer unexpectedly exited: {:?}", ret);
+        }
+        ret = gm_server_task => {
+            tracing::error!("GMServer unexpectedly exited: {:?}", ret);
+        }
     }
+    Ok(())
 }

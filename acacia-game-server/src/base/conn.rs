@@ -39,10 +39,14 @@ impl Conn {
         self.uid.try_lock().ok().and_then(|g| *g)
     }
 
-    pub async fn bind_uid(&self, uid: u64) {
+    pub async fn bind_uid(self: &Arc<Self>, uid: u64) {
         {
             let mut g = self.uid.lock().await;
+            if let Some(old_uid) = *g {
+                CONNS.uid_map.remove(&old_uid);
+            }
             *g = Some(uid);
+            CONNS.uid_map.insert(uid, self.clone());
         }
     }
 
