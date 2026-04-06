@@ -18,6 +18,7 @@ mod listeners {
 mod func {
     mod callgs {
         mod chapter;
+        mod gacha;
         mod general;
         mod girl_skin;
         mod girl_weapon_skin;
@@ -37,9 +38,10 @@ mod func {
 pub mod gm {
     pub mod gm_script {
         pub mod gm_script;
+        pub mod gm_script_add;
+        pub mod gm_script_gacha;
         pub mod gm_script_un_lock_all_level;
         pub mod gm_script_un_lock_level;
-        pub mod gm_script_add;
     }
 }
 
