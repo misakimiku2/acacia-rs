@@ -28,27 +28,35 @@ async fn deal_level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
             let time = param["tbParam"]["nTime"]
                 .as_f64()
                 .with_context(|| format!("Expected 'tbParam.nTime' but not found in param {:?}", param))?;
-            let score = 40000 - ((time * 100.0) as u32);
-            let attr_1 = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 4, score.to_string()).await?;
-            let attr_2 = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 5, time.to_string()).await?;
-            let rsp = protocol::NtfSyncPlayer {
-                custom_str: HashMap::<u32, String>::from([attr_1, attr_2]),
-                ..protocol::NtfSyncPlayer::default()
-            };
-            conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+            let level_attr_base_id = 10 * (level_id as u32) + 100;
+            let before_score: u64 = manager.str_attrs.get_attr(51, level_attr_base_id + 4).await?.1.parse().unwrap_or(0);
+            let score = 40000 - ((time * 100.0) as u64);
+            if before_score < score {
+                let attr_1 = manager.str_attrs.set_attr(51, level_attr_base_id + 4, score.to_string()).await?;
+                let attr_2 = manager.str_attrs.set_attr(51, level_attr_base_id + 5, time.to_string()).await?;
+                let rsp = protocol::NtfSyncPlayer {
+                    custom_str: HashMap::<u32, String>::from([attr_1, attr_2]),
+                    ..protocol::NtfSyncPlayer::default()
+                };
+                conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+            }
         }
         "BossPvpLogic_LevelFail" => {
             let level_id = param["tbParam"]["nID"].as_u64().with_context(|| format!("Expected 'tbParam.nID' but not found in param {:?}", param))?;
             let health_percentage = param["tbParam"]["HealthPercentage"]
                 .as_u64()
                 .with_context(|| format!("Expected 'tbParam.HealthPercentage' but not found in param {:?}", param))?;
+            let level_attr_base_id = 10 * (level_id as u32) + 100;
+            let before_score: u64 = manager.str_attrs.get_attr(51, level_attr_base_id + 4).await?.1.parse().unwrap_or(0);
             let score = (100 - health_percentage) * 80;
-            let attr = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 4, score.to_string()).await?;
-            let rsp = protocol::NtfSyncPlayer {
-                custom_str: HashMap::<u32, String>::from([attr]),
-                ..protocol::NtfSyncPlayer::default()
-            };
-            conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+            if before_score < score {
+                let attr = manager.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 4, score.to_string()).await?;
+                let rsp = protocol::NtfSyncPlayer {
+                    custom_str: HashMap::<u32, String>::from([attr]),
+                    ..protocol::NtfSyncPlayer::default()
+                };
+                conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+            }
         }
         _ => {
             let level_id = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
