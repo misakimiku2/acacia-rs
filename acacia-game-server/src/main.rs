@@ -24,6 +24,7 @@ mod func {
         mod general;
         mod girl_skin;
         mod girl_weapon_skin;
+        mod house;
         mod lineup;
         mod player_setting;
         mod vir_capture;
