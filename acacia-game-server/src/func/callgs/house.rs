@@ -38,6 +38,14 @@ async fn request_girl_register(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         }
     }
     if new_room_id == 0 {
+        for &room_id in &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] {
+            let _room_girl_id = manager.attrs.get_attr(101, 2550 + room_id).await?.1;
+            if _room_girl_id == 0 {
+                new_room_id = room_id
+            }
+        }
+    }
+    if new_room_id == 0 {
         bail!("Insufficient slots for FloorId: {}", floor_id);
     }
 
