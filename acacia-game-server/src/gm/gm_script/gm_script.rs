@@ -5,7 +5,7 @@ use super::gm_script_gacha::GMScriptGacha;
 use super::gm_script_un_lock_all_level::GMScriptUnLockAllLevel;
 use super::gm_script_un_lock_level::GMScriptUnLockLevel;
 use crate::base::conn::Conn;
-use acacia_commons::lua_parser;
+use acacia_commons::lua_utils::lua_func;
 
 #[derive(Debug)]
 pub enum GMScript {
@@ -17,8 +17,8 @@ pub enum GMScript {
 
 impl GMScript {
     pub fn from_code(code: &str) -> Option<Self> {
-        let (func_name, raw_args) = lua_parser::parse_function_call(code)?;
-        let args = lua_parser::parse_function_args(raw_args);
+        let (func_name, raw_args) = lua_func::parse_function_call(code)?;
+        let args = lua_func::parse_function_args(raw_args);
         let gm_script = match func_name {
             "GM.UnLockAllLevel" => Self::UnLockAllLevel(GMScriptUnLockAllLevel::from_args(&args)),
             "GM.UnLockLevel" => Self::UnLockLevel(GMScriptUnLockLevel::from_args(&args)),

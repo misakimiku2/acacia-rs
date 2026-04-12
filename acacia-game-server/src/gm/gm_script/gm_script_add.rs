@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 use tracing::warn;
 
 use crate::base::conn::Conn;
-use acacia_commons::{bits::set_template, lua_parser};
+use acacia_commons::{bits::set_template, lua_utils::lua_func};
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[derive(Debug)]
@@ -17,7 +17,7 @@ impl GMScriptAdd {
     pub fn from_args(args: &[String]) -> Option<Self> {
         let sub_fn = args.get(0).map(String::as_str);
         let sub_args = if let Some(sub_args_str) = args.get(1) {
-            lua_parser::parse_function_args(sub_args_str.trim_start_matches('{').trim_end_matches('}'))
+            lua_func::parse_function_args(sub_args_str.trim_start_matches('{').trim_end_matches('}'))
         } else {
             Vec::new()
         };
