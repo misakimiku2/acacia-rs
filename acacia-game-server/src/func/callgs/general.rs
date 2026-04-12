@@ -42,3 +42,24 @@ async fn enter_girl_room(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) 
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+#[callgs_reg("RecordConfession")]
+async fn record_confession(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let nidx = param["nId"].as_u64().with_context(|| format!("Expected 'nId' but not found in param {:?}", param))? as u32;
+    
+    let manager = conn.manager().await;
+    let attr = manager.attrs.set_attr(132, nidx + 10, 1).await?;
+
+    let rsp = protocol::NtfSyncPlayer {
+        custom: HashMap::from([attr]),
+        ..protocol::NtfSyncPlayer::default()
+    };
+    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "RecordConfession".to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
