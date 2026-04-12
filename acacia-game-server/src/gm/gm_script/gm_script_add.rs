@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use tracing::warn;
 
 use crate::base::conn::Conn;
@@ -64,19 +64,30 @@ impl GMScriptAddExp {
 
 #[derive(Debug)]
 pub struct GMScriptAddMoney {
-    pub value: i64,
-    pub count: i64,
+    pub typ: u32,
+    pub count: u32,
 }
 
 impl GMScriptAddMoney {
     fn from_args(args: &[String]) -> Self {
         Self {
-            value: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
-            count: args.get(1).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
+            typ: args.get(0).and_then(|s| s.parse::<u32>().ok()).unwrap_or(0),
+            count: args.get(1).and_then(|s| s.parse::<u32>().ok()).unwrap_or(1),
         }
     }
 
-    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+    pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
+        let manager = conn.manager().await;
+
+        let mut attr = manager.attrs.get_attr(1, &self.typ * 2 + 1).await?;
+        attr.1 += &self.count;
+        manager.attrs.set(attr.0, attr.1).await?;
+
+        let rsp = protocol::NtfSyncPlayer {
+            custom: HashMap::from([attr]),
+            ..protocol::NtfSyncPlayer::default()
+        };
+        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
         Ok(())
     }
 }
