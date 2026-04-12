@@ -1,9 +1,11 @@
-use anyhow::{Context, bail};
-use serde_json::{Value, json};
+use anyhow::{Context, Ok, bail};
+use serde_json::{Value, from_value, json};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
 use acacia_commons::bits::set_template;
+use acacia_commons::game::girl_love_level::GirlLoveLevel;
+use acacia_commons::game::girl_room_furniture::GirlRoomFurniture;
 use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
@@ -15,6 +17,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "GirlRegister" => request_girl_register(conn, msgdata, param).await?,
         "GirlRoomChange" => request_girl_room_change(conn, msgdata, param).await?,
         "ExchangeGift" => request_exchange_gift(conn, msgdata, param).await?,
+        "GiveGiftToArea" => request_give_gift_to_area(conn, msgdata, param).await?,
         _ => {}
     };
     Ok(())
@@ -138,12 +141,12 @@ async fn request_girl_room_change(conn: Arc<Conn>, _: protocol::ReqCallGs, param
 
 async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let index = param["Index"].as_i64().with_context(|| format!("Expected 'Index' but not found in param {param:?}"))? as u32;
-    let use_gold = param["UseGold"].as_bool().with_context(|| format!("Expected 'UseGold' but not found in param {param:?}"))?;
+    let use_gold = param["UseGold"].as_bool().unwrap_or(false);
 
     let girl_exchange_data = tables()
         .gift_exchange
         .find_one("index_1", index)
-        .with_context(|| format!("Expected 'UseGold' but not found in param {param:?}"))?;
+        .with_context(|| format!("The specified girl_exchange_data does not exist."))?;
 
     let mut attrs = HashMap::<u32, u32>::new();
     let manager = conn.manager().await;
@@ -201,6 +204,90 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         arg: json!({
             "Award": [gift],
             "FuncName": "ExchangeGiftRsp",
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let area_id = param["AreaId"].as_i64().with_context(|| format!("Expected 'AreaId' but not found in param {param:?}"))? as u32;
+    if area_id > 50 {
+        bail!("AreaId: {area_id} not supported")
+    }
+    let manager = conn.manager().await;
+
+    let girl_id = area_id;
+    let mut items = Vec::<core::Item>::new();
+    let mut attrs = HashMap::<u32, u32>::new();
+    let mut add_favor: u32 = 0;
+    let mut new_level: u32 = 0;
+    let mut add_fur_list: Vec<u32> = Vec::new();
+    let mut set_girl_id: u32 = 0;
+    let tb_gdpln: Vec<(u16, u16, u16, u16, u32)> = from_value(param["tbGDPLN"].clone())?;
+    for gdpln in tb_gdpln {
+        let cost_item_id = set_template(gdpln.0, gdpln.1, gdpln.2, gdpln.3)?;
+        let Some(mut item) = manager.items.get_item_by_template(cost_item_id).await? else {
+            bail!("Insufficient quantity for ItemId: {}", cost_item_id);
+        };
+        if item.count < gdpln.4 {
+            bail!("Insufficient quantity for ItemId: {}", cost_item_id);
+        }
+        item.count = item.count - gdpln.4;
+        manager.items.set(item.clone()).await?;
+        items.push(item);
+
+        let dorm_gift_template_data = tables()
+            .dorm_gift_template
+            .find_one("gdpl", [gdpln.0, gdpln.1, gdpln.2, gdpln.3])
+            .with_context(|| format!("The specified dorm_gift_template_data does not exist."))?;
+        let gift_id = dorm_gift_template_data.param1;
+        let gift_data = tables()
+            .gift
+            .find_one("gift_id_1", gift_id)
+            .with_context(|| format!("The specified gift_data {gift_id} does not exist."))?;
+        let furniture_id = gift_id % 100 + 1;
+        let furniture_attr_idx = (furniture_id - 1) / 10;
+        let furniture_sub_idx = (furniture_id - 1) % 10;
+        add_fur_list.push(gift_id);
+        set_girl_id = gift_id;
+
+        let mut furniture_attr = manager.attrs.get_attr(101, girl_id * 50 + furniture_attr_idx + 10).await?;
+        let mut furniture = GirlRoomFurniture::from_value(furniture_attr.1);
+        furniture.add(furniture_sub_idx as usize, gdpln.4 as u8);
+        furniture_attr.1 = furniture.as_value();
+        manager.attrs.set(furniture_attr.0, furniture_attr.1).await?;
+        attrs.insert(furniture_attr.0, furniture_attr.1);
+
+        let mut love_level_attr = manager.attrs.get_attr(101, girl_id * 50).await?;
+        let mut love_level = GirlLoveLevel::from_value(love_level_attr.1);
+        love_level.add_exp(gift_data.add_love_num * gdpln.4);
+        love_level_attr.1 = love_level.as_value();
+        manager.attrs.set(love_level_attr.0, love_level_attr.1).await?;
+        attrs.insert(love_level_attr.0, love_level_attr.1);
+        add_favor += gift_data.add_love_num * gdpln.4;
+        new_level = love_level.get_level();
+    }
+
+    let rsp = protocol::NtfSyncPlayer {
+        items: items,
+        custom: attrs,
+        ..protocol::NtfSyncPlayer::default()
+    };
+    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "House_Request".to_string(),
+        arg: json!({
+            "AddFavor": add_favor,
+            "NewLevel": new_level,
+            "AddFurList": add_fur_list,
+            "GirlId": area_id,
+            "AreaId": area_id,
+            "GiftId": set_girl_id,
+            "FuncName": "GiveGiftToAreaSuccess",
         })
         .to_string(),
         ..protocol::NtfCallScript::default()

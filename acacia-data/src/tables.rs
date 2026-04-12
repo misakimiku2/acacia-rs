@@ -15,9 +15,17 @@ pub fn load_tables() -> anyhow::Result<()> {
 
 crate::define_tables! {
     pub struct Tables {
+        #[path="house/gift.txt"]
+        #[index("gift_id_1", gift_id)]
+        pub gift: DataTable<schemas::GiftData>,
+
         #[path="house/gift_exchange.txt"]
         #[index("index_1", index)]
         #[index("gift_id_1", gift_id)]
         pub gift_exchange: DataTable<schemas::GiftExchangeData>,
+
+        #[path="item/templates/dorm_gift.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub dorm_gift_template: DataTable<schemas::DormGiftTemplateData>,
     }
 }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Deserializer};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use tracing::warn;
+use tracing::debug;
 
 pub fn with_lua_table<'de, D, T>(deserializer: D) -> anyhow::Result<T, D::Error>
 where
@@ -33,11 +33,11 @@ where
             Ok(record) => results.push(record),
             Err(e) => match e.kind() {
                 csv::ErrorKind::Deserialize { .. } => {
-                    warn!("Failed to parse line: {e}");
+                    debug!("Failed to parse line: {e}");
                     continue;
                 }
                 csv::ErrorKind::UnequalLengths { .. } => {
-                    warn!("Failed to parse line: {e}");
+                    debug!("Failed to parse line: {e}");
                     continue;
                 }
                 _ => return Err(e.into()),
