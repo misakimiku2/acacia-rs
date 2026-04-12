@@ -45,7 +45,7 @@ async fn enter_girl_room(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) 
 
 #[callgs_reg("RecordConfession")]
 async fn record_confession(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nidx = param["nId"].as_u64().with_context(|| format!("Expected 'nId' but not found in param {:?}", param))? as u32;
+    let nidx = param["nIdx"].as_u64().with_context(|| format!("Expected 'nIdx' but not found in param {:?}", param))? as u32;
     
     let manager = conn.manager().await;
     let attr = manager.attrs.set_attr(132, nidx + 10, 1).await?;
