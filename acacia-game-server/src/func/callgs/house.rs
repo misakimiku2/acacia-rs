@@ -19,6 +19,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "ExchangeGift" => request_exchange_gift(conn, msgdata, param).await?,
         "GiveGiftToArea" => request_give_gift_to_area(conn, msgdata, param).await?,
         "ArcadeGameEnterMainUI" => request_arcade_game_enter_main_ui(conn, msgdata, param).await?,
+        "ArcadeGameEnter" => request_arcade_game_enter(conn, msgdata, param).await?,
         _ => {}
     };
     Ok(())
@@ -297,12 +298,26 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
     Ok(())
 }
 
-async fn request_arcade_game_enter_main_ui(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+async fn request_arcade_game_enter_main_ui(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     let rsp = protocol::NtfCallScript {
         api: "House_Request".to_string(),
         arg: json!({
             "tbUnlockGirlList": [1, 5, 13, 23, 10],
             "FuncName": "ArcadeGameEnterMainUI",
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_arcade_game_enter(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "House_Request".to_string(),
+        arg: json!({
+            "nSeed": 0,
+            "FuncName": "ArcadeGameEnter",
         })
         .to_string(),
         ..protocol::NtfCallScript::default()
