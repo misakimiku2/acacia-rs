@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::base::conn::Conn;
 use acacia_commons::time::ServerTime;
-use acacia_data::data;
+use acacia_data::init_data::init_data;
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
@@ -45,8 +45,8 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
 async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
     let manager = conn.manager().await;
     if manager.attrs.get_all().await?.len() == 0 {
-        manager.attrs.set_many(data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
-        manager.items.set_many(data().items.iter().cloned()).await?;
+        manager.attrs.set_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
+        manager.items.set_many(init_data().items.iter().cloned()).await?;
     }
     manager.attrs.set_attr(4, 0, 5).await?;
     Ok(())

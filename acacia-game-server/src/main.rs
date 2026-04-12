@@ -1,5 +1,3 @@
-use anyhow::Ok;
-
 mod base {
     pub mod dispatcher {
         mod callgs_handler;
@@ -58,8 +56,9 @@ async fn main() -> anyhow::Result<()> {
         .with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&base::config::CONFIG.log)))
         .init();
 
-    acacia_data::init_data().await?;
-
+    acacia_data::init_data::load_init_data()?;
+    acacia_data::tables::load_tables()?;
+    
     if base::config::CONFIG.database.mode == "remote" {
         acacia_database::db::init_db_by_auth(
             &base::config::CONFIG.database.address,

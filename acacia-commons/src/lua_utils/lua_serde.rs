@@ -101,13 +101,6 @@ impl<'de> MapAccess<'de> for LuaDictAccess {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
-
-    #[derive(Debug, Deserialize)]
-    struct Item {
-        id: u32,
-        name: String,
-    }
 
     #[test]
     fn test() {

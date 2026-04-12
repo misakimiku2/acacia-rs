@@ -1,15 +1,14 @@
-use acacia_game_msg::core::Player;
-use prost::Message;
-use std::sync::OnceLock;
-
-static DATA: OnceLock<Player> = OnceLock::new();
-
-pub fn data() -> &'static Player {
-    DATA.get().expect("Failed to use data")
+pub mod manager {
+    pub mod data_table;
+    pub mod data_tables;
+    pub mod tsv;
 }
+pub mod init_data;
+pub mod schemas;
+pub mod tables;
 
-pub async fn init_data() -> anyhow::Result<()> {
-    let data = Player::decode(&include_bytes!("../data/data.pb")[..])?;
-    DATA.set(data).expect("Failed to initialize data");
-    Ok(())
-}
+pub use init_data::init_data;
+pub use tables::tables;
+
+#[cfg(test)]
+mod tests;
