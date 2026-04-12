@@ -4,8 +4,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
 use acacia_commons::bits::set_template;
+use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
-use acacia_game_msg::{protocol, protocol::Pf};
+use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[callgs_reg("House_Request")]
 async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
@@ -13,6 +14,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
     match func_name {
         "GirlRegister" => request_girl_register(conn, msgdata, param).await?,
         "GirlRoomChange" => request_girl_room_change(conn, msgdata, param).await?,
+        "ExchangeGift" => request_exchange_gift(conn, msgdata, param).await?,
         _ => {}
     };
     Ok(())
@@ -50,7 +52,7 @@ async fn request_girl_register(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
     }
 
     let cost_item_id = set_template(5, 26, 1, 4)?;
-    let Some(mut item) = manager.items.get_from_template(cost_item_id).await? else {
+    let Some(mut item) = manager.items.get_item_by_template(cost_item_id).await? else {
         bail!("Insufficient quantity for ItemId: {}", cost_item_id);
     };
     if item.count < 1 {
@@ -126,6 +128,79 @@ async fn request_girl_room_change(conn: Arc<Conn>, _: protocol::ReqCallGs, param
             "NewRoomId": param["RoomId"],
             "OldRoomId": old_room_id,
             "FuncName": "GirlRoomChangeSuccess",
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let index = param["Index"].as_i64().with_context(|| format!("Expected 'Index' but not found in param {param:?}"))? as u32;
+    let use_gold = param["UseGold"].as_bool().with_context(|| format!("Expected 'UseGold' but not found in param {param:?}"))?;
+
+    let girl_exchange_data = tables()
+        .gift_exchange
+        .find_one("index_1", index)
+        .with_context(|| format!("Expected 'UseGold' but not found in param {param:?}"))?;
+
+    let mut attrs = HashMap::<u32, u32>::new();
+    let manager = conn.manager().await;
+    if use_gold {
+        let Some(gold_count) = girl_exchange_data.need_gold else {
+            bail!("Gold cannot be used to buy this item {girl_exchange_data:?}");
+        };
+        let mut attr = manager.attrs.get_attr(1, 5).await?;
+        if attr.1 < gold_count {
+            bail!("Insufficient gold. ({}/{})", attr.1, gold_count);
+        }
+        attr.1 = attr.1 - gold_count;
+        manager.attrs.set(attr.0, attr.1).await?;
+        attrs.insert(attr.0, attr.1);
+    } else {
+        let money_count = girl_exchange_data.need_money;
+        let mut attr = manager.attrs.get_attr(1, 27).await?;
+        if attr.1 < money_count {
+            bail!("Insufficient money. ({}/{})", attr.1, money_count);
+        }
+        attr.1 = attr.1 - money_count;
+        manager.attrs.set(attr.0, attr.1).await?;
+        attrs.insert(attr.0, attr.1);
+    }
+
+    let gift = girl_exchange_data.gift;
+    let template_id = set_template(gift[0], gift[1], gift[2], gift[3])?;
+    let item = if let Some(mut item) = manager.items.get_item_by_template(template_id).await? {
+        item.count += 1;
+        item
+    } else {
+        core::Item {
+            id: manager.items.new_id().await?,
+            template: template_id,
+            count: 1,
+            ..core::Item::default()
+        }
+    };
+    manager.items.set(item.clone()).await?;
+
+    let mut attr = manager.attrs.get_attr(101, 50 * gift[2] as u32 + 36).await?;
+    attr.1 += 1;
+    manager.attrs.set(attr.0, attr.1).await?;
+    attrs.insert(attr.0, attr.1);
+
+    let rsp = protocol::NtfSyncPlayer {
+        items: vec![item],
+        custom: attrs,
+        ..protocol::NtfSyncPlayer::default()
+    };
+    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "House_Request".to_string(),
+        arg: json!({
+            "Award": [gift],
+            "FuncName": "ExchangeGiftRsp",
         })
         .to_string(),
         ..protocol::NtfCallScript::default()

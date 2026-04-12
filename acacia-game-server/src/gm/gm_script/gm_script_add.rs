@@ -133,7 +133,7 @@ impl GMScriptAddItem {
         let template_id = set_template(self.g, self.d, self.p, self.l)?;
         let manager = conn.manager().await;
 
-        let item = if let Some(mut item) = manager.items.get_from_template(template_id).await? {
+        let item = if let Some(mut item) = manager.items.get_item_by_template(template_id).await? {
             item.count += &self.count;
             item
         } else {

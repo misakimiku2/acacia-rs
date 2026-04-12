@@ -40,16 +40,6 @@ impl PlayerItemManager {
         Ok(result)
     }
 
-    pub async fn get_from_template(&self, template: u64) -> Result<Option<core::Item>> {
-        let mut resp = db()
-            .query("SELECT * FROM player_item WHERE pid = $pid AND template = $template LIMIT 1")
-            .bind(("pid", self.pid))
-            .bind(("template", template))
-            .await?;
-        let item = resp.take::<Vec<PlayerItem>>(0)?.into_iter().next().map(|i| i.to_prost());
-        Ok(item)
-    }
-
     pub async fn set(&self, src_item: core::Item) -> Result<()> {
         let src_item: core::Item = src_item.into();
         db().query("UPSERT type::record('player_item', [$pid, $item.sid]) MERGE object::extend({ pid: $pid }, $item)")
@@ -85,5 +75,25 @@ impl PlayerItemManager {
     pub async fn del_all(&self) -> Result<()> {
         db().query("DELETE FROM player_item WHERE pid = $pid").bind(("pid", self.pid)).await?;
         Ok(())
+    }
+
+    pub async fn get_item_by_template(&self, template: u64) -> Result<Option<core::Item>> {
+        let mut resp = db()
+            .query("SELECT * FROM player_item WHERE pid = $pid AND template = $template LIMIT 1")
+            .bind(("pid", self.pid))
+            .bind(("template", template))
+            .await?;
+        let item = resp.take::<Vec<PlayerItem>>(0)?.into_iter().next().map(|i| i.to_prost());
+        Ok(item)
+    }
+
+    pub async fn get_items_by_template(&self, template: u64) -> Result<Vec<core::Item>> {
+        let mut resp = db()
+            .query("SELECT * FROM player_item WHERE pid = $pid AND template = $template")
+            .bind(("pid", self.pid))
+            .bind(("template", template))
+            .await?;
+        let items = resp.take::<Vec<PlayerItem>>(0)?.into_iter().map(|i| i.to_prost()).collect();
+        Ok(items)
     }
 }
