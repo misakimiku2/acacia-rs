@@ -19,6 +19,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "ExchangeGift" => request_exchange_gift(conn, msgdata, param).await?,
         "GiveGiftToArea" => request_give_gift_to_area(conn, msgdata, param).await?,
         "ChangeFurnitureFoldByTmpId" => request_change_furniture_fold_by_tmp_id(conn, msgdata, param).await?,
+        "SetGroupFurIndex" => request_set_group_fur_index(conn, msgdata, param).await?,
         "ArcadeGameEnterMainUI" => request_arcade_game_enter_main_ui(conn, msgdata, param).await?,
         "ArcadeGameEnter" => request_arcade_game_enter(conn, msgdata, param).await?,
         _ => {}
@@ -271,7 +272,7 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
         let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
         let attr = furniture_fold.set_by_tmp_id(gift_id, false).await?;
         attrs.insert(attr.0, attr.1);
-        
+
         add_fur_list.push(gift_id);
         set_girl_id = gift_id;
     }
@@ -330,6 +331,43 @@ async fn request_change_furniture_fold_by_tmp_id(conn: Arc<Conn>, _: protocol::R
             "AreaId": param["AreaId"],
             "TmpId": param["TmpId"],
             "FuncName": "FurnitureFoldChangeSuccess",
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_set_group_fur_index(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let area_id = param["AreaId"].as_i64().with_context(|| format!("Expected 'AreaId' but not found in param {param:?}"))? as u32;
+    let index = param["Index"].as_i64().with_context(|| format!("Expected 'Index' but not found in param {param:?}"))? as usize - 1;
+    let group_id = param["GroupId"].as_i64().with_context(|| format!("Expected 'GroupId' but not found in param {param:?}"))? as u32;
+
+    let furniture_pos_data = tables()
+        .furniture_pos
+        .find_one("area_id_group_id_1", [area_id, group_id])
+        .with_context(|| format!("The specified furniture_pos_data does not exist."))?;
+    let &target_tmp_id = furniture_pos_data
+        .furniture_tmp_id
+        .get(index)
+        .with_context(|| format!("The specified index={index} is out of the furniture_tmp_id range."))?;
+
+    let manager = conn.manager().await;
+    let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+    let attr = furniture_fold.set_by_tmp_id(target_tmp_id, false).await?;
+
+    let rsp = protocol::NtfSyncPlayer {
+        custom: HashMap::from([attr]),
+        ..protocol::NtfSyncPlayer::default()
+    };
+    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "House_Request".to_string(),
+        arg: json!({
+            "AreaId": param["AreaId"],
+            "FuncName": "SetGroupFurSuccess",
         })
         .to_string(),
         ..protocol::NtfCallScript::default()

@@ -26,6 +26,7 @@ crate::define_tables! {
 
         #[path="house/FurniturePos.txt"]
         #[index("area_id_1", area_id)]
+        #[index("area_id_group_id_1", area_id, group_id)]
         pub furniture_pos: DataTable<schemas::FurniturePosData>,
 
         #[path="house/support_furniture.txt"]
