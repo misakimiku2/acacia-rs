@@ -1,42 +1,48 @@
+use anyhow::{Context, Ok, bail};
+
+use acacia_data::tables::tables;
 use acacia_database::manager::player::PlayerManager;
 
-#[derive(Debug, Clone, Copy)]
-pub struct GirlRoomFurniture(u32);
+pub struct GirlRoomFurniture<'a> {
+    manager: &'a PlayerManager,
+    area_id: u32,
+}
 
-impl GirlRoomFurniture {
-    pub fn from_value(val: u32) -> Self {
-        Self(val)
+impl<'a> GirlRoomFurniture<'a> {
+    pub fn new(manager: &'a PlayerManager, area_id: u32) -> Self {
+        Self { manager: manager, area_id: area_id }
     }
 
-    pub fn as_value(&self) -> u32 {
-        self.0
+    pub async fn get(&self, index: u32) -> anyhow::Result<u32> {
+        let (group_idx, sub_idx) = GirlRoomFurniture::get_group_idx(index);
+        let value = self.manager.attrs.get_attr(101, self.area_id * 50 + group_idx + 10).await?.1;
+        let shift = sub_idx * 3;
+        Ok((value >> shift) & 0b111)
     }
 
-    pub fn get(&self, index: u32) -> u32 {
-        assert!(index <= 9, "Index out of bounds (0-9)");
-        let shift = index * 3;
-        (self.0 >> shift) & 0b111
-    }
-
-    pub fn set(&mut self, index: u32, value: u32) {
-        assert!(index <= 9, "Index out of bounds (0-9)");
-        let value = (value.min(7)) as u32;
-        let shift = index * 3;
+    pub async fn set(&self, index: u32, tmp_value: u32) -> anyhow::Result<(u32, u32)> {
+        let (group_idx, sub_idx) = GirlRoomFurniture::get_group_idx(index);
+        let mut value = self.manager.attrs.get_attr(101, self.area_id * 50 + group_idx + 10).await?.1;
+        let tmp_value = (tmp_value.min(7)) as u32;
+        let shift = sub_idx * 3;
         let mask = 0b111 << shift;
-        self.0 = (self.0 & !mask) | (value << shift);
+        value = (value & !mask) | (tmp_value << shift);
+        Ok(self.manager.attrs.set_attr(101, self.area_id * 50 + group_idx + 10, value).await?)
     }
 
-    pub fn add(&mut self, index: u32, value: u32) {
-        let current = self.get(index);
-        let new_value = current.saturating_add(value).min(7);
-        self.set(index, new_value);
+    pub async fn set_by_tmp_id(&self, tmp_id: u32, tmp_value: u32) -> anyhow::Result<(u32, u32)> {
+        let support_furniture_data = tables()
+            .support_furniture
+            .find_one("furniture_tmp_id_1", tmp_id)
+            .with_context(|| format!("The specified support_furniture_data does not exist."))?;
+        if support_furniture_data.area_id != self.area_id {
+            bail!("Mismatched area_id: {} != {}", support_furniture_data.area_id, self.area_id)
+        }
+        self.set(support_furniture_data.index, tmp_value).await
     }
 
-    pub fn get_idx_by_gift_id(gift_id: u32) -> (u32, u32) {
-        let furniture_id = gift_id % 100 + 1;
-        let furniture_attr_idx = (furniture_id - 1) / 10;
-        let furniture_sub_idx = (furniture_id - 1) % 10;
-        return (furniture_attr_idx, furniture_sub_idx);
+    pub fn get_group_idx(tmp_idx: u32) -> (u32, u32) {
+        return (tmp_idx / 10, tmp_idx % 10);
     }
 }
 
@@ -71,12 +77,42 @@ impl<'a> GirlRoomFurnitureFold<'a> {
         self.manager.attrs.set_attr(101, self.area_id * 50 + 23, self.value).await
     }
 
-    pub async fn set_by_tmp_id(&mut self, tmp_id: u32, fold: bool) -> anyhow::Result<(u32, u32)> {
-        self.set(tmp_id % 100, fold).await
-    }
-
     pub fn toggle(&mut self, index: u32) {
         assert!(index <= 31, "Index out of bounds (0-31)");
         self.value ^= 1 << index;
+    }
+
+    async fn __set_one_by_tmp_id(&mut self, tmp_id: u32, fold: bool) -> anyhow::Result<()> {
+        let support_furniture_data = tables()
+            .support_furniture
+            .find_one("furniture_tmp_id_1", tmp_id)
+            .with_context(|| format!("The specified support_furniture_data does not exist."))?;
+        if support_furniture_data.area_id != self.area_id {
+            bail!("Mismatched area_id: {} != {}", support_furniture_data.area_id, self.area_id)
+        }
+        if fold {
+            self.value |= 1 << support_furniture_data.index;
+        } else {
+            self.value &= !(1 << support_furniture_data.index);
+        }
+        Ok(())
+    }
+
+    pub async fn set_by_tmp_id(&mut self, tmp_id: u32, fold: bool) -> anyhow::Result<(u32, u32)> {
+        self.__set_one_by_tmp_id(tmp_id, fold).await?;
+        if !fold {
+            for furniture_pos_data in tables().furniture_pos.find("area_id_1", self.area_id) {
+                if !furniture_pos_data.furniture_tmp_id.contains(&tmp_id) {
+                    continue;
+                }
+                for &fold_tmp_id in &furniture_pos_data.furniture_tmp_id {
+                    if fold_tmp_id == tmp_id {
+                        continue;
+                    }
+                    self.__set_one_by_tmp_id(fold_tmp_id, true).await?;
+                }
+            }
+        }
+        self.manager.attrs.set_attr(101, self.area_id * 50 + 23, self.value).await
     }
 }

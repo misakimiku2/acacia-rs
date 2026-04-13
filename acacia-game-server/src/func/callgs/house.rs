@@ -1,4 +1,4 @@
-use anyhow::{Context, Ok, bail};
+use anyhow::{Context, bail};
 use serde_json::{Value, from_value, json};
 use std::{collections::HashMap, sync::Arc};
 
@@ -146,16 +146,16 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
     let index = param["Index"].as_i64().with_context(|| format!("Expected 'Index' but not found in param {param:?}"))? as u32;
     let use_gold = param["UseGold"].as_bool().unwrap_or(false);
 
-    let girl_exchange_data = tables()
+    let gift_exchange_data = tables()
         .gift_exchange
         .find_one("index_1", index)
-        .with_context(|| format!("The specified girl_exchange_data does not exist."))?;
+        .with_context(|| format!("The specified gift_exchange_data does not exist."))?;
 
     let mut attrs = HashMap::<u32, u32>::new();
     let manager = conn.manager().await;
     if use_gold {
-        let Some(gold_count) = girl_exchange_data.need_gold else {
-            bail!("Gold cannot be used to buy this item {girl_exchange_data:?}");
+        let Some(gold_count) = gift_exchange_data.need_gold else {
+            bail!("Gold cannot be used to buy this item {gift_exchange_data:?}");
         };
         let mut attr = manager.attrs.get_attr(1, 5).await?;
         if attr.1 < gold_count {
@@ -165,7 +165,7 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         manager.attrs.set(attr.0, attr.1).await?;
         attrs.insert(attr.0, attr.1);
     } else {
-        let money_count = girl_exchange_data.need_money;
+        let money_count = gift_exchange_data.need_money;
         let mut attr = manager.attrs.get_attr(1, 27).await?;
         if attr.1 < money_count {
             bail!("Insufficient money. ({}/{})", attr.1, money_count);
@@ -175,7 +175,7 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         attrs.insert(attr.0, attr.1);
     }
 
-    let gift = girl_exchange_data.gift;
+    let gift = gift_exchange_data.gift;
     let template_id = set_template(gift[0], gift[1], gift[2], gift[3])?;
     let item = if let Some(mut item) = manager.items.get_item_by_template(template_id).await? {
         item.count += 1;
@@ -221,6 +221,7 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
         bail!("AreaId: {area_id} not supported")
     }
     let manager = conn.manager().await;
+    let girl_furniture = GirlRoomFurniture::new(&manager, area_id);
 
     let girl_id = area_id;
     let mut items = Vec::<core::Item>::new();
@@ -229,19 +230,9 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
     let mut new_level: u32 = 0;
     let mut add_fur_list: Vec<u32> = Vec::new();
     let mut set_girl_id: u32 = 0;
+
     let tb_gdpln: Vec<(u16, u16, u16, u16, u32)> = from_value(param["tbGDPLN"].clone())?;
     for gdpln in tb_gdpln {
-        let cost_item_id = set_template(gdpln.0, gdpln.1, gdpln.2, gdpln.3)?;
-        let Some(mut item) = manager.items.get_item_by_template(cost_item_id).await? else {
-            bail!("Insufficient quantity for ItemId: {}", cost_item_id);
-        };
-        if item.count < gdpln.4 {
-            bail!("Insufficient quantity for ItemId: {}", cost_item_id);
-        }
-        item.count = item.count - gdpln.4;
-        manager.items.set(item.clone()).await?;
-        items.push(item);
-
         let dorm_gift_template_data = tables()
             .dorm_gift_template
             .find_one("gdpl", [gdpln.0, gdpln.1, gdpln.2, gdpln.3])
@@ -251,15 +242,21 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
             .gift
             .find_one("gift_id_1", gift_id)
             .with_context(|| format!("The specified gift_data {gift_id} does not exist."))?;
-        add_fur_list.push(gift_id);
-        set_girl_id = gift_id;
 
-        let furniture_idx = GirlRoomFurniture::get_idx_by_gift_id(gift_id);
-        let mut furniture_attr = manager.attrs.get_attr(101, girl_id * 50 + furniture_idx.0 + 10).await?;
-        let mut furniture = GirlRoomFurniture::from_value(furniture_attr.1);
-        furniture.add(furniture_idx.1, gdpln.4);
-        furniture_attr.1 = furniture.as_value();
-        manager.attrs.set(furniture_attr.0, furniture_attr.1).await?;
+        if gift_data.default_had.unwrap_or(0) == 0 {
+            let cost_item_id = set_template(gdpln.0, gdpln.1, gdpln.2, gdpln.3)?;
+            let Some(mut item) = manager.items.get_item_by_template(cost_item_id).await? else {
+                bail!("Insufficient quantity for ItemId: {}", cost_item_id);
+            };
+            if item.count < gdpln.4 {
+                bail!("Insufficient quantity for ItemId: {}", cost_item_id);
+            }
+            item.count = item.count - gdpln.4;
+            manager.items.set(item.clone()).await?;
+            items.push(item);
+        }
+
+        let furniture_attr = girl_furniture.set_by_tmp_id(gift_id, 1).await?;
         attrs.insert(furniture_attr.0, furniture_attr.1);
 
         let mut love_level_attr = manager.attrs.get_attr(101, girl_id * 50).await?;
@@ -270,6 +267,13 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
         attrs.insert(love_level_attr.0, love_level_attr.1);
         add_favor += gift_data.add_love_num * gdpln.4;
         new_level = love_level.get_level();
+
+        let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+        let attr = furniture_fold.set_by_tmp_id(gift_id, false).await?;
+        attrs.insert(attr.0, attr.1);
+        
+        add_fur_list.push(gift_id);
+        set_girl_id = gift_id;
     }
 
     let rsp = protocol::NtfSyncPlayer {
@@ -312,22 +316,6 @@ async fn request_change_furniture_fold_by_tmp_id(conn: Arc<Conn>, _: protocol::R
     let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
     let attr = furniture_fold.set_by_tmp_id(tmp_id, is_fold).await?;
     attrs.insert(attr.0, attr.1);
-
-    if !is_fold {
-        for furniture_pos_data in tables().furniture_pos.find("area_id_1", area_id) {
-            if !furniture_pos_data.furniture_tmp_id.contains(&tmp_id) {
-                continue;
-            }
-            for &fold_tmp_id in &furniture_pos_data.furniture_tmp_id {
-                if fold_tmp_id == tmp_id {
-                    continue;
-                }
-                let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
-                let attr = furniture_fold.set_by_tmp_id(fold_tmp_id, true).await?;
-                attrs.insert(attr.0, attr.1);
-            }
-        }
-    }
 
     let rsp = protocol::NtfSyncPlayer {
         custom: attrs,
