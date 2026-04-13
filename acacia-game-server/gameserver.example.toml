@@ -4,6 +4,6 @@ port = 5200
 
 [database]
 mode = "local"                    # "local" | "remote"
-address = "http://127.0.0.1:8000" # "remote" mode only
+address = "ws://127.0.0.1:8000"   # "remote" mode only
 username = "root"                 # "remote" mode only
-password = "root"                 # "remote" mode only
+password = "secret"               # "remote" mode only
