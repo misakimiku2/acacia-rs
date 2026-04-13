@@ -6,6 +6,7 @@ use super::gm_script_house::{GMScriptHouse, GMScriptHouseAddAllGirlLoveNum, GMSc
 use super::gm_script_un_lock_all_level::GMScriptUnLockAllLevel;
 use super::gm_script_un_lock_level::GMScriptUnLockLevel;
 use crate::base::conn::Conn;
+use crate::gm::gm_script::gm_script_activity::{GMScriptActivity, GMScriptActivityDoOpenActivity};
 use acacia_commons::lua_utils::lua_func;
 
 #[derive(Debug)]
@@ -15,6 +16,7 @@ pub enum GMScript {
     Add(GMScriptAdd),
     Gacha(GMScriptGacha),
     House(GMScriptHouse),
+    Activity(GMScriptActivity),
 }
 
 impl GMScript {
@@ -39,6 +41,14 @@ impl GMScript {
             "GM.Gacha.ForcePickUp" => Self::Gacha(GMScriptGacha::ForcePickUp),
             "GM.House.AddGirlLoveNum" => Self::House(GMScriptHouse::AddGirlLoveNum(GMScriptHouseAddGirlLoveNum::from_args(&args))),
             "GM.House.AddAllGirlLoveNum" => Self::House(GMScriptHouse::AddAllGirlLoveNum(GMScriptHouseAddAllGirlLoveNum::from_args(&args))),
+            "Activity.DoOpenActivity" => {
+                if let Some(gm_script_activity_do_open_activity) = GMScriptActivityDoOpenActivity::from_args(&args) {
+                    Self::Activity(GMScriptActivity::DoOpenActivity(gm_script_activity_do_open_activity))
+                } else {
+                    println!("Unknown Activity.DoOpenActivity args: {}", raw_args);
+                    return None;
+                }
+            }
             _ => {
                 println!("Unknown Code: {} {}", func_name, raw_args);
                 return None;
@@ -54,6 +64,7 @@ impl GMScript {
             Self::Add(s) => s.run(conn).await,
             Self::Gacha(s) => s.run(conn).await,
             Self::House(s) => s.run(conn).await,
+            Self::Activity(s) => s.run(conn).await,
         }
     }
 }

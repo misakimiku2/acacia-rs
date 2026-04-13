@@ -43,6 +43,7 @@ mod func {
 pub mod gm {
     pub mod gm_script {
         pub mod gm_script;
+        pub mod gm_script_activity;
         pub mod gm_script_add;
         pub mod gm_script_gacha;
         pub mod gm_script_house;

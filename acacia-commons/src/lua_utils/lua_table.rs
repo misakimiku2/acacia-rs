@@ -170,6 +170,7 @@ impl<'a> Parser<'a> {
 
     fn parse_table(&mut self) -> Result<Value, String> {
         self.expect(b'{')?;
+        self.skip_spaces();
 
         // 空表
         if self.peek() == Some(b'}') {
@@ -185,27 +186,36 @@ impl<'a> Parser<'a> {
             return true;
         }
         let mut i = self.pos;
+
         while i < self.input.len() {
             let c = self.input[i];
             if c.is_ascii_alphanumeric() || c == b'_' {
                 i += 1;
             } else {
-                return c == b'=';
+                break;
             }
         }
-        false
+
+        while i < self.input.len() && self.input[i] == b' ' {
+            i += 1;
+        }
+
+        i < self.input.len() && self.input[i] == b'='
     }
 
     fn parse_list_inner(&mut self) -> Result<Value, String> {
         let mut items = Vec::new();
         loop {
             items.push(self.parse_value()?);
+            self.skip_spaces();
+            
             if self.peek() == Some(b',') {
                 self.advance();
             } else {
                 break;
             }
         }
+        self.skip_spaces();
         self.expect(b'}')?;
         Ok(Value::SeqTable(items))
     }
@@ -213,16 +223,23 @@ impl<'a> Parser<'a> {
     fn parse_dict_inner(&mut self) -> Result<Value, String> {
         let mut map = HashMap::new();
         loop {
+            self.skip_spaces();
             let key = self.parse_dict_key()?;
+            
+            self.skip_spaces();
             self.expect(b'=')?;
+            
             let value = self.parse_value()?;
             map.insert(key, value);
+            
+            self.skip_spaces();
             if self.peek() == Some(b',') {
                 self.advance();
             } else {
                 break;
             }
         }
+        self.skip_spaces();
         self.expect(b'}')?;
         Ok(Value::Table(map))
     }
@@ -272,5 +289,6 @@ mod tests {
     fn test() {
         println!("{:?}", parse("{8,1,5,3}"));
         println!("{:?}", parse("{{5,1,1,1,2}}"));
+        println!("{:?}", parse("{nId = 597, nStartTime = 1776021019, nEndTime = 1776193819}"));
     }
 }
