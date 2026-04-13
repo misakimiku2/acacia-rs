@@ -7,6 +7,8 @@ use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tracing::{debug, error};
 
+use crate::logic::manager::PlayerManager;
+
 use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
 use acacia_database::repositories::player::PlayerRepository;
@@ -53,6 +55,10 @@ impl Conn {
     pub async fn database(&self) -> PlayerRepository {
         let uid = *self.uid.lock().await;
         PlayerRepository::new(uid.expect("conn.database() called before uid was bound"))
+    }
+
+    pub async fn manager(&self) -> PlayerManager {
+        PlayerManager::new(self.database().await)
     }
 
     pub async fn recv_loop(self: &Arc<Self>, mut reader: tokio::net::tcp::OwnedReadHalf) {
