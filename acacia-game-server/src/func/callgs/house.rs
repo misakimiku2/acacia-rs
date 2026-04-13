@@ -20,6 +20,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "GiveGiftToArea" => request_give_gift_to_area(conn, msgdata, param).await?,
         "ChangeFurnitureFoldByTmpId" => request_change_furniture_fold_by_tmp_id(conn, msgdata, param).await?,
         "SetGroupFurIndex" => request_set_group_fur_index(conn, msgdata, param).await?,
+        "ReadGirlLoveStory" => request_read_girl_love_story(conn, msgdata, param).await?,
         "ArcadeGameEnterMainUI" => request_arcade_game_enter_main_ui(conn, msgdata, param).await?,
         "ArcadeGameEnter" => request_arcade_game_enter(conn, msgdata, param).await?,
         _ => {}
@@ -368,6 +369,35 @@ async fn request_set_group_fur_index(conn: Arc<Conn>, _: protocol::ReqCallGs, pa
         arg: json!({
             "AreaId": param["AreaId"],
             "FuncName": "SetGroupFurSuccess",
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_read_girl_love_story(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let girl_id = param["GirlId"].as_i64().with_context(|| format!("Expected 'GirlId' but not found in param {param:?}"))? as u32;
+    let index = param["Index"].as_i64().with_context(|| format!("Expected 'Index' but not found in param {param:?}"))? as u32;
+    let manager = conn.manager().await;
+    let mut attr = manager.attrs.get_attr(101, 50 * girl_id + 2).await?;
+    attr.1 |= 1 << index;
+    manager.attrs.set(attr.0, attr.1).await?;
+
+    let rsp = protocol::NtfSyncPlayer {
+        custom: HashMap::from([attr]),
+        ..protocol::NtfSyncPlayer::default()
+    };
+    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "House_Request".to_string(),
+        arg: json!({
+            "tbReward": [], // WIP
+            "Index": param["Index"],
+            "GirlId": param["GirlId"],
+            "FuncName": "ReadGirlLoveStorySuccess",
         })
         .to_string(),
         ..protocol::NtfCallScript::default()
