@@ -57,3 +57,10 @@ pub struct SupportFurnitureData {
     pub index: u32,
     pub furniture_tmp_id: u32,
 }
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct HouseOpenGirlData {
+    pub girl_id: u32,
+}
