@@ -41,3 +41,17 @@ async fn select_season_talent(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value)
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+#[callgs_reg("Rogue3D_EnterSeasonLevel")]
+async fn enter_season_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "Rogue3D_EnterSeasonLevel".to_string(),
+        arg: json!({
+            "nSeed": 0,
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
