@@ -25,6 +25,7 @@ mod func {
         mod house;
         mod lineup;
         mod player_setting;
+        mod rouge3_d;
         mod vir_capture;
         mod vir_capture_level;
         mod weapon;
