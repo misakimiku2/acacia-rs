@@ -18,7 +18,6 @@ tracing-subscriber.workspace = true
 dashmap.workspace = true
 flate2.workspace = true
 axum.workspace = true
-chrono.workspace = true
 
 acacia-commons.workspace = true
 acacia-data.workspace = true

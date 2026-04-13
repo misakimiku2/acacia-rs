@@ -1,11 +1,9 @@
-use acacia_commons::{bits::set_attribute, lua_utils::lua_serde};
-use anyhow::Context;
-use chrono::{DateTime, FixedOffset, TimeZone, Utc};
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
 
-use crate::{base::conn::Conn, logic::girl_love_level::GirlLoveLevel};
+use crate::base::conn::Conn;
+use acacia_commons::{bits::set_attribute, lua_utils::lua_serde};
 use acacia_game_msg::{protocol, protocol::Pf};
 
 #[derive(Debug)]
@@ -40,18 +38,19 @@ impl GMScriptActivityDoOpenActivity {
     }
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
-        let offset = FixedOffset::east_opt(8 * 3600).expect("Invalid offset");
-        // let dt_start = DateTime::from_timestamp(self.start_time, 0).map(|dt| dt.with_timezone(&offset)).expect("Invalid timestamp");
-        // let format_str = "%Y%m%d%H%M";
-        // dt_start.format(format_str).to_string(),
+        let rsp = protocol::NtfSyncPlayer {
+            custom: HashMap::<u32, u32>::from([(set_attribute(50, self.id * 10)?, 1 as u32)]),
+            ..protocol::NtfSyncPlayer::default()
+        };
+        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
 
         let rsp = protocol::NtfCallScript {
             api: "ActivityQuest_Open".to_string(),
             arg: json!({
                 "nId": self.id,
                 "nCloseFlag": 0,
-                "nStartTime": "202001011005".to_string(),
-                "nEndTime": "209901011005".to_string(),
+                "nStartTime": -1,
+                "nEndTime": "203001014000".to_string(),
             })
             .to_string(),
             ..protocol::NtfCallScript::default()
