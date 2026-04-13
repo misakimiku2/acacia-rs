@@ -6,7 +6,7 @@ use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
 #[callgs_reg("ShopLogic_GetGoodsList")]
-async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+async fn get_goods_list(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let rsp = protocol::NtfCallScript {
         api: "ShopLogic_GetGoodsList".to_string(),
         arg: json!({
@@ -14,6 +14,17 @@ async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -
             "goodsList": [] // WIP
         })
         .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+#[callgs_reg("ShopLogic_GetOpenTime")]
+async fn get_open_time(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "ShopLogic_GetOpenTime".to_string(),
+        arg: json!([]).to_string(),
         ..protocol::NtfCallScript::default()
     };
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
