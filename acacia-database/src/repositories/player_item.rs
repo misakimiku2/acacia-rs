@@ -4,11 +4,11 @@ use crate::db::db;
 use crate::models::PlayerItem;
 use acacia_game_msg::core;
 
-pub struct PlayerItemManager {
+pub struct PlayerItemRepository {
     pid: u64,
 }
 
-impl PlayerItemManager {
+impl PlayerItemRepository {
     pub fn new(pid: u64) -> Self {
         Self { pid }
     }
@@ -22,14 +22,14 @@ impl PlayerItemManager {
         Ok(id.unwrap_or(1))
     }
 
-    pub async fn get_all(&self) -> Result<Vec<core::Item>> {
+    pub async fn find_all(&self) -> Result<Vec<core::Item>> {
         let mut resp = db().query("SELECT * FROM player_item WHERE pid = $pid").bind(("pid", self.pid)).await?;
         let items: Vec<PlayerItem> = resp.take(0)?;
         let result = items.into_iter().map(PlayerItem::to_prost).collect();
         Ok(result)
     }
 
-    pub async fn get(&self, sid: u64) -> Result<Option<core::Item>> {
+    pub async fn find_one(&self, sid: u64) -> Result<Option<core::Item>> {
         let mut resp = db()
             .query("SELECT * FROM ONLY type::record('player_item', [$pid, $sid])")
             .bind(("pid", self.pid))
@@ -40,7 +40,7 @@ impl PlayerItemManager {
         Ok(result)
     }
 
-    pub async fn set(&self, src_item: core::Item) -> Result<()> {
+    pub async fn update_one(&self, src_item: core::Item) -> Result<()> {
         let src_item: core::Item = src_item.into();
         db().query("UPSERT type::record('player_item', [$pid, $item.sid]) MERGE object::extend({ pid: $pid }, $item)")
             .bind(("pid", self.pid))
@@ -49,7 +49,7 @@ impl PlayerItemManager {
         Ok(())
     }
 
-    pub async fn set_many(&self, src_items: impl IntoIterator<Item: Into<core::Item>>) -> Result<()> {
+    pub async fn update_many(&self, src_items: impl IntoIterator<Item: Into<core::Item>>) -> Result<()> {
         let mut player_items = Vec::new();
         for src_item in src_items {
             let src_item: core::Item = src_item.into();
@@ -66,18 +66,18 @@ impl PlayerItemManager {
         Ok(())
     }
 
-    pub async fn del(&self, sid: u64) -> Result<()> {
+    pub async fn delete_one(&self, sid: u64) -> Result<()> {
         db().query("DELETE ONLY type::record('player_item', [$pid, $sid])").bind(("pid", self.pid)).bind(("sid", sid)).await?;
         db().query("UPSERT ONLY type::record('counter', $pid) SET player_item_counter = 0").bind(("pid", self.pid)).await?;
         Ok(())
     }
 
-    pub async fn del_all(&self) -> Result<()> {
+    pub async fn delete_all(&self) -> Result<()> {
         db().query("DELETE FROM player_item WHERE pid = $pid").bind(("pid", self.pid)).await?;
         Ok(())
     }
 
-    pub async fn get_item_by_template(&self, template: u64) -> Result<Option<core::Item>> {
+    pub async fn find_one_by_template(&self, template: u64) -> Result<Option<core::Item>> {
         let mut resp = db()
             .query("SELECT * FROM player_item WHERE pid = $pid AND template = $template LIMIT 1")
             .bind(("pid", self.pid))
@@ -87,7 +87,7 @@ impl PlayerItemManager {
         Ok(item)
     }
 
-    pub async fn get_items_by_template(&self, template: u64) -> Result<Vec<core::Item>> {
+    pub async fn find_many_by_template(&self, template: u64) -> Result<Vec<core::Item>> {
         let mut resp = db()
             .query("SELECT * FROM player_item WHERE pid = $pid AND template = $template")
             .bind(("pid", self.pid))

@@ -1,3 +1,5 @@
+use acacia_database::repositories::player::PlayerRepository;
+
 pub const MAX_LEVEL: u32 = 50;
 pub const MAX_TOTAL_EXP: u32 = 140000;
 
@@ -17,21 +19,23 @@ pub fn get_exp_limit_for_level(level: u32) -> u32 {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct GirlLoveLevel {
+pub struct GirlLoveLevelValue {
     total_exp: u32,
 }
 
-impl GirlLoveLevel {
-    pub const MAX_LEVEL: u32 = 50;
+impl GirlLoveLevelValue {
+    pub fn new() -> Self {
+        Self { total_exp: 0 }
+    }
 
-    pub fn from_value(attr: u32) -> Self {
+    pub fn from_attr(attr: u32) -> Self {
         if attr == 0 {
             return Self { total_exp: 0 };
         }
         let level = attr & 0x7FF;
         let current_exp = (attr >> 11) & 0xFFFFF;
 
-        if level >= Self::MAX_LEVEL {
+        if level >= MAX_LEVEL {
             return Self { total_exp: MAX_TOTAL_EXP };
         }
 
@@ -49,16 +53,16 @@ impl GirlLoveLevel {
         Self { total_exp: total }
     }
 
-    pub fn as_value(&self) -> u32 {
+    pub fn as_attr(&self) -> u32 {
         let max_exp = MAX_TOTAL_EXP;
         if self.total_exp >= max_exp {
-            return (Self::MAX_LEVEL & 0x7FF) | (0 << 11);
+            return (MAX_LEVEL & 0x7FF) | (0 << 11);
         }
 
         let mut temp_exp = self.total_exp;
         let mut level = 1;
 
-        while level < Self::MAX_LEVEL {
+        while level < MAX_LEVEL {
             let req = get_exp_limit_for_level(level);
             if temp_exp >= req {
                 temp_exp -= req;
@@ -68,7 +72,7 @@ impl GirlLoveLevel {
             }
         }
 
-        let current_exp = if level >= Self::MAX_LEVEL { 0 } else { temp_exp };
+        let current_exp = if level >= MAX_LEVEL { 0 } else { temp_exp };
 
         (level & 0x7FF) | ((current_exp & 0xFFFFF) << 11)
     }
@@ -81,17 +85,38 @@ impl GirlLoveLevel {
         }
     }
 
-    pub fn get_total_exp(&self) -> u32 {
+    pub fn as_total_exp(&self) -> u32 {
         self.total_exp
     }
 
-    pub fn get_level(&self) -> u32 {
-        let attr = self.as_value();
-        attr & 0x7FF
+    pub fn as_level_exp(&self) -> (u32, u32) {
+        let attr = self.as_attr();
+        (attr & 0x7FF, attr >> 11)
+    }
+}
+
+pub struct GirlLoveLevel<'a> {
+    database: &'a PlayerRepository,
+    girl_id: u32,
+}
+
+impl<'a> GirlLoveLevel<'a> {
+    pub fn new(database: &'a PlayerRepository, girl_id: u32) -> Self {
+        Self { database: database, girl_id: girl_id }
     }
 
-    pub fn get_exp(&self) -> u32 {
-        let attr = self.as_value();
-        attr >> 11
+    pub async fn get(&self) -> anyhow::Result<GirlLoveLevelValue> {
+        let value = self.database.attrs.get_attr(101, self.girl_id * 50).await?.1;
+        Ok(GirlLoveLevelValue::from_attr(value))
+    }
+
+    pub async fn add(&self, amount: u32) -> anyhow::Result<(u32, u32)> {
+        let mut value = self.get().await?;
+        value.add_exp(amount);
+        self.set(value).await
+    }
+
+    pub async fn set(&self, value: GirlLoveLevelValue) -> anyhow::Result<(u32, u32)> {
+        self.database.attrs.set_attr(101, self.girl_id * 50, value.as_attr()).await
     }
 }

@@ -9,8 +9,8 @@ use acacia_game_msg::{protocol, protocol::Pf};
 #[callgs_reg("ChangeMainScene")]
 async fn change_main_scene(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let nid = param["nId"].as_u64().with_context(|| format!("Expected 'nId' but not found in param {:?}", param))?;
-    let manager = conn.manager().await;
-    let attr = manager.attrs.set_attr(132, 1, nid as u32).await?;
+    let database = conn.database().await;
+    let attr = database.attrs.set_attr(132, 1, nid as u32).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         custom: HashMap::from([attr]),
@@ -47,8 +47,8 @@ async fn enter_girl_room(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) 
 async fn record_confession(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let nidx = param["nIdx"].as_u64().with_context(|| format!("Expected 'nIdx' but not found in param {:?}", param))? as u32;
     
-    let manager = conn.manager().await;
-    let attr = manager.attrs.set_attr(132, nidx + 10, 1).await?;
+    let database = conn.database().await;
+    let attr = database.attrs.set_attr(132, nidx + 10, 1).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         custom: HashMap::from([attr]),

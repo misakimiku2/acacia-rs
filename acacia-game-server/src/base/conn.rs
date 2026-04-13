@@ -9,7 +9,7 @@ use tracing::{debug, error};
 
 use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
-use acacia_database::manager::player::PlayerManager;
+use acacia_database::repositories::player::PlayerRepository;
 use acacia_game_msg::protocol::Pf;
 
 static CONN_ID_SEQ: AtomicU64 = AtomicU64::new(1);
@@ -50,9 +50,9 @@ impl Conn {
         }
     }
 
-    pub async fn manager(&self) -> PlayerManager {
+    pub async fn database(&self) -> PlayerRepository {
         let uid = *self.uid.lock().await;
-        PlayerManager::new(uid.expect("conn.manager() called before uid was bound"))
+        PlayerRepository::new(uid.expect("conn.database() called before uid was bound"))
     }
 
     pub async fn recv_loop(self: &Arc<Self>, mut reader: tokio::net::tcp::OwnedReadHalf) {

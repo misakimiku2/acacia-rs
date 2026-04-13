@@ -1,5 +1,5 @@
 pub mod db;
-pub mod manager {
+pub mod repositories {
     pub mod player;
     pub mod player_attr;
     pub mod player_item;

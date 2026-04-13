@@ -11,12 +11,12 @@ async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow
     let card_id = param["CardId"].as_u64().with_context(|| format!("Expected 'CardId' but not found in param {:?}", param))?;
     let skin_id = param["Id"].as_u64().with_context(|| format!("Expected 'CardId' but not found in param {:?}", param))?;
 
-    let manager = conn.manager().await;
-    let mut girl = manager.items.get(card_id).await?.with_context(|| format!("Girl not found {}", card_id))?;
+    let database = conn.database().await;
+    let mut girl = database.items.find_one(card_id).await?.with_context(|| format!("Girl not found {}", card_id))?;
     let before_skin_id = girl.slots.get(&5).with_context(|| format!("Girl skin slot not found {:?}", girl))?;
-    let before_skin = manager.items.get(*before_skin_id).await?.with_context(|| format!("Girl before skin not found {:?}", before_skin_id))?;
+    let before_skin = database.items.find_one(*before_skin_id).await?.with_context(|| format!("Girl before skin not found {:?}", before_skin_id))?;
     girl.slots.insert(5, skin_id);
-    manager.items.set(girl.clone()).await?;
+    database.items.update_one(girl.clone()).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         items: vec![before_skin, girl],
@@ -37,10 +37,10 @@ async fn change_skin_type(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
     let nskin_id = param["nSkinId"].as_u64().with_context(|| format!("Expected 'nSkinId' but not found in param {:?}", param))?;
     let ntype = param["nType"].as_i64().with_context(|| format!("Expected 'nType' but not found in param {:?}", param))?;
 
-    let manager = conn.manager().await;
-    let mut skin = manager.items.get(nskin_id).await?.with_context(|| format!("Skin not found {}", nskin_id))?;
+    let database = conn.database().await;
+    let mut skin = database.items.find_one(nskin_id).await?.with_context(|| format!("Skin not found {}", nskin_id))?;
     skin.slots.insert(11, ntype as u64);
-    manager.items.set(skin.clone()).await?;
+    database.items.update_one(skin.clone()).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         items: vec![skin],

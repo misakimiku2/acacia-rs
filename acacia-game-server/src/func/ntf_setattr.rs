@@ -12,7 +12,7 @@ async fn ntf_setattr(conn: Arc<Conn>, msgdata: protocol::NtfSetAttr) -> anyhow::
         custom: HashMap::<u32, u32>::from([(key, msgdata.val)]),
         ..protocol::NtfSyncPlayer::default()
     };
-    conn.manager().await.attrs.set(key, msgdata.val).await?;
+    conn.database().await.attrs.update_one((key, msgdata.val)).await?;
     conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
     Ok(())
 }

@@ -9,7 +9,7 @@ use acacia_game_msg::{protocol, protocol::Pf};
 #[callgs_reg("VirCapture_CheckOpenAct")]
 async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     let nid = 2;
-    let attr = conn.manager().await.attrs.set_attr(128, 1, nid).await?;
+    let attr = conn.database().await.attrs.set_attr(128, 1, nid).await?;
     let rsp = protocol::NtfSyncPlayer {
         custom: HashMap::<u32, u32>::from([attr]),
         ..protocol::NtfSyncPlayer::default()
@@ -40,16 +40,16 @@ async fn switch_day_night(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
         return Ok(());
     };
 
-    let manager = conn.manager().await;
+    let database = conn.database().await;
     let map_base_id = 10000 + (map_index - 1) * 3000;
-    let mut attr = manager.attrs.get_attr(128, map_base_id + 7).await?;
+    let mut attr = database.attrs.get_attr(128, map_base_id + 7).await?;
     attr.1 = match attr.1 {
         0 => 2,
         1 => 2,
         2 => 1,
         _ => 1,
     };
-    manager.attrs.set(attr.0, attr.1).await?;
+    database.attrs.update_one(attr).await?;
 
     let rsp = protocol::NtfCallScript {
         api: "VirCapture_SwitchDayNight".to_string(),

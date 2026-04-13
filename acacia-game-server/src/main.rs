@@ -42,6 +42,7 @@ pub mod gm {
         pub mod gm_script;
         pub mod gm_script_add;
         pub mod gm_script_gacha;
+        pub mod gm_script_house;
         pub mod gm_script_un_lock_all_level;
         pub mod gm_script_un_lock_level;
     }

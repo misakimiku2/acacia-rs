@@ -2,9 +2,11 @@ use std::sync::Arc;
 
 use super::gm_script_add::GMScriptAdd;
 use super::gm_script_gacha::GMScriptGacha;
+use super::gm_script_house::GMScriptHouse;
 use super::gm_script_un_lock_all_level::GMScriptUnLockAllLevel;
 use super::gm_script_un_lock_level::GMScriptUnLockLevel;
 use crate::base::conn::Conn;
+use crate::gm::gm_script::gm_script_house::GMScriptHouseAddGirlLoveNum;
 use acacia_commons::lua_utils::lua_func;
 
 #[derive(Debug)]
@@ -13,6 +15,7 @@ pub enum GMScript {
     UnLockLevel(GMScriptUnLockLevel),
     Add(GMScriptAdd),
     Gacha(GMScriptGacha),
+    House(GMScriptHouse),
 }
 
 impl GMScript {
@@ -35,6 +38,7 @@ impl GMScript {
             "Gacha.PrintWeight" => Self::Gacha(GMScriptGacha::PrintWeight),
             "GM.Gacha.UnLockAllPool" => Self::Gacha(GMScriptGacha::UnLockAllPool),
             "GM.Gacha.ForcePickUp" => Self::Gacha(GMScriptGacha::ForcePickUp),
+            "GM.House.AddGirlLoveNum" => Self::House(GMScriptHouse::AddGirlLoveNum(GMScriptHouseAddGirlLoveNum::from_args(&args))),
             _ => {
                 println!("Unknown Code: {} {}", func_name, raw_args);
                 return None;
@@ -49,6 +53,7 @@ impl GMScript {
             Self::UnLockLevel(s) => s.run(conn).await,
             Self::Add(s) => s.run(conn).await,
             Self::Gacha(s) => s.run(conn).await,
+            Self::House(s) => s.run(conn).await,
         }
     }
 }

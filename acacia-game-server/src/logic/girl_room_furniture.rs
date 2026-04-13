@@ -1,33 +1,33 @@
-use anyhow::{Context, Ok, bail};
+use anyhow::{Context, bail};
 
 use acacia_data::tables::tables;
-use acacia_database::manager::player::PlayerManager;
+use acacia_database::repositories::player::PlayerRepository;
 
 pub struct GirlRoomFurniture<'a> {
-    manager: &'a PlayerManager,
+    database: &'a PlayerRepository,
     area_id: u32,
 }
 
 impl<'a> GirlRoomFurniture<'a> {
-    pub fn new(manager: &'a PlayerManager, area_id: u32) -> Self {
-        Self { manager: manager, area_id: area_id }
+    pub fn new(database: &'a PlayerRepository, area_id: u32) -> Self {
+        Self { database: database, area_id: area_id }
     }
 
     pub async fn get(&self, index: u32) -> anyhow::Result<u32> {
         let (group_idx, sub_idx) = GirlRoomFurniture::get_group_idx(index);
-        let value = self.manager.attrs.get_attr(101, self.area_id * 50 + group_idx + 10).await?.1;
+        let value = self.database.attrs.get_attr(101, self.area_id * 50 + group_idx + 10).await?.1;
         let shift = sub_idx * 3;
         Ok((value >> shift) & 0b111)
     }
 
     pub async fn set(&self, index: u32, tmp_value: u32) -> anyhow::Result<(u32, u32)> {
         let (group_idx, sub_idx) = GirlRoomFurniture::get_group_idx(index);
-        let mut value = self.manager.attrs.get_attr(101, self.area_id * 50 + group_idx + 10).await?.1;
+        let mut value = self.database.attrs.get_attr(101, self.area_id * 50 + group_idx + 10).await?.1;
         let tmp_value = (tmp_value.min(7)) as u32;
         let shift = sub_idx * 3;
         let mask = 0b111 << shift;
         value = (value & !mask) | (tmp_value << shift);
-        Ok(self.manager.attrs.set_attr(101, self.area_id * 50 + group_idx + 10, value).await?)
+        Ok(self.database.attrs.set_attr(101, self.area_id * 50 + group_idx + 10, value).await?)
     }
 
     pub async fn set_by_tmp_id(&self, tmp_id: u32, tmp_value: u32) -> anyhow::Result<(u32, u32)> {
@@ -47,16 +47,16 @@ impl<'a> GirlRoomFurniture<'a> {
 }
 
 pub struct GirlRoomFurnitureFold<'a> {
-    manager: &'a PlayerManager,
+    database: &'a PlayerRepository,
     area_id: u32,
     value: u32,
 }
 
 impl<'a> GirlRoomFurnitureFold<'a> {
-    pub async fn from(manager: &'a PlayerManager, area_id: u32) -> anyhow::Result<Self> {
-        let value = manager.attrs.get_attr(101, area_id * 50 + 23).await?.1;
+    pub async fn from(database: &'a PlayerRepository, area_id: u32) -> anyhow::Result<Self> {
+        let value = database.attrs.get_attr(101, area_id * 50 + 23).await?.1;
         Ok(Self {
-            manager: manager,
+            database: database,
             area_id: area_id,
             value: value,
         })
@@ -74,7 +74,7 @@ impl<'a> GirlRoomFurnitureFold<'a> {
         } else {
             self.value &= !(1 << index);
         }
-        self.manager.attrs.set_attr(101, self.area_id * 50 + 23, self.value).await
+        self.database.attrs.set_attr(101, self.area_id * 50 + 23, self.value).await
     }
 
     pub fn toggle(&mut self, index: u32) {
@@ -113,6 +113,6 @@ impl<'a> GirlRoomFurnitureFold<'a> {
                 }
             }
         }
-        self.manager.attrs.set_attr(101, self.area_id * 50 + 23, self.value).await
+        self.database.attrs.set_attr(101, self.area_id * 50 + 23, self.value).await
     }
 }

@@ -11,7 +11,7 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
     conn.bind_uid(10000).await;
     init_userdata(&conn).await?;
 
-    let manager = conn.manager().await;
+    let database = conn.database().await;
     let mut rsp = protocol::RspLogin {
         session_id: "123456".into(),
         data: Some(core::Player {
@@ -19,10 +19,10 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
             pid: conn.uid().unwrap(),
             sign: String::from("telegram @acacia_rs"),
             vigor: 240,
-            items: manager.items.get_all().await?,
-            solutions: manager.solutions.get_all().await?,
-            attrs: manager.attrs.get_all().await?,
-            str_attrs: manager.str_attrs.get_all().await?,
+            items: database.items.find_all().await?,
+            solutions: database.solutions.find_all().await?,
+            attrs: database.attrs.find_all().await?,
+            str_attrs: database.str_attrs.find_all().await?,
             show_items: vec![0, 0, 0, 10040101],
             ..Default::default()
         }),
@@ -43,11 +43,11 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
 }
 
 async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
-    let manager = conn.manager().await;
-    if manager.attrs.get_all().await?.len() == 0 {
-        manager.attrs.set_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
-        manager.items.set_many(init_data().items.iter().cloned()).await?;
+    let database = conn.database().await;
+    if database.attrs.find_all().await?.len() == 0 {
+        database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
+        database.items.update_many(init_data().items.iter().cloned()).await?;
     }
-    manager.attrs.set_attr(4, 0, 5).await?;
+    database.attrs.set_attr(4, 0, 5).await?;
     Ok(())
 }

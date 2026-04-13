@@ -38,18 +38,18 @@ async fn request_girl_register(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         4 => &[17, 18, 19, 20, 21, 22, 23, 24],
         _ => bail!("Invalid FloorId: {}", floor_id),
     };
-    let manager = conn.manager().await;
+    let database = conn.database().await;
 
     let mut new_room_id = 0;
     for &room_id in floor_room_list {
-        let _room_girl_id = manager.attrs.get_attr(101, 2550 + room_id).await?.1;
+        let _room_girl_id = database.attrs.get_attr(101, 2550 + room_id).await?.1;
         if _room_girl_id == 0 {
             new_room_id = room_id
         }
     }
     if new_room_id == 0 {
         for &room_id in &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] {
-            let _room_girl_id = manager.attrs.get_attr(101, 2550 + room_id).await?.1;
+            let _room_girl_id = database.attrs.get_attr(101, 2550 + room_id).await?.1;
             if _room_girl_id == 0 {
                 new_room_id = room_id
             }
@@ -60,17 +60,17 @@ async fn request_girl_register(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
     }
 
     let cost_item_id = set_template(5, 26, 1, 4)?;
-    let Some(mut item) = manager.items.get_item_by_template(cost_item_id).await? else {
+    let Some(mut item) = database.items.find_one_by_template(cost_item_id).await? else {
         bail!("Insufficient quantity for ItemId: {}", cost_item_id);
     };
     if item.count < 1 {
         bail!("Insufficient quantity for ItemId: {}", cost_item_id);
     }
     item.count = item.count - 1;
-    manager.items.set(item.clone()).await?;
+    database.items.update_one(item.clone()).await?;
 
-    let attr_1 = manager.attrs.set_attr(101, 2550 + new_room_id, girl_id).await?;
-    let attr_2 = manager.attrs.set_attr(101, 50 * girl_id + 1, new_room_id).await?;
+    let attr_1 = database.attrs.set_attr(101, 2550 + new_room_id, girl_id).await?;
+    let attr_2 = database.attrs.set_attr(101, 50 * girl_id + 1, new_room_id).await?;
     let rsp = protocol::NtfSyncPlayer {
         items: vec![item],
         custom: HashMap::<u32, u32>::from([attr_1, attr_2]),
@@ -94,32 +94,32 @@ async fn request_girl_register(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
 async fn request_girl_room_change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let room_id = param["RoomId"].as_i64().with_context(|| format!("Expected 'RoomId' but not found in param {:?}", param))? as u32;
     let girl_id = param["GirlId"].as_u64().with_context(|| format!("Expected 'GirlId' but not found in param {:?}", param))? as u32;
-    let manager = conn.manager().await;
-    let old_room_id = manager.attrs.get_attr(101, 50 * girl_id + 1).await?.1;
+    let database = conn.database().await;
+    let old_room_id = database.attrs.get_attr(101, 50 * girl_id + 1).await?.1;
 
     let mut attrs = HashMap::<u32, u32>::new();
     if room_id == 0 {
-        let attr = manager.attrs.set_attr(101, 2550 + old_room_id, 0).await?;
+        let attr = database.attrs.set_attr(101, 2550 + old_room_id, 0).await?;
         attrs.insert(attr.0, attr.1);
-        let attr = manager.attrs.set_attr(101, 50 * girl_id + 1, 100).await?;
+        let attr = database.attrs.set_attr(101, 50 * girl_id + 1, 100).await?;
         attrs.insert(attr.0, attr.1);
     } else {
-        let occupant_girl_id = manager.attrs.get_attr(101, 2550 + room_id).await?.1;
+        let occupant_girl_id = database.attrs.get_attr(101, 2550 + room_id).await?.1;
 
         if old_room_id != 0 && old_room_id != 100 {
-            let attr = manager.attrs.set_attr(101, 2550 + old_room_id, 0).await?;
+            let attr = database.attrs.set_attr(101, 2550 + old_room_id, 0).await?;
             attrs.insert(attr.0, attr.1);
         }
 
-        let attr = manager.attrs.set_attr(101, 2550 + room_id, girl_id).await?;
+        let attr = database.attrs.set_attr(101, 2550 + room_id, girl_id).await?;
         attrs.insert(attr.0, attr.1);
 
         if occupant_girl_id != 0 {
-            let attr = manager.attrs.set_attr(101, 50 * occupant_girl_id + 1, 100).await?;
+            let attr = database.attrs.set_attr(101, 50 * occupant_girl_id + 1, 100).await?;
             attrs.insert(attr.0, attr.1);
         }
 
-        let attr = manager.attrs.set_attr(101, 50 * girl_id + 1, room_id).await?;
+        let attr = database.attrs.set_attr(101, 50 * girl_id + 1, room_id).await?;
         attrs.insert(attr.0, attr.1);
     }
 
@@ -154,47 +154,47 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         .with_context(|| format!("The specified gift_exchange_data does not exist."))?;
 
     let mut attrs = HashMap::<u32, u32>::new();
-    let manager = conn.manager().await;
+    let database = conn.database().await;
     if use_gold {
         let Some(gold_count) = gift_exchange_data.need_gold else {
             bail!("Gold cannot be used to buy this item {gift_exchange_data:?}");
         };
-        let mut attr = manager.attrs.get_attr(1, 5).await?;
+        let mut attr = database.attrs.get_attr(1, 5).await?;
         if attr.1 < gold_count {
             bail!("Insufficient gold. ({}/{})", attr.1, gold_count);
         }
         attr.1 = attr.1 - gold_count;
-        manager.attrs.set(attr.0, attr.1).await?;
+        database.attrs.update_one(attr).await?;
         attrs.insert(attr.0, attr.1);
     } else {
         let money_count = gift_exchange_data.need_money;
-        let mut attr = manager.attrs.get_attr(1, 27).await?;
+        let mut attr = database.attrs.get_attr(1, 27).await?;
         if attr.1 < money_count {
             bail!("Insufficient money. ({}/{})", attr.1, money_count);
         }
         attr.1 = attr.1 - money_count;
-        manager.attrs.set(attr.0, attr.1).await?;
+        database.attrs.update_one(attr).await?;
         attrs.insert(attr.0, attr.1);
     }
 
     let gift = gift_exchange_data.gift;
     let template_id = set_template(gift[0], gift[1], gift[2], gift[3])?;
-    let item = if let Some(mut item) = manager.items.get_item_by_template(template_id).await? {
+    let item = if let Some(mut item) = database.items.find_one_by_template(template_id).await? {
         item.count += 1;
         item
     } else {
         core::Item {
-            id: manager.items.new_id().await?,
+            id: database.items.new_id().await?,
             template: template_id,
             count: 1,
             ..core::Item::default()
         }
     };
-    manager.items.set(item.clone()).await?;
+    database.items.update_one(item.clone()).await?;
 
-    let mut attr = manager.attrs.get_attr(101, 50 * gift[2] as u32 + 36).await?;
+    let mut attr = database.attrs.get_attr(101, 50 * gift[2] as u32 + 36).await?;
     attr.1 += 1;
-    manager.attrs.set(attr.0, attr.1).await?;
+    database.attrs.update_one(attr).await?;
     attrs.insert(attr.0, attr.1);
 
     let rsp = protocol::NtfSyncPlayer {
@@ -222,14 +222,14 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
     if area_id > 50 {
         bail!("AreaId: {area_id} not supported")
     }
-    let manager = conn.manager().await;
-    let girl_furniture = GirlRoomFurniture::new(&manager, area_id);
+    let database = conn.database().await;
+    let girl_furniture = GirlRoomFurniture::new(&database, area_id);
+    let love_level = GirlLoveLevel::new(&database, area_id);
 
     let girl_id = area_id;
     let mut items = Vec::<core::Item>::new();
     let mut attrs = HashMap::<u32, u32>::new();
     let mut add_favor: u32 = 0;
-    let mut new_level: u32 = 0;
     let mut add_fur_list: Vec<u32> = Vec::new();
     let mut set_girl_id: u32 = 0;
 
@@ -247,30 +247,28 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
 
         if gift_data.default_had.unwrap_or(0) == 0 {
             let cost_item_id = set_template(gdpln.0, gdpln.1, gdpln.2, gdpln.3)?;
-            let Some(mut item) = manager.items.get_item_by_template(cost_item_id).await? else {
+            let Some(mut item) = database.items.find_one_by_template(cost_item_id).await? else {
                 bail!("Insufficient quantity for ItemId: {}", cost_item_id);
             };
             if item.count < gdpln.4 {
                 bail!("Insufficient quantity for ItemId: {}", cost_item_id);
             }
             item.count = item.count - gdpln.4;
-            manager.items.set(item.clone()).await?;
+            database.items.update_one(item.clone()).await?;
             items.push(item);
         }
 
         let furniture_attr = girl_furniture.set_by_tmp_id(gift_id, 1).await?;
         attrs.insert(furniture_attr.0, furniture_attr.1);
 
-        let mut love_level_attr = manager.attrs.get_attr(101, girl_id * 50).await?;
-        let mut love_level = GirlLoveLevel::from_value(love_level_attr.1);
-        love_level.add_exp(gift_data.add_love_num * gdpln.4);
-        love_level_attr.1 = love_level.as_value();
-        manager.attrs.set(love_level_attr.0, love_level_attr.1).await?;
-        attrs.insert(love_level_attr.0, love_level_attr.1);
-        add_favor += gift_data.add_love_num * gdpln.4;
-        new_level = love_level.get_level();
+        let love_amount_exp = gift_data.add_love_num * gdpln.4;
+        add_favor += love_amount_exp;
+        
+        let love_level = GirlLoveLevel::new(&database, girl_id);
+        let attr = love_level.add(love_amount_exp).await?;
+        attrs.insert(attr.0, attr.1);
 
-        let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+        let mut furniture_fold = GirlRoomFurnitureFold::from(&database, area_id).await?;
         let attr = furniture_fold.set_by_tmp_id(gift_id, false).await?;
         attrs.insert(attr.0, attr.1);
 
@@ -289,7 +287,7 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
         api: "House_Request".to_string(),
         arg: json!({
             "AddFavor": add_favor,
-            "NewLevel": new_level,
+            "NewLevel": love_level.get().await?.as_level_exp().0,
             "AddFurList": add_fur_list,
             "GirlId": area_id,
             "AreaId": area_id,
@@ -307,7 +305,7 @@ async fn request_change_furniture_fold_by_tmp_id(conn: Arc<Conn>, _: protocol::R
     let is_fold = param["IsFold"].as_bool().with_context(|| format!("Expected 'IsFold' but not found in param {param:?}"))?;
     let tmp_id = param["TmpId"].as_i64().with_context(|| format!("Expected 'TmpId' but not found in param {param:?}"))? as u32;
     let area_id = param["AreaId"].as_i64().with_context(|| format!("Expected 'AreaId' but not found in param {param:?}"))? as u32;
-    let manager = conn.manager().await;
+    let database = conn.database().await;
 
     if area_id > 50 {
         bail!("AreaId: {area_id} not supported");
@@ -315,7 +313,7 @@ async fn request_change_furniture_fold_by_tmp_id(conn: Arc<Conn>, _: protocol::R
 
     let mut attrs = HashMap::<u32, u32>::new();
 
-    let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+    let mut furniture_fold = GirlRoomFurnitureFold::from(&database, area_id).await?;
     let attr = furniture_fold.set_by_tmp_id(tmp_id, is_fold).await?;
     attrs.insert(attr.0, attr.1);
 
@@ -354,8 +352,8 @@ async fn request_set_group_fur_index(conn: Arc<Conn>, _: protocol::ReqCallGs, pa
         .get(index)
         .with_context(|| format!("The specified index={index} is out of the furniture_tmp_id range."))?;
 
-    let manager = conn.manager().await;
-    let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+    let database = conn.database().await;
+    let mut furniture_fold = GirlRoomFurnitureFold::from(&database, area_id).await?;
     let attr = furniture_fold.set_by_tmp_id(target_tmp_id, false).await?;
 
     let rsp = protocol::NtfSyncPlayer {
@@ -380,10 +378,10 @@ async fn request_set_group_fur_index(conn: Arc<Conn>, _: protocol::ReqCallGs, pa
 async fn request_read_girl_love_story(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let girl_id = param["GirlId"].as_i64().with_context(|| format!("Expected 'GirlId' but not found in param {param:?}"))? as u32;
     let index = param["Index"].as_i64().with_context(|| format!("Expected 'Index' but not found in param {param:?}"))? as u32;
-    let manager = conn.manager().await;
-    let mut attr = manager.attrs.get_attr(101, 50 * girl_id + 2).await?;
+    let database = conn.database().await;
+    let mut attr = database.attrs.get_attr(101, 50 * girl_id + 2).await?;
     attr.1 |= 1 << index;
-    manager.attrs.set(attr.0, attr.1).await?;
+    database.attrs.update_one(attr).await?;
 
     let rsp = protocol::NtfSyncPlayer {
         custom: HashMap::from([attr]),

@@ -1,7 +1,7 @@
 use acacia_game_msg::core;
 
 use crate::db::init_db_by_auth;
-use crate::manager::player::PlayerManager;
+use crate::repositories::player::PlayerRepository;
 
 #[tokio::test]
 async fn test() {
@@ -9,18 +9,18 @@ async fn test() {
         .await
         .expect("Failed to init test db");
 
-    let player = PlayerManager::new(10001);
+    let player = PlayerRepository::new(10001);
     test_player_item(&player).await.expect("test_player_item failed");
 }
 
-async fn test_player_item(player: &PlayerManager) -> anyhow::Result<()> {
+async fn test_player_item(player: &PlayerRepository) -> anyhow::Result<()> {
     let item_1 = core::Item {
         id: 0,
         template: 50001,
         ..core::Item::default()
     };
     println!("item_1: {:?}", item_1);
-    player.items.set(item_1).await?;
+    player.items.update_one(item_1).await?;
 
     let item_2 = core::Item {
         id: 0,
@@ -28,14 +28,14 @@ async fn test_player_item(player: &PlayerManager) -> anyhow::Result<()> {
         ..core::Item::default()
     };
     println!("item_2: {:?}", item_2);
-    player.items.set(item_2).await?;
+    player.items.update_one(item_2).await?;
 
-    let items = player.items.get_all().await?;
+    let items = player.items.find_all().await?;
     println!("{:?}", items);
 
-    player.items.del_all().await?;
+    player.items.delete_all().await?;
 
-    let items = player.items.get_all().await?;
+    let items = player.items.find_all().await?;
     println!("{:?}", items);
     Ok(())
 }

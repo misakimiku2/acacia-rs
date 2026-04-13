@@ -77,11 +77,11 @@ impl GMScriptAddMoney {
     }
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
-        let manager = conn.manager().await;
+        let database = conn.database().await;
 
-        let mut attr = manager.attrs.get_attr(1, &self.typ * 2 + 1).await?;
+        let mut attr = database.attrs.get_attr(1, &self.typ * 2 + 1).await?;
         attr.1 += &self.count;
-        manager.attrs.set(attr.0, attr.1).await?;
+        database.attrs.update_one(attr).await?;
 
         let rsp = protocol::NtfSyncPlayer {
             custom: HashMap::from([attr]),
@@ -131,21 +131,21 @@ impl GMScriptAddItem {
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         let template_id = set_template(self.g, self.d, self.p, self.l)?;
-        let manager = conn.manager().await;
+        let database = conn.database().await;
 
-        let item = if let Some(mut item) = manager.items.get_item_by_template(template_id).await? {
+        let item = if let Some(mut item) = database.items.find_one_by_template(template_id).await? {
             item.count += &self.count;
             item
         } else {
             core::Item {
-                id: manager.items.new_id().await?,
+                id: database.items.new_id().await?,
                 template: template_id,
                 count: self.count,
                 ..core::Item::default()
             }
         };
 
-        manager.items.set(item.clone()).await?;
+        database.items.update_one(item.clone()).await?;
         let rsp = protocol::NtfSyncPlayer {
             items: vec![item],
             ..protocol::NtfSyncPlayer::default()

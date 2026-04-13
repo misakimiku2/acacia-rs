@@ -8,7 +8,7 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[callgs_reg("Lineup_Update")]
 async fn update(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let manager = conn.manager().await;
+    let database = conn.database().await;
     let solution = core::Lineup {
         index: param["index"].as_u64().with_context(|| format!("Expected 'index' but not found in param {:?}", param))? as u32,
         name: param["name"].as_str().with_context(|| format!("Expected 'name' but not found in param {:?}", param))?.to_string(),
@@ -16,7 +16,7 @@ async fn update(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow
         member2: param["member2"].as_u64().with_context(|| format!("Expected 'member2' but not found in param {:?}", param))?,
         member3: param["member3"].as_u64().with_context(|| format!("Expected 'member3' but not found in param {:?}", param))?,
     };
-    manager.solutions.update(solution.clone()).await?;
+    database.solutions.update_one(solution.clone()).await?;
     let rsp = protocol::NtfSyncLineup {
         lineup: Some(solution),
         ..protocol::NtfSyncLineup::default()

@@ -55,11 +55,11 @@ async fn save_fight_data(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) 
         return Ok(());
     };
 
-    let manager = conn.manager().await;
+    let database = conn.database().await;
     let map_base_id = 10000 + (map_index - 1) * 3000;
-    let mut attr = manager.attrs.get_attr(128, map_base_id + ((point_id - 500) / 30) + 1001).await?;
+    let mut attr = database.attrs.get_attr(128, map_base_id + ((point_id - 500) / 30) + 1001).await?;
     attr.1 = attr.1 | (1 << ((point_id - 500) % 30));
-    manager.attrs.set(attr.0, attr.1).await?;
+    database.attrs.update_one(attr).await?;
 
     let rsp = protocol::NtfCallScript {
         api: "VirCaptureLevel_SaveFightData".to_string(),
@@ -93,12 +93,12 @@ async fn save_pos(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyh
         return Ok(());
     };
 
-    let manager = conn.manager().await;
+    let database = conn.database().await;
     let map_base_id = 10000 + (map_index - 1) * 3000;
-    let pos_x_attr = manager.attrs.set_attr(128, map_base_id + 3, pos_x).await?;
-    let pos_y_attr = manager.attrs.set_attr(128, map_base_id + 4, pos_y).await?;
-    let pos_z_attr = manager.attrs.set_attr(128, map_base_id + 5, pos_z).await?;
-    let toward_attr = manager.attrs.set_attr(128, map_base_id + 6, toward).await?;
+    let pos_x_attr = database.attrs.set_attr(128, map_base_id + 3, pos_x).await?;
+    let pos_y_attr = database.attrs.set_attr(128, map_base_id + 4, pos_y).await?;
+    let pos_z_attr = database.attrs.set_attr(128, map_base_id + 5, pos_z).await?;
+    let toward_attr = database.attrs.set_attr(128, map_base_id + 6, toward).await?;
 
     let rsp = protocol::NtfCallScript {
         api: "VirCaptureLevel_SavePos".to_string(),
