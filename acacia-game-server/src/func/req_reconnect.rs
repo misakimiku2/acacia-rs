@@ -27,7 +27,6 @@ async fn req_reconnect(conn: Arc<Conn>, _: protocol::ReqReconnect) -> anyhow::Re
         timestamp: ServerTime::now() as u32,
         ..Default::default()
     };
-
-    conn.send_msg(Pf::RspLogin, &rsp, 0).await?;
+    conn.send_msg(Pf::RspReconnect, &rsp, 0).await?;
     Ok(())
 }
