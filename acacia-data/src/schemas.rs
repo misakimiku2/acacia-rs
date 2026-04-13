@@ -37,3 +37,13 @@ pub struct GiftData {
     pub gift_id: u32,
     pub add_love_num: u32,
 }
+
+#[allow(dead_code)]
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct FurniturePosData {
+    pub area_id: u32,
+    pub group_id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub furniture_tmp_id: Vec<u32>,
+}

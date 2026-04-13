@@ -3,9 +3,9 @@ use serde_json::{Value, from_value, json};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
+use crate::logic::girl_love_level::GirlLoveLevel;
+use crate::logic::girl_room_furniture::{GirlRoomFurniture, GirlRoomFurnitureFold};
 use acacia_commons::bits::set_template;
-use acacia_commons::game::girl_love_level::GirlLoveLevel;
-use acacia_commons::game::girl_room_furniture::GirlRoomFurniture;
 use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
@@ -18,6 +18,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "GirlRoomChange" => request_girl_room_change(conn, msgdata, param).await?,
         "ExchangeGift" => request_exchange_gift(conn, msgdata, param).await?,
         "GiveGiftToArea" => request_give_gift_to_area(conn, msgdata, param).await?,
+        "ChangeFurnitureFoldByTmpId" => request_change_furniture_fold_by_tmp_id(conn, msgdata, param).await?,
         "ArcadeGameEnterMainUI" => request_arcade_game_enter_main_ui(conn, msgdata, param).await?,
         "ArcadeGameEnter" => request_arcade_game_enter(conn, msgdata, param).await?,
         _ => {}
@@ -250,15 +251,13 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
             .gift
             .find_one("gift_id_1", gift_id)
             .with_context(|| format!("The specified gift_data {gift_id} does not exist."))?;
-        let furniture_id = gift_id % 100 + 1;
-        let furniture_attr_idx = (furniture_id - 1) / 10;
-        let furniture_sub_idx = (furniture_id - 1) % 10;
         add_fur_list.push(gift_id);
         set_girl_id = gift_id;
 
-        let mut furniture_attr = manager.attrs.get_attr(101, girl_id * 50 + furniture_attr_idx + 10).await?;
+        let furniture_idx = GirlRoomFurniture::get_idx_by_gift_id(gift_id);
+        let mut furniture_attr = manager.attrs.get_attr(101, girl_id * 50 + furniture_idx.0 + 10).await?;
         let mut furniture = GirlRoomFurniture::from_value(furniture_attr.1);
-        furniture.add(furniture_sub_idx as usize, gdpln.4 as u8);
+        furniture.add(furniture_idx.1, gdpln.4);
         furniture_attr.1 = furniture.as_value();
         manager.attrs.set(furniture_attr.0, furniture_attr.1).await?;
         attrs.insert(furniture_attr.0, furniture_attr.1);
@@ -290,6 +289,59 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
             "AreaId": area_id,
             "GiftId": set_girl_id,
             "FuncName": "GiveGiftToAreaSuccess",
+        })
+        .to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_change_furniture_fold_by_tmp_id(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let is_fold = param["IsFold"].as_bool().with_context(|| format!("Expected 'IsFold' but not found in param {param:?}"))?;
+    let tmp_id = param["TmpId"].as_i64().with_context(|| format!("Expected 'TmpId' but not found in param {param:?}"))? as u32;
+    let area_id = param["AreaId"].as_i64().with_context(|| format!("Expected 'AreaId' but not found in param {param:?}"))? as u32;
+    let manager = conn.manager().await;
+
+    if area_id > 50 {
+        bail!("AreaId: {area_id} not supported");
+    }
+
+    let mut attrs = HashMap::<u32, u32>::new();
+
+    let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+    let attr = furniture_fold.set_by_tmp_id(tmp_id, is_fold).await?;
+    attrs.insert(attr.0, attr.1);
+
+    if !is_fold {
+        for furniture_pos_data in tables().furniture_pos.find("area_id_1", area_id) {
+            if !furniture_pos_data.furniture_tmp_id.contains(&tmp_id) {
+                continue;
+            }
+            for &fold_tmp_id in &furniture_pos_data.furniture_tmp_id {
+                if fold_tmp_id == tmp_id {
+                    continue;
+                }
+                let mut furniture_fold = GirlRoomFurnitureFold::from(&manager, area_id).await?;
+                let attr = furniture_fold.set_by_tmp_id(fold_tmp_id, true).await?;
+                attrs.insert(attr.0, attr.1);
+            }
+        }
+    }
+
+    let rsp = protocol::NtfSyncPlayer {
+        custom: attrs,
+        ..protocol::NtfSyncPlayer::default()
+    };
+    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "House_Request".to_string(),
+        arg: json!({
+            "IsFold": param["IsFold"],
+            "AreaId": param["AreaId"],
+            "TmpId": param["TmpId"],
+            "FuncName": "FurnitureFoldChangeSuccess",
         })
         .to_string(),
         ..protocol::NtfCallScript::default()

@@ -46,6 +46,10 @@ pub mod gm {
         pub mod gm_script_un_lock_level;
     }
 }
+pub mod logic {
+    pub mod girl_love_level;
+    pub mod girl_room_furniture;
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -58,7 +62,7 @@ async fn main() -> anyhow::Result<()> {
 
     acacia_data::init_data::load_init_data()?;
     acacia_data::tables::load_tables()?;
-    
+
     if base::config::CONFIG.database.mode == "remote" {
         acacia_database::db::init_db_by_auth(
             &base::config::CONFIG.database.address,

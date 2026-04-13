@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json;
@@ -21,11 +21,13 @@ impl<T> fmt::Debug for DataTable<T> {
 
 impl<T: DeserializeOwned + Clone> DataTable<T> {
     pub fn load(table_name: &str) -> Result<Self> {
-        let mut path = PathBuf::from("data/settings").join(format!("{}", table_name));
-        if !path.exists() {
-            path = PathBuf::from("../data/settings").join(format!("{}", table_name));
-        }
-        let data: Vec<T> = tsv::load_tsv(&path).with_context(|| format!("Failed to load table: {}", table_name))?;
+        let path = ["data/settings", "../data/settings"]
+            .iter()
+            .map(|base| PathBuf::from(base).join(table_name))
+            .find(|p| p.exists())
+            .ok_or_else(|| anyhow!("Cannot find table: {table_name}"))?;
+    
+        let data: Vec<T> = tsv::load_tsv(&path).with_context(|| format!("Failed to load table: {table_name}"))?;
         Ok(Self { data, indexes: HashMap::new() })
     }
 

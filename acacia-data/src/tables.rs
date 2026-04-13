@@ -1,4 +1,4 @@
-use crate::schemas;
+use crate::schemas::{self, FurniturePosData};
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -23,6 +23,10 @@ crate::define_tables! {
         #[index("index_1", index)]
         #[index("gift_id_1", gift_id)]
         pub gift_exchange: DataTable<schemas::GiftExchangeData>,
+
+        #[path="house/FurniturePos.txt"]
+        #[index("area_id_1", area_id)]
+        pub furniture_pos: DataTable<schemas::FurniturePosData>,
 
         #[path="item/templates/dorm_gift.txt"]
         #[index("gdpl", genre, detail, particular, level)]
