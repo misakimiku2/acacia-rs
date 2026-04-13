@@ -18,6 +18,7 @@ mod func {
         mod boss_logic;
         mod boss_pvp_logic;
         mod chapter;
+        mod dlc_logic;
         mod gacha;
         mod general;
         mod girl_skin;
