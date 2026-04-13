@@ -32,6 +32,16 @@ async fn select_mode(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
     Ok(())
 }
 
+#[callgs_reg("Rogue3D_SelectDiff")]
+async fn select_diff(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "Rogue3D_SelectDiff".to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
 #[callgs_reg("Rogue3D_SelectSeasonTalent")]
 async fn select_season_talent(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     let rsp = protocol::NtfCallScript {
