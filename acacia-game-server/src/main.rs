@@ -26,6 +26,7 @@ mod func {
         mod lineup;
         mod player_setting;
         mod rouge3_d;
+        mod shop_logic;
         mod vir_capture;
         mod vir_capture_level;
         mod weapon;
@@ -49,9 +50,9 @@ pub mod gm {
     }
 }
 pub mod logic {
-    pub mod manager;
     pub mod girl_love_level;
     pub mod girl_room_furniture;
+    pub mod manager;
 }
 
 #[tokio::main]
