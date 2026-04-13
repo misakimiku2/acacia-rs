@@ -66,7 +66,7 @@ async fn select_talent(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) ->
 }
 
 #[callgs_reg("Rogue3D_EnterLevel")]
-async fn enter_season_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+async fn enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     let rsp = protocol::NtfCallScript {
         api: "Rogue3D_EnterLevel".to_string(),
         arg: json!({
