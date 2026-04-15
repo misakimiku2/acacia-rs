@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
+use tracing::warn;
 
 use crate::base::conn::Conn;
 use acacia_commons::{bits::set_attribute, lua_utils::lua_serde};
@@ -32,9 +33,7 @@ pub struct GMScriptActivityDoOpenActivity {
 impl GMScriptActivityDoOpenActivity {
     pub fn from_args(args: &[String]) -> Option<Self> {
         let param = args.get(0)?;
-        lua_serde::from_str::<Self>(param)
-            .inspect_err(|e| eprintln!("Activity.DoOpenActivity parse {param:?} error: {}", e))
-            .ok()
+        lua_serde::from_str::<Self>(param).inspect_err(|e| warn!("Activity.DoOpenActivity parse {param:?} error: {}", e)).ok()
     }
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {

@@ -48,6 +48,7 @@ pub mod gm {
         pub mod gm_script_add;
         pub mod gm_script_gacha;
         pub mod gm_script_house;
+        pub mod gm_script_riki;
         pub mod gm_script_un_lock_all_level;
         pub mod gm_script_un_lock_level;
     }
@@ -56,6 +57,7 @@ pub mod logic {
     pub mod girl_love_level;
     pub mod girl_room_furniture;
     pub mod manager;
+    pub mod riki;
 }
 
 #[tokio::main]

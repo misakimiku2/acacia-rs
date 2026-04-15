@@ -1,12 +1,14 @@
 use std::sync::Arc;
+use tracing::warn;
 
+use super::gm_script_activity::{GMScriptActivity, GMScriptActivityDoOpenActivity};
 use super::gm_script_add::GMScriptAdd;
 use super::gm_script_gacha::GMScriptGacha;
 use super::gm_script_house::{GMScriptHouse, GMScriptHouseAddAllGirlLoveNum, GMScriptHouseAddGirlLoveNum};
+use super::gm_script_riki::{GMScriptRiki, GMScriptRikiGMUnLockRiki};
 use super::gm_script_un_lock_all_level::GMScriptUnLockAllLevel;
 use super::gm_script_un_lock_level::GMScriptUnLockLevel;
 use crate::base::conn::Conn;
-use crate::gm::gm_script::gm_script_activity::{GMScriptActivity, GMScriptActivityDoOpenActivity};
 use acacia_commons::lua_utils::lua_func;
 
 #[derive(Debug)]
@@ -17,6 +19,7 @@ pub enum GMScript {
     Gacha(GMScriptGacha),
     House(GMScriptHouse),
     Activity(GMScriptActivity),
+    Riki(GMScriptRiki),
 }
 
 impl GMScript {
@@ -45,12 +48,13 @@ impl GMScript {
                 if let Some(gm_script_activity_do_open_activity) = GMScriptActivityDoOpenActivity::from_args(&args) {
                     Self::Activity(GMScriptActivity::DoOpenActivity(gm_script_activity_do_open_activity))
                 } else {
-                    println!("Unknown Activity.DoOpenActivity args: {}", raw_args);
+                    warn!("Unknown Activity.DoOpenActivity args: {}", raw_args);
                     return None;
                 }
             }
+            "GM.Riki.GMUnLockRiki" => Self::Riki(GMScriptRiki::GMUnLockRiki(GMScriptRikiGMUnLockRiki::from_args(&args))),
             _ => {
-                println!("Unknown Code: {} {}", func_name, raw_args);
+                warn!("Unknown Code: {} {}", func_name, raw_args);
                 return None;
             }
         };
@@ -65,6 +69,7 @@ impl GMScript {
             Self::Gacha(s) => s.run(conn).await,
             Self::House(s) => s.run(conn).await,
             Self::Activity(s) => s.run(conn).await,
+            Self::Riki(s) => s.run(conn).await,
         }
     }
 }

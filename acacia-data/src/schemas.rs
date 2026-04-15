@@ -1,7 +1,6 @@
 use crate::manager::tsv::with_lua_table;
 use serde::Deserialize;
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct GiftExchangeData {
@@ -19,7 +18,6 @@ pub struct GiftExchangeData {
     pub sale_off_end_time: Option<String>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DormGiftTemplateData {
@@ -30,7 +28,6 @@ pub struct DormGiftTemplateData {
     pub param1: u32,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct GiftData {
@@ -39,7 +36,6 @@ pub struct GiftData {
     pub default_had: Option<u32>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct FurniturePosData {
@@ -49,7 +45,6 @@ pub struct FurniturePosData {
     pub furniture_tmp_id: Vec<u32>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SupportFurnitureData {
@@ -58,9 +53,15 @@ pub struct SupportFurnitureData {
     pub furniture_tmp_id: u32,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct HouseOpenGirlData {
     pub girl_id: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RikiData {
+    pub r#type: u32,
+    pub id: u32,
 }
