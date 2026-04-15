@@ -3,7 +3,7 @@ host = "127.0.0.1"
 port = 5200
 
 [database]
-mode = "local"                    # "local" | "remote"
+mode = "remote"                   # "local" | "remote"
 address = "ws://127.0.0.1:8000"   # "remote" mode only
-username = "root"                 # "remote" mode only
-password = "secret"               # "remote" mode only
+username = "acacia-root"          # "remote" mode only
+password = "acacia-secret"        # "remote" mode only

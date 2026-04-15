@@ -18,9 +18,14 @@ tracing-subscriber.workspace = true
 dashmap.workspace = true
 flate2.workspace = true
 axum.workspace = true
+surrealdb.workspace = true
 
 acacia-commons.workspace = true
 acacia-data.workspace = true
 acacia-database.workspace = true
 acacia-derive.workspace = true
 acacia-game-msg.workspace = true
+
+[features]
+test = ["surrealdb/kv-mem"]
+full = ["surrealdb/kv-surrealkv"]

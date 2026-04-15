@@ -38,7 +38,7 @@ prost-types = "0.13"
 prost-build = "0.13"
 tokio = { version = "1", features = ["full"] }
 axum = "0.8"
-surrealdb = { version = "3", features = ["kv-surrealkv", "protocol-ws"] }
+surrealdb = { version = "3" }
 surrealdb-types = "3"
 
 proc-macro2 = "1.0"

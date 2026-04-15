@@ -12,5 +12,6 @@ surrealdb-types.workspace = true
 acacia-commons.workspace = true
 acacia-game-msg.workspace = true
 
-[dev-dependencies]
-surrealdb = { workspace = true, features = ["kv-mem"] }
+[features]
+test = ["surrealdb/kv-mem"]
+full = ["surrealdb/kv-surrealkv"]

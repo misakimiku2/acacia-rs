@@ -35,8 +35,11 @@ pub struct DatabaseConfig {
 
 impl Default for DatabaseConfig {
     fn default() -> Self {
-        Self {
-            mode: "local".to_string(),
+        Self {mode: if cfg!(feature = "full") {
+                "local".to_string()
+            } else {
+                "remote".to_string()
+            },
             address: "http://127.0.0.1:8000".to_string(),
             username: "root".to_string(),
             password: "root".to_string(),
