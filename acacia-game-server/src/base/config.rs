@@ -40,9 +40,9 @@ impl Default for DatabaseConfig {
             } else {
                 "remote".to_string()
             },
-            address: "http://127.0.0.1:8000".to_string(),
-            username: "root".to_string(),
-            password: "root".to_string(),
+            address: "ws://127.0.0.1:8000".to_string(),
+            username: "acacia-root".to_string(),
+            password: "acacia-secret".to_string(),
         }
     }
 }
