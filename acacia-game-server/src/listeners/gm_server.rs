@@ -6,7 +6,7 @@ use crate::base::conn::CONNS;
 use crate::gm::gm_script::gm_script::GMScript;
 
 pub async fn listen_gm_server() {
-    let addr = format!("{}:{}", CONFIG.host, 1234);
+    let addr = format!("{}:{}", CONFIG.game_server.host, 1234);
     let app = Router::new().route("/gm/script", post(handle_gm_script));
     let listener = tokio::net::TcpListener::bind(&addr).await.expect("GMServer failed to bind portFailed to bind GM port");
     tracing::info!("GMServer listening on {}", addr);

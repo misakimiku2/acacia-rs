@@ -8,6 +8,7 @@ mod base {
     pub mod config;
     pub mod conn;
     pub mod packet;
+    pub mod time;
 }
 mod listeners {
     pub mod game_server;

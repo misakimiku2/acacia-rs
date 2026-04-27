@@ -9,8 +9,8 @@ lazy_static! {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub log: String,
-    pub host: String,
-    pub port: u16,
+    pub game_server: GameServerConfig,
+    pub gm_server: GmServerConfig,
     pub database: DatabaseConfig,
 }
 
@@ -18,10 +18,38 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             log: "info".to_string(),
-            host: "127.0.0.1".to_string(),
-            port: 5200,
+            game_server: GameServerConfig::default(),
+            gm_server: GmServerConfig::default(),
             database: DatabaseConfig::default(),
         }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GameServerConfig {
+    pub host: String,
+    pub port: u16,
+    pub time_offset: i64,
+}
+
+impl Default for GameServerConfig {
+    fn default() -> Self {
+        Self {
+            host: "127.0.0.1".to_string(),
+            port: 5200,
+            time_offset: 0,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GmServerConfig {
+    pub enable: bool,
+}
+
+impl Default for GmServerConfig {
+    fn default() -> Self {
+        Self { enable: true }
     }
 }
 
@@ -35,11 +63,8 @@ pub struct DatabaseConfig {
 
 impl Default for DatabaseConfig {
     fn default() -> Self {
-        Self {mode: if cfg!(feature = "full") {
-                "local".to_string()
-            } else {
-                "remote".to_string()
-            },
+        Self {
+            mode: if cfg!(feature = "full") { "local".to_string() } else { "remote".to_string() },
             address: "ws://127.0.0.1:8000".to_string(),
             username: "acacia-root".to_string(),
             password: "acacia-secret".to_string(),

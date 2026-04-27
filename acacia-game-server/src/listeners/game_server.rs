@@ -5,7 +5,7 @@ use crate::base::config::CONFIG;
 use crate::base::conn::{CONNS, Conn};
 
 pub async fn listen_game_server() {
-    let addr = format!("{}:{}", CONFIG.host, CONFIG.port);
+    let addr = format!("{}:{}", CONFIG.game_server.host, CONFIG.game_server.port);
     let listener = tokio::net::TcpListener::bind(&addr).await.expect("GameServer failed to bind port");
     tracing::info!("GameServer listening on {}", addr);
     loop {

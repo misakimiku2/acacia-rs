@@ -1,9 +1,15 @@
 log = "info"
+
+[game_server]
 host = "127.0.0.1"
 port = 5200
+time_offset = 0
+
+[gm_server]
+enable = true
 
 [database]
-mode = "remote"                   # "local" | "remote"
-address = "ws://127.0.0.1:8000"   # "remote" mode only
-username = "acacia-root"          # "remote" mode only
-password = "acacia-secret"        # "remote" mode only
+mode = "remote"                 # "local" | "remote"
+address = "ws://127.0.0.1:8000" # "remote" mode only
+username = "acacia-root"        # "remote" mode only
+password = "acacia-secret"      # "remote" mode only
