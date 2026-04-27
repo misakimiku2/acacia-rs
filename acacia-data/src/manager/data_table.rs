@@ -27,7 +27,7 @@ impl<T: DeserializeOwned + Clone> DataTable<T> {
             .find(|p| p.exists())
             .ok_or_else(|| anyhow!("Cannot find table: {table_name}"))?;
     
-        let data: Vec<T> = tsv::load_tsv(&path).with_context(|| format!("Failed to load table: {table_name}"))?;
+        let data: Vec<T> = tsv::load_tsv(&path).with_context(|| format!("Failed to load table: data/settings/{table_name}"))?;
         Ok(Self { data, indexes: HashMap::new() })
     }
 

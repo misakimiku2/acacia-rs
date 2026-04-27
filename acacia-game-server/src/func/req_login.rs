@@ -1,3 +1,4 @@
+use anyhow::Context;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
@@ -12,20 +13,17 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
     init_userdata(&conn).await?;
 
     let database = conn.database().await;
+    let mut player = database.info.find_one().await?.with_context(|| format!("The player {:?} has not been initialized", conn.uid()))?;
+    player.last_login_time = ServerTime::now() as u32;
+    database.info.update_one(player.clone()).await?;
+    player.items = database.items.find_all().await?;
+    player.solutions = database.solutions.find_all().await?;
+    player.attrs = database.attrs.find_all().await?;
+    player.str_attrs = database.str_attrs.find_all().await?;
+
     let mut rsp = protocol::RspLogin {
         session_id: "123456".into(),
-        data: Some(core::Player {
-            level: 100,
-            pid: conn.uid().unwrap(),
-            sign: String::from("telegram @acacia_rs"),
-            vigor: 240,
-            items: database.items.find_all().await?,
-            solutions: database.solutions.find_all().await?,
-            attrs: database.attrs.find_all().await?,
-            str_attrs: database.str_attrs.find_all().await?,
-            show_items: vec![0, 0, 0, 10040101],
-            ..Default::default()
-        }),
+        data: Some(player),
         timestamp: ServerTime::now() as u32,
         ..Default::default()
     };
@@ -44,7 +42,19 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
 
 async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
     let database = conn.database().await;
-    if database.attrs.find_all().await?.len() == 0 {
+    if database.info.find_one().await?.is_none() {
+        let player = core::Player {
+            pid: conn.uid().with_context(|| format!("The pid should not be None"))?,
+            name: String::from("分析员"),
+            sign: String::from("telegram @acacia_rs"),
+            level: 100,
+            vigor: 240,
+            create_time: ServerTime::now() as u32,
+            show_items: vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            show_attrs: vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ..Default::default()
+        };
+        database.info.update_one(player).await?;
         database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
         database.items.update_many(init_data().items.iter().cloned()).await?;
     }
