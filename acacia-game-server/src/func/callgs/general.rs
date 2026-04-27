@@ -24,6 +24,11 @@ async fn req_entrance_green_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Va
     Ok(())
 }
 
+#[callgs_reg("LanguageChange")]
+async fn language_change(_: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    Ok(())
+}
+
 #[callgs_reg("ChangeMainScene")]
 async fn change_main_scene(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let nid = param["nId"].as_u64().with_context(|| format!("Expected 'nId' but not found in param {:?}", param))?;
