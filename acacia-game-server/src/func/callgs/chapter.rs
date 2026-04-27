@@ -20,6 +20,17 @@ async fn enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
     Ok(())
 }
 
+#[callgs_reg("Chapter_NewPrologueEnterLevel")]
+async fn new_prologue_enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    let rsp = protocol::NtfCallScript {
+        api: "Chapter_NewPrologueEnterLevel".to_string(),
+        arg: "{}".to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
 #[callgs_reg("Chapter_DealLevelSettlement")]
 async fn deal_level_settlement(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let cmd = param["sCmd"].as_str().with_context(|| format!("Expected 'sCmd' but not found in param {:?}", param))?;
