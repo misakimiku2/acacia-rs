@@ -42,3 +42,20 @@ async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+#[callgs_reg("PlayerSetting_ChangeAccountShowSkin")]
+async fn change_account_show_skin(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let nitem_id = param["nItemID"].as_u64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
+    let nindex = param["nIndex"].as_u64().with_context(|| format!("Expected 'nIndex' but not found in param {:?}", param))? as usize;
+
+    let mut me = conn.manager().await;
+    me.set_show_item(SHOWITEM_SKIN[nindex - 1], nitem_id).await?;
+    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "PlayerSetting_ChangeAccountShowSkin".to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
