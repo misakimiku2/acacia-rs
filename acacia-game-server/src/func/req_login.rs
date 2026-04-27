@@ -53,6 +53,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
             ..Default::default()
         };
         database.info.update_one(player).await?;
+        database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
         // database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
         // database.items.update_many(init_data().items.iter().cloned()).await?;
     }

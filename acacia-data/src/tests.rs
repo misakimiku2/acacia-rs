@@ -9,5 +9,8 @@ fn test_data() -> anyhow::Result<()> {
     println!("{:?}", data);
     let data = tables::tables().gift.find_one("gift_id_1", data.param1);
     println!("{:?}", data);
+    let data = tables::tables().chapter_level.find_one("id_1", 50174);
+    println!("{:?}", data);
+    println!("{:?}", tables::tables().drop_grop.all());
     Ok(())
 }

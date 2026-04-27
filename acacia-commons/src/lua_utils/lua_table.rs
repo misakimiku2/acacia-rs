@@ -16,6 +16,7 @@ pub enum Value {
     Nil,
     SeqTable(Vec<Value>),
     Table(HashMap<Key, Value>),
+    Empty,
 }
 
 impl fmt::Display for Value {
@@ -49,6 +50,7 @@ impl fmt::Display for Value {
                 }
                 write!(f, "}}")
             }
+            Value::Empty => write!(f, ""),
         }
     }
 }
@@ -208,7 +210,7 @@ impl<'a> Parser<'a> {
         loop {
             items.push(self.parse_value()?);
             self.skip_spaces();
-            
+
             if self.peek() == Some(b',') {
                 self.advance();
             } else {
@@ -225,13 +227,13 @@ impl<'a> Parser<'a> {
         loop {
             self.skip_spaces();
             let key = self.parse_dict_key()?;
-            
+
             self.skip_spaces();
             self.expect(b'=')?;
-            
+
             let value = self.parse_value()?;
             map.insert(key, value);
-            
+
             self.skip_spaces();
             if self.peek() == Some(b',') {
                 self.advance();
@@ -272,6 +274,10 @@ impl<'a> Parser<'a> {
 }
 
 pub fn parse(input: &str) -> Result<Value, String> {
+    if input.trim().is_empty() {
+        return Ok(Value::Empty);
+    }
+    
     let mut p = Parser::new(input);
     p.skip_spaces();
     let val = p.parse_value()?;
@@ -290,5 +296,6 @@ mod tests {
         println!("{:?}", parse("{8,1,5,3}"));
         println!("{:?}", parse("{{5,1,1,1,2}}"));
         println!("{:?}", parse("{nId = 597, nStartTime = 1776021019, nEndTime = 1776193819}"));
+        println!("{:?}", parse(""));
     }
 }

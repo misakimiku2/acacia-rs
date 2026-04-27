@@ -1,9 +1,10 @@
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use tracing::debug;
+use tracing::warn;
 
 pub fn with_lua_table<'de, D, T>(deserializer: D) -> anyhow::Result<T, D::Error>
 where
@@ -16,10 +17,10 @@ where
 
 pub fn load_tsv<T, P>(file_path: P) -> anyhow::Result<Vec<T>>
 where
-    P: AsRef<Path>,
+    P: AsRef<Path> + Debug,
     T: for<'de> Deserialize<'de>,
 {
-    let file = File::open(file_path)?;
+    let file = File::open(&file_path)?;
     let mut buf_reader = BufReader::new(file);
 
     let mut throwaway_line = String::new();
@@ -33,11 +34,11 @@ where
             Ok(record) => results.push(record),
             Err(e) => match e.kind() {
                 csv::ErrorKind::Deserialize { .. } => {
-                    debug!("Failed to parse line: {e}");
+                    warn!("Failed to parse {file_path:?} line ({e})");
                     continue;
                 }
                 csv::ErrorKind::UnequalLengths { .. } => {
-                    debug!("Failed to parse line: {e}");
+                    warn!("Failed to parse {file_path:?} line ({e})");
                     continue;
                 }
                 _ => return Err(e.into()),

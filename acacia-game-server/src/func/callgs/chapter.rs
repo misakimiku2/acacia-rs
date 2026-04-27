@@ -1,8 +1,11 @@
 use anyhow::Context;
 use serde_json::{Value, json};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
+use tracing::warn;
 
+use super::boss_pvp_logic;
 use crate::base::conn::Conn;
+use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
@@ -18,80 +21,48 @@ async fn enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
 }
 
 #[callgs_reg("Chapter_DealLevelSettlement")]
-async fn deal_level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+async fn deal_level_settlement(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let cmd = param["sCmd"].as_str().with_context(|| format!("Expected 'sCmd' but not found in param {:?}", param))?;
-    let database = conn.database().await;
 
     match cmd {
-        "BossPvpLogic_LevelSettlement" => {
-            let level_id = param["tbParam"]["nID"].as_u64().with_context(|| format!("Expected 'tbParam.nID' but not found in param {:?}", param))?;
-            let time = param["tbParam"]["nTime"]
-                .as_f64()
-                .with_context(|| format!("Expected 'tbParam.nTime' but not found in param {:?}", param))?;
-            let level_attr_base_id = 10 * (level_id as u32) + 100;
-            let before_score: u64 = database.str_attrs.get_attr(51, level_attr_base_id + 4).await?.1.parse().unwrap_or(0);
-            let score = 40000 - ((time * 100.0) as u64);
-            if before_score < score {
-                let attr_1 = database.str_attrs.set_attr(51, level_attr_base_id + 4, score.to_string()).await?;
-                let attr_2 = database.str_attrs.set_attr(51, level_attr_base_id + 5, time.to_string()).await?;
-                let rsp = protocol::NtfSyncPlayer {
-                    custom_str: HashMap::<u32, String>::from([attr_1, attr_2]),
-                    ..protocol::NtfSyncPlayer::default()
-                };
-                conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
-            }
-        }
-        "BossPvpLogic_LevelFail" => {
-            let level_id = param["tbParam"]["nID"].as_u64().with_context(|| format!("Expected 'tbParam.nID' but not found in param {:?}", param))?;
-            let health_percentage = param["tbParam"]["HealthPercentage"]
-                .as_u64()
-                .with_context(|| format!("Expected 'tbParam.HealthPercentage' but not found in param {:?}", param))?;
-            let level_attr_base_id = 10 * (level_id as u32) + 100;
-            let before_score: u64 = database.str_attrs.get_attr(51, level_attr_base_id + 4).await?.1.parse().unwrap_or(0);
-            let score = (100 - health_percentage) * 80;
-            if before_score < score {
-                let attr = database.str_attrs.set_attr(51, 10 * (level_id as u32) + 100 + 4, score.to_string()).await?;
-                let rsp = protocol::NtfSyncPlayer {
-                    custom_str: HashMap::<u32, String>::from([attr]),
-                    ..protocol::NtfSyncPlayer::default()
-                };
-                conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
-            }
-        }
+        "Chapter_NewPrologueSettlement" => new_prologue_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
+        "BossPvpLogic_LevelSettlement" => boss_pvp_logic::level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
+        "BossPvpLogic_LevelFail" => boss_pvp_logic::level_fail(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         _ => {
-            let level_id = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
-
-            if level_id > 0 {
-                let level_times = database.attrs.get_attr(22, level_id as u32).await?.0 + 1;
-                let attr = database.attrs.set_attr(22, level_id as u32, level_times).await?;
-                let rsp = protocol::NtfSyncPlayer {
-                    custom: HashMap::<u32, u32>::from([attr]),
-                    ..protocol::NtfSyncPlayer::default()
-                };
-                conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
-
-                let level_star = param["tbParam"]["nID"].as_i64().unwrap_or(-1);
-                if level_star > 0 {
-                    let attr = database.attrs.set_attr(21, level_id as u32, level_star as u32).await?;
-                    let rsp = protocol::NtfSyncPlayer {
-                        custom: HashMap::<u32, u32>::from([attr]),
-                        ..protocol::NtfSyncPlayer::default()
-                    };
-                    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
-                }
-            }
+            warn!("Chapter_DealLevelSettlement fn: {} not exists", param["sCmd"]);
         }
     }
+    Ok(())
+}
 
+async fn new_prologue_settlement(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    deal_level_settlement_level_logger(conn.clone(), msgdata, param.clone()).await?;
     let rsp = protocol::NtfCallScript {
         api: "Chapter_DealLevelSettlement".to_string(),
         arg: json!({
-            "sCmd": param["sCmd"],
-            "tbParam": []
+            "sCmd": "Chapter_NewPrologueSettlement",
+            "tbParam": {
+                "bWaitServer": param["bWaitServer"],
+                // "tbShowAward": [], // WIP
+            }
         })
         .to_string(),
         ..protocol::NtfCallScript::default()
     };
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn deal_level_settlement_level_logger(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let nid = param["nID"].as_i64().with_context(|| format!("Expected 'nID' but not found in param {:?}", param))? as u32;
+    let nstar = param["nStar"].as_i64().unwrap_or(-1);
+
+    let mut me = conn.manager().await;
+    let level_times = me.get_attribute(22, nid).await? + 1;
+    me.set_attribute(22, nid, level_times).await?;
+    if nstar > 0 {
+        me.set_attribute(22, nid, nstar as u32).await?;
+    }
+    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
     Ok(())
 }

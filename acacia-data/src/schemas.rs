@@ -1,6 +1,50 @@
 use crate::manager::tsv::with_lua_table;
 use serde::Deserialize;
 
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct GDPL(pub u16, pub u16, pub u16, pub u16);
+
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct GDPLN(pub u16, pub u16, pub u16, pub u16, pub u32);
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ChapterLevelData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    pub r#type: u32,
+    pub player_exp: Option<u32>,
+    pub role_exp: Option<u32>,
+    #[serde(alias = "FirstDropID")]
+    #[serde(deserialize_with = "with_lua_table")]
+    pub first_drop_id: Option<Vec<u32>>,
+    #[serde(alias = "BaseDropID")]
+    #[serde(deserialize_with = "with_lua_table")]
+    pub base_drop_id: Option<Vec<u32>>,
+    #[serde(alias = "RandomDropID")]
+    #[serde(deserialize_with = "with_lua_table")]
+    pub random_drop_id: Option<Vec<u32>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct DropData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub drop: Vec<[u32; 3]>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct DropGropData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    pub rand_type: Option<u32>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub grop: String,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct GiftExchangeData {
@@ -11,7 +55,7 @@ pub struct GiftExchangeData {
     #[serde(deserialize_with = "with_lua_table")]
     pub gift: [u16; 4],
     #[serde(deserialize_with = "with_lua_table")]
-    pub need_items: Vec<[u32; 5]>,
+    pub need_items: Vec<GDPLN>,
     pub need_money: u32,
     pub need_gold: Option<u32>,
     pub sale_off_begin_time: Option<String>,
@@ -32,7 +76,7 @@ pub struct DormGiftTemplateData {
 #[serde(rename_all = "PascalCase")]
 pub struct GiftData {
     pub gift_id: u32,
-    pub add_love_num: u32,
+    pub add_love_num: Option<u32>,
     pub default_had: Option<u32>,
 }
 

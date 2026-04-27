@@ -261,9 +261,9 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
         let furniture_attr = girl_furniture.set_by_tmp_id(gift_id, 1).await?;
         attrs.insert(furniture_attr.0, furniture_attr.1);
 
-        let love_amount_exp = gift_data.add_love_num * gdpln.4;
+        let love_amount_exp = gift_data.add_love_num.unwrap_or(0) * gdpln.4;
         add_favor += love_amount_exp;
-        
+
         let love_level = GirlLoveLevel::new(&database, girl_id);
         let attr = love_level.add(love_amount_exp).await?;
         attrs.insert(attr.0, attr.1);

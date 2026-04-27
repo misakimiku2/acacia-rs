@@ -15,6 +15,18 @@ pub fn load_tables() -> anyhow::Result<()> {
 
 crate::define_tables! {
     pub struct Tables {
+        #[path="chapter/level.txt"]
+        #[index("id_1", id)]
+        pub chapter_level: DataTable<schemas::ChapterLevelData>,
+
+        #[path="drop/drop.txt"]
+        #[index("id_1", id)]
+        pub drop: DataTable<schemas::DropData>,
+
+        #[path="drop/drop_grop.txt"]
+        #[index("id_1", id)]
+        pub drop_grop: DataTable<schemas::DropGropData>,
+
         #[path="house/gift.txt"]
         #[index("gift_id_1", gift_id)]
         pub gift: DataTable<schemas::GiftData>,

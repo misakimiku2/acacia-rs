@@ -33,6 +33,7 @@ impl<'de> de::Deserializer<'de> for lua_table::Value {
             lua_table::Value::Float(n) => visitor.visit_f64(n),
             lua_table::Value::Str(s) => visitor.visit_string(s),
             lua_table::Value::Nil => visitor.visit_unit(),
+            lua_table::Value::Empty => visitor.visit_unit(),
             lua_table::Value::SeqTable(v) => {
                 let _len = v.len();
                 let mut access = LuaSeqAccess(v.into_iter());
@@ -49,9 +50,17 @@ impl<'de> de::Deserializer<'de> for lua_table::Value {
         }
     }
 
+    fn deserialize_option<V: Visitor<'de>>(self, visitor: V) -> Result<V::Value, Self::Error> {
+        match self {
+            lua_table::Value::Nil => visitor.visit_none(),
+            lua_table::Value::Empty => visitor.visit_none(),
+            other => visitor.visit_some(other),
+        }
+    }
+
     serde::forward_to_deserialize_any! {
         bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64
-        char str string bytes byte_buf option unit unit_struct
+        char str string bytes byte_buf unit unit_struct
         newtype_struct seq tuple tuple_struct map struct
         enum identifier ignored_any
     }
