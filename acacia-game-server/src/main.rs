@@ -41,6 +41,7 @@ mod func {
     mod req_callgs;
     mod req_login;
     mod req_reconnect;
+    mod req_rename;
 }
 pub mod gm {
     pub mod gm_script {
