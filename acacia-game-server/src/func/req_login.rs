@@ -30,7 +30,7 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
 
     if let Some(ref client_profile) = msgdata.client_profile {
         if !client_profile.resource_version.starts_with("3.5.") {
-            rsp.error_code = 108;
+            // rsp.error_code = 108;
         }
     } else {
         rsp.error_code = 304;
@@ -46,18 +46,16 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         let player = core::Player {
             pid: conn.uid().with_context(|| format!("The pid should not be None"))?,
             name: String::from("分析员"),
-            sign: String::from("telegram @acacia_rs"),
-            level: 100,
+            // sign: String::from("telegram @acacia_rs"),
+            level: 1,
             vigor: 240,
             create_time: ServerTime::now() as u32,
-            show_items: vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            show_attrs: vec![0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             ..Default::default()
         };
         database.info.update_one(player).await?;
-        database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
-        database.items.update_many(init_data().items.iter().cloned()).await?;
+        // database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
+        // database.items.update_many(init_data().items.iter().cloned()).await?;
     }
-    database.attrs.set_attr(4, 0, 5).await?;
+    // database.attrs.set_attr(4, 0, 5).await?;
     Ok(())
 }
