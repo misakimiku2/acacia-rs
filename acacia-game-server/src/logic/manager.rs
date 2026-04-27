@@ -1,3 +1,4 @@
+use anyhow::Context;
 use std::collections::HashMap;
 
 use acacia_commons::bits;
@@ -9,6 +10,7 @@ pub struct PlayerManager {
     attrs: HashMap<u32, u32>,
     items: Vec<core::Item>,
     str_attrs: HashMap<u32, String>,
+    show_items: Vec<u64>,
 }
 
 impl PlayerManager {
@@ -18,6 +20,7 @@ impl PlayerManager {
             attrs: HashMap::new(),
             items: Vec::new(),
             str_attrs: HashMap::new(),
+            show_items: Vec::new(),
         }
     }
 
@@ -43,11 +46,28 @@ impl PlayerManager {
         Ok(())
     }
 
+    pub async fn get_show_item(&self, idx: usize) -> anyhow::Result<u64> {
+        let player = self.database.info.find_one().await?.with_context(|| format!("The pid should not be None"))?;
+        Ok(player.show_items.get(idx).copied().unwrap_or(0))
+    }
+
+    pub async fn set_show_item(&mut self, idx: usize, value: u64) -> anyhow::Result<()> {
+        let mut player = self.database.info.find_one().await?.with_context(|| format!("The pid should not be None"))?;
+        if idx >= player.show_items.len() {
+            player.show_items.resize(idx + 1, 0);
+        }
+        player.show_items[idx] = value;
+        self.show_items = player.show_items.clone();
+        self.database.info.update_one(player).await?;
+        Ok(())
+    }
+
     pub fn as_sync_player(self) -> protocol::NtfSyncPlayer {
         protocol::NtfSyncPlayer {
             custom: self.attrs,
             custom_str: self.str_attrs,
             items: self.items,
+            show_items: self.show_items,
             ..Default::default()
         }
     }
