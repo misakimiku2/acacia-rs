@@ -46,6 +46,7 @@ mod func {
     mod req_login;
     mod req_reconnect;
     mod req_rename;
+    mod req_world_chat;
 }
 pub mod gm {
     pub mod gm_script {
