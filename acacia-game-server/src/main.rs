@@ -28,6 +28,7 @@ mod func {
         mod girl_weapon_skin;
         mod guide_logic;
         mod house;
+        mod launch;
         mod lineup;
         mod player_setting;
         mod rouge3_d;
@@ -58,11 +59,11 @@ pub mod gm {
     }
 }
 pub mod logic {
+    pub mod chapter;
     pub mod girl_love_level;
     pub mod girl_room_furniture;
     pub mod manager;
     pub mod riki;
-    pub mod chapter;
 }
 
 #[tokio::main]

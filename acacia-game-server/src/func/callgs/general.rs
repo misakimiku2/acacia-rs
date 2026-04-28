@@ -86,3 +86,18 @@ async fn record_confession(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+#[callgs_reg("FavMailLog")]
+async fn fav_mail_log(_: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    Ok(())
+}
+
+#[callgs_reg("ExtendFightLog")]
+async fn extend_fight_log(_: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    Ok(())
+}
+
+#[callgs_reg("ExtendFightDynamicLog")]
+async fn extend_fight_dynamic_log(_: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    Ok(())
+}
