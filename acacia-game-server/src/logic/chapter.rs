@@ -11,7 +11,6 @@ pub async fn chapter_level_logger(me: &mut PlayerManager, param: &Value) -> anyh
 
     let level_times = me.get_attribute(22, nid).await? + 1;
     me.set_attribute(22, nid, level_times).await?;
-    println!("22 {nid} {level_times}");
     if nstar > 0 {
         me.set_attribute(21, nid, nstar as u32).await?;
     }
@@ -24,6 +23,10 @@ pub async fn chapter_level_drop(me: &mut PlayerManager, param: &Value) -> anyhow
         .chapter_level
         .find_one("id_1", nid)
         .with_context(|| format!("The specified chapter_level_data does not exist."))?;
+
+    if let Some(player_exp) = &level_data.player_exp {
+        me.add_exp(*player_exp).await?;
+    }
 
     let mut drop_result: Vec<Vec<u32>> = Vec::<Vec<u32>>::new();
     if let Some(first_drop_id) = &level_data.first_drop_id {
