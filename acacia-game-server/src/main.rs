@@ -62,6 +62,7 @@ pub mod logic {
     pub mod girl_room_furniture;
     pub mod manager;
     pub mod riki;
+    pub mod chapter;
 }
 
 #[tokio::main]

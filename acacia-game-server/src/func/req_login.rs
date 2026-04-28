@@ -54,7 +54,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
             ..Default::default()
         };
         database.info.update_one(player).await?;
-        // database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
+        database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
 
         let item = core::Item {
             id: database.items.new_id().await?,

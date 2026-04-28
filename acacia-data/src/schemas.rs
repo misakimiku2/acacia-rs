@@ -56,7 +56,6 @@ pub struct DropGropData {
     #[serde(alias = "ID")]
     pub id: u32,
     pub rand_type: Option<u32>,
-    #[serde(deserialize_with = "with_lua_table")]
     pub grop: String,
 }
 
