@@ -11,6 +11,6 @@ fn test_data() -> anyhow::Result<()> {
     println!("{:?}", data);
     let data = tables::tables().chapter_level.find_one("id_1", 50174);
     println!("{:?}", data);
-    println!("{:?}", tables::tables().drop_grop.all());
+    println!("{:?}", tables::tables().battlepass_timelist.all());
     Ok(())
 }

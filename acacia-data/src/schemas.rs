@@ -1,4 +1,4 @@
-use crate::manager::tsv::with_lua_table;
+use crate::manager::tsv::{with_datetime, with_lua_table};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -6,6 +6,21 @@ pub struct GDPL(pub u16, pub u16, pub u16, pub u16);
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct GDPLN(pub u16, pub u16, pub u16, pub u16, pub u32);
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct BattlepassTimelistData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(deserialize_with = "with_datetime")]
+    pub start_time: i64,
+    #[serde(deserialize_with = "with_datetime")]
+    pub end_time: i64,
+    #[serde(deserialize_with = "with_datetime")]
+    pub buy_start_time: i64,
+    #[serde(deserialize_with = "with_datetime")]
+    pub buy_end_time: i64,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]

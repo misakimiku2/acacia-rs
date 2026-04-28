@@ -1,3 +1,4 @@
+use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
 use std::fmt::Debug;
@@ -5,6 +6,17 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use tracing::warn;
+
+pub fn with_datetime<'de, D>(deserializer: D) -> Result<i64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    let offset = FixedOffset::east_opt(8 * 3600).ok_or_else(|| serde::de::Error::custom("The time_offset should not be error"))?;
+    let naive = NaiveDateTime::parse_from_str(&s, "[%Y%m%d%H%M]").map_err(serde::de::Error::custom)?;
+    let dt = offset.from_local_datetime(&naive).single().ok_or_else(|| serde::de::Error::custom("invalid datetime {s}"))?;
+    Ok(dt.timestamp())
+}
 
 pub fn with_lua_table<'de, D, T>(deserializer: D) -> anyhow::Result<T, D::Error>
 where

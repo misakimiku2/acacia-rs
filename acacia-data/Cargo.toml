@@ -12,6 +12,7 @@ prost.workspace = true
 csv.workspace = true
 tracing.workspace = true
 tokio.workspace = true
+chrono.workspace = true
 
 acacia-game-msg.workspace = true
 acacia-commons.workspace = true

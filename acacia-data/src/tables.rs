@@ -15,6 +15,10 @@ pub fn load_tables() -> anyhow::Result<()> {
 
 crate::define_tables! {
     pub struct Tables {
+        #[path="battlepass/timelist.txt"]
+        #[index("id_1", id)]
+        pub battlepass_timelist: DataTable<schemas::BattlepassTimelistData>,
+
         #[path="chapter/level.txt"]
         #[index("id_1", id)]
         pub chapter_level: DataTable<schemas::ChapterLevelData>,

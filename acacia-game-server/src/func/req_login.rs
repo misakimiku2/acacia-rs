@@ -1,5 +1,6 @@
+use acacia_commons::bits::set_template;
 use anyhow::Context;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
 use crate::base::time::ServerTime;
@@ -53,7 +54,53 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
             ..Default::default()
         };
         database.info.update_one(player).await?;
-        database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
+        // database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
+
+        let item = core::Item {
+            id: database.items.new_id().await?,
+            template: set_template(1, 2, 1, 1)?,
+            count: 1,
+            enhance: Some(core::Enhance { level: 1, ..Default::default() }),
+            slots: HashMap::from([(4, 2), (5, 3)]),
+            ..Default::default()
+        };
+        database.items.update_one(item).await?;
+
+        let item = core::Item {
+            id: database.items.new_id().await?,
+            template: set_template(2, 1, 255, 1)?,
+            count: 1,
+            flag: 0b1,
+            enhance: Some(core::Enhance { level: 1, ..Default::default() }),
+            ..Default::default()
+        };
+        database.items.update_one(item).await?;
+
+        let item = core::Item {
+            id: database.items.new_id().await?,
+            template: set_template(7, 2, 1, 1)?,
+            count: 1,
+            flag: 0b1,
+            ..Default::default()
+        };
+        database.items.update_one(item).await?;
+
+        let item = core::Item {
+            id: database.items.new_id().await?,
+            template: set_template(9, 1, 2, 1)?,
+            count: 1,
+            ..Default::default()
+        };
+        database.items.update_one(item).await?;
+
+        let item = core::Item {
+            id: database.items.new_id().await?,
+            template: set_template(9, 10, 1, 1)?,
+            count: 1,
+            ..Default::default()
+        };
+        database.items.update_one(item).await?;
+
         // database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
         // database.items.update_many(init_data().items.iter().cloned()).await?;
     }
