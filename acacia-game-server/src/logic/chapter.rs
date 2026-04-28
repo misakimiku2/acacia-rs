@@ -1,6 +1,7 @@
 use acacia_data::tables::tables;
 use anyhow::Context;
 use serde_json::Value;
+use tracing::warn;
 
 use super::drop::drop;
 use super::manager::PlayerManager;
@@ -13,6 +14,10 @@ pub async fn chapter_level_logger(me: &mut PlayerManager, param: &Value) -> anyh
     me.set_attribute(22, nid, level_times).await?;
     if nstar > 0 {
         me.set_attribute(21, nid, nstar as u32).await?;
+    } else if matches!(nid, 10121 | 10122 | 10123 | 10124) {
+        me.set_attribute(21, nid, 7).await?;
+    } else if nid < 50000 {
+        warn!("nStar -1 appeared in battle level {nid}.");
     }
     Ok(())
 }
