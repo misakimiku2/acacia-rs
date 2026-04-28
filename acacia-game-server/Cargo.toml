@@ -19,6 +19,7 @@ dashmap.workspace = true
 flate2.workspace = true
 axum.workspace = true
 surrealdb.workspace = true
+rand.workspace = true
 
 acacia-commons.workspace = true
 acacia-data.workspace = true

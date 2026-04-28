@@ -1,5 +1,6 @@
 use dashmap::DashMap;
 use prost::Message;
+use serde_json::json;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -7,12 +8,11 @@ use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tracing::{debug, error};
 
-use crate::logic::manager::PlayerManager;
-
 use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
+use crate::logic::manager::PlayerManager;
 use acacia_database::repositories::player::PlayerRepository;
-use acacia_game_msg::protocol::Pf;
+use acacia_game_msg::{protocol, protocol::Pf};
 
 static CONN_ID_SEQ: AtomicU64 = AtomicU64::new(1);
 pub static CONNS: std::sync::LazyLock<Conns> = std::sync::LazyLock::new(Conns::new);
@@ -99,6 +99,19 @@ impl Conn {
         let mut writer = self.writer.lock().await;
         writer.write_all(&packet).await?;
         writer.flush().await?;
+        Ok(())
+    }
+
+    pub async fn send_err(&self, err: impl Into<String>) -> anyhow::Result<()> {
+        let rsp = protocol::NtfCallScript {
+            api: "AcaciaError".to_string(),
+            arg: json!({
+                "sErr": err.into()
+            })
+            .to_string(),
+            ..protocol::NtfCallScript::default()
+        };
+        self.send_msg(Pf::NtfScript, &rsp, 0).await?;
         Ok(())
     }
 }

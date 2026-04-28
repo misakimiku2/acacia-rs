@@ -1,4 +1,4 @@
-use crate::schemas;
+use crate::schemas::{self, CashData};
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -15,6 +15,14 @@ pub fn load_tables() -> anyhow::Result<()> {
 
 crate::define_tables! {
     pub struct Tables {
+        #[path="player/rename.txt"]
+        #[index("times_1", times)]
+        pub rename: DataTable<schemas::RenameData>,
+
+        #[path="cash/cash.txt"]
+        #[index("gdpl_1", gdpl)]
+        pub cash: DataTable<schemas::CashData>,
+
         #[path="battlepass/timelist.txt"]
         #[index("id_1", id)]
         pub battlepass_timelist: DataTable<schemas::BattlepassTimelistData>,

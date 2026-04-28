@@ -59,6 +59,7 @@ pub mod gm {
     }
 }
 pub mod logic {
+    pub mod drop;
     pub mod chapter;
     pub mod girl_love_level;
     pub mod girl_room_furniture;

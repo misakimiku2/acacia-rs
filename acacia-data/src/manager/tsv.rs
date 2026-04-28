@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, NaiveDateTime, TimeZone};
+use chrono::{FixedOffset, NaiveDateTime, TimeZone};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Deserializer};
 use std::fmt::Debug;
@@ -6,6 +6,20 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use tracing::warn;
+
+use super::parser::parse_gdpl;
+
+pub fn with_gdpl<'de, D>(deserializer: D) -> Result<Option<(u16, u16, u16, u16)>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<String>::deserialize(deserializer)?;
+    match value {
+        None => Ok(None),
+        Some(s) if s.trim().is_empty() => Ok(None),
+        Some(s) => parse_gdpl::<D::Error>(&s).map(Some),
+    }
+}
 
 pub fn with_datetime<'de, D>(deserializer: D) -> Result<i64, D::Error>
 where

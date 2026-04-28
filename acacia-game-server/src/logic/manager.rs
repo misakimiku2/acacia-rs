@@ -1,4 +1,5 @@
-use anyhow::Context;
+use acacia_data::tables::tables;
+use anyhow::{Context, Ok};
 use std::collections::HashMap;
 
 use acacia_commons::bits::{self, set_template};
@@ -35,12 +36,20 @@ impl PlayerManager {
     }
 
     pub async fn get_item_count(&self, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<u32> {
+        if let Some(cash_data) = tables().cash.find_one("gdpl_1", Some((g, d, p, l))) {
+            return self.get_attribute(1, 1 + cash_data.id * 2).await;
+        }
         let template_id = set_template(g, d, p, l)?;
         let items = self.database.items.find_many_by_template(template_id).await?;
         let count = items.iter().map(|item| item.count).sum();
         Ok(count)
     }
+
     pub async fn set_item_count(&mut self, g: u16, d: u16, p: u16, l: u16, n: u32) -> anyhow::Result<()> {
+        if let Some(cash_data) = tables().cash.find_one("gdpl_1", Some((g, d, p, l))) {
+            self.set_attribute(1, 1 + cash_data.id * 2, n).await?;
+            return Ok(());
+        }
         let current_count = self.get_item_count(g, d, p, l).await?;
         if n == current_count {
             return Ok(());
@@ -59,6 +68,11 @@ impl PlayerManager {
         if n == 0 {
             return Ok(());
         }
+        if let Some(cash_data) = tables().cash.find_one("gdpl_1", Some((g, d, p, l))) {
+            let current_count = self.get_attribute(1, 1 + cash_data.id * 2).await?;
+            self.set_attribute(1, 1 + cash_data.id * 2, current_count + n).await?;
+            return Ok(());
+        }
         let template_id = set_template(g, d, p, l)?;
         let item = if let Some(mut item) = self.database.items.find_one_by_template(template_id).await? {
             item.count += n;
@@ -71,13 +85,20 @@ impl PlayerManager {
                 ..Default::default()
             }
         };
-        self.database.items.update_one(item.clone()).await?;
-        self.items.insert(item.id, item);
+        self.set_item(item).await?;
         Ok(())
     }
 
     pub async fn remove_item_count(&mut self, g: u16, d: u16, p: u16, l: u16, n: u32) -> anyhow::Result<()> {
         if n == 0 {
+            return Ok(());
+        }
+        if let Some(cash_data) = tables().cash.find_one("gdpl_1", Some((g, d, p, l))) {
+            let current_count = self.get_attribute(1, 1 + cash_data.id * 2).await?;
+            if current_count < n {
+                anyhow::bail!("Insufficient item quantity {}/{}", n, current_count);
+            }
+            self.set_attribute(1, 1 + cash_data.id * 2, current_count - n).await?;
             return Ok(());
         }
         let template_id = set_template(g, d, p, l)?;
@@ -102,8 +123,7 @@ impl PlayerManager {
             changed_items.push(item.clone());
         }
         for item in changed_items {
-            self.database.items.update_one(item.clone()).await?;
-            self.items.insert(item.id, item);
+            self.set_item(item).await?;
         }
         Ok(())
     }

@@ -5,7 +5,7 @@ use tracing::warn;
 
 use super::boss_pvp_logic;
 use crate::base::conn::Conn;
-use crate::logic::chapter::chapter_level_logger;
+use crate::logic::chapter::{chapter_level_drop, chapter_level_logger};
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
@@ -61,6 +61,7 @@ async fn new_prologue_enter_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Va
 
 async fn level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let mut me = conn.manager().await;
+    let drop_result = chapter_level_drop(&mut me, &param).await?;
     chapter_level_logger(&mut me, &param).await?;
     conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
 
@@ -68,7 +69,7 @@ async fn level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
         api: "Chapter_DealLevelSettlement".to_string(),
         arg: json!({
             "sCmd": "Chapter_LevelSettlement",
-            "tbParam": {}
+            "tbParam": [drop_result]
         })
         .to_string(),
         ..protocol::NtfCallScript::default()
@@ -85,12 +86,13 @@ async fn new_prologue_settlement_(conn: Arc<Conn>, msgdata: protocol::ReqCallGs,
 
 async fn new_prologue_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value, from_deal_level_settlement: bool) -> anyhow::Result<()> {
     let mut me = conn.manager().await;
+    let drop_result = chapter_level_drop(&mut me, &param).await?;
     chapter_level_logger(&mut me, &param).await?;
     conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
 
     let tb_param = json!({
         "bWaitServer": param["bWaitServer"],
-        "tbShowAward": [], // WIP
+        "tbShowAward": [drop_result],
     });
 
     let rsp = if from_deal_level_settlement {

@@ -1,4 +1,4 @@
-use crate::manager::tsv::{with_datetime, with_lua_table};
+use crate::manager::tsv::{with_datetime, with_lua_table, with_gdpl};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -6,6 +6,25 @@ pub struct GDPL(pub u16, pub u16, pub u16, pub u16);
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct GDPLN(pub u16, pub u16, pub u16, pub u16, pub u32);
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CashData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(alias = "GDPL")]
+    #[serde(deserialize_with = "with_gdpl")]
+    pub gdpl: Option<(u16, u16, u16, u16)>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct RenameData {
+    pub times: u32,
+    pub r#type: u32,
+    pub num: u32,
+}
+
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
