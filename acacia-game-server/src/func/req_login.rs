@@ -1,5 +1,6 @@
 use acacia_commons::bits::set_template;
 use anyhow::Context;
+use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
@@ -103,7 +104,14 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
 
         // database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
         // database.items.update_many(init_data().items.iter().cloned()).await?;
+        // database.attrs.set_attr(4, 0, 5).await?;
     }
-    // database.attrs.set_attr(4, 0, 5).await?;
+
+    let rsp = protocol::NtfCallScript {
+        api: "NtfWorldChatHostUrl".to_string(),
+        arg: json!({"HostUrl": "https://snowbreak-ea-chat.amazingseasuncdn.com/chat/"}).to_string(),
+        ..protocol::NtfCallScript::default()
+    };
+    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
