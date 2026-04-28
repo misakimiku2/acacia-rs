@@ -42,6 +42,7 @@ mod func {
     mod ntf_setattr;
     mod ntf_setstrattr;
     mod req_callgs;
+    mod req_change_world_channel;
     mod req_login;
     mod req_reconnect;
     mod req_rename;
@@ -59,8 +60,8 @@ pub mod gm {
     }
 }
 pub mod logic {
-    pub mod drop;
     pub mod chapter;
+    pub mod drop;
     pub mod girl_love_level;
     pub mod girl_room_furniture;
     pub mod manager;

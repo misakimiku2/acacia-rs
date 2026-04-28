@@ -6,7 +6,7 @@ use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol::Pf};
 
 #[func_reg(Pf::ReqRename)]
-async fn req_callgs(conn: Arc<Conn>, msgdata: core::SimpleString) -> anyhow::Result<()> {
+async fn req_rename(conn: Arc<Conn>, msgdata: core::SimpleString) -> anyhow::Result<()> {
     /*
     let mut me = conn.manager().await;
     let times = me.get_attribute(99, 6).await? + 1;
