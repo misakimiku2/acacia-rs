@@ -1,14 +1,14 @@
 use anyhow::Context;
 use std::collections::HashMap;
 
-use acacia_commons::bits;
+use acacia_commons::bits::{self, set_template};
 use acacia_database::repositories::player::PlayerRepository;
 use acacia_game_msg::{core, protocol};
 
 pub struct PlayerManager {
     database: PlayerRepository,
     attrs: HashMap<u32, u32>,
-    items: Vec<core::Item>,
+    items: HashMap<u64, core::Item>,
     str_attrs: HashMap<u32, String>,
     show_items: Vec<u64>,
 }
@@ -18,10 +18,99 @@ impl PlayerManager {
         Self {
             database: database,
             attrs: HashMap::new(),
-            items: Vec::new(),
+            items: HashMap::new(),
             str_attrs: HashMap::new(),
             show_items: Vec::new(),
         }
+    }
+
+    pub async fn get_item(&self, id: u64) -> anyhow::Result<Option<core::Item>> {
+        Ok(self.database.items.find_one(id).await?)
+    }
+
+    pub async fn set_item(&mut self, item: core::Item) -> anyhow::Result<()> {
+        self.database.items.update_one(item.clone()).await?;
+        self.items.insert(item.id, item);
+        Ok(())
+    }
+
+    pub async fn get_item_count(&self, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<u32> {
+        let template_id = set_template(g, d, p, l)?;
+        let items = self.database.items.find_many_by_template(template_id).await?;
+        let count = items.iter().map(|item| item.count).sum();
+        Ok(count)
+    }
+    pub async fn set_item_count(&mut self, g: u16, d: u16, p: u16, l: u16, n: u32) -> anyhow::Result<()> {
+        let current_count = self.get_item_count(g, d, p, l).await?;
+        if n == current_count {
+            return Ok(());
+        }
+        if n > current_count {
+            let add_count = n - current_count;
+            self.add_item_count(g, d, p, l, add_count).await?;
+        } else {
+            let remove_count = current_count - n;
+            self.remove_item_count(g, d, p, l, remove_count).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn add_item_count(&mut self, g: u16, d: u16, p: u16, l: u16, n: u32) -> anyhow::Result<()> {
+        if n == 0 {
+            return Ok(());
+        }
+        let template_id = set_template(g, d, p, l)?;
+        let item = if let Some(mut item) = self.database.items.find_one_by_template(template_id).await? {
+            item.count += n;
+            item
+        } else {
+            core::Item {
+                id: self.database.items.new_id().await?,
+                template: template_id,
+                count: n,
+                ..Default::default()
+            }
+        };
+        self.database.items.update_one(item.clone()).await?;
+        self.items.insert(item.id, item);
+        Ok(())
+    }
+
+    pub async fn remove_item_count(&mut self, g: u16, d: u16, p: u16, l: u16, n: u32) -> anyhow::Result<()> {
+        if n == 0 {
+            return Ok(());
+        }
+        let template_id = set_template(g, d, p, l)?;
+        let mut items = self.database.items.find_many_by_template(template_id).await?;
+        let current_count: u32 = items.iter().map(|item| item.count).sum();
+        if current_count < n {
+            anyhow::bail!("Insufficient item quantity {}/{}", n, current_count);
+        }
+        let mut left_remove_count = n;
+        let mut changed_items: Vec<core::Item> = Vec::new();
+        for item in items.iter_mut() {
+            if left_remove_count == 0 {
+                break;
+            }
+            if item.count <= left_remove_count {
+                left_remove_count -= item.count;
+                item.count = 0;
+            } else {
+                item.count -= left_remove_count;
+                left_remove_count = 0;
+            }
+            changed_items.push(item.clone());
+        }
+        for item in changed_items {
+            self.database.items.update_one(item.clone()).await?;
+            self.items.insert(item.id, item);
+        }
+        Ok(())
+    }
+
+    pub async fn get_items_by_gdpl(&self, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<Vec<core::Item>> {
+        let template_id = set_template(g, d, p, l)?;
+        Ok(self.database.items.find_many_by_template(template_id).await?)
     }
 
     pub async fn get_attribute(&self, gid: u32, id: u32) -> anyhow::Result<u32> {
@@ -66,7 +155,7 @@ impl PlayerManager {
         protocol::NtfSyncPlayer {
             custom: self.attrs,
             custom_str: self.str_attrs,
-            items: self.items,
+            items: self.items.into_values().collect(),
             show_items: self.show_items,
             ..Default::default()
         }

@@ -6,7 +6,6 @@ use tracing::warn;
 use super::boss_pvp_logic;
 use crate::base::conn::Conn;
 use crate::logic::chapter::chapter_level_logger;
-use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
