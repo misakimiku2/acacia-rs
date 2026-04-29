@@ -28,11 +28,16 @@ async fn change_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
 
 #[callgs_reg("PlayerSetting_ChangeAccountShowCard")]
 async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nitem_id = param["nItemID"].as_u64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
+    let nitem_id = param["nItemID"].as_i64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
     let nindex = param["nIndex"].as_u64().with_context(|| format!("Expected 'nIndex' but not found in param {:?}", param))? as usize;
+    let showitem_index = SHOWITEM_CARD[nindex - 1];
 
     let mut me = conn.manager().await;
-    me.set_show_item(SHOWITEM_CARD[nindex - 1], nitem_id).await?;
+    if nitem_id > 0 {
+        me.set_show_item(showitem_index, nitem_id as u64).await?;
+    } else {
+        me.set_show_item(showitem_index, 0).await?;
+    }
     conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
 
     let rsp = protocol::NtfCallScript {
@@ -45,11 +50,16 @@ async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param
 
 #[callgs_reg("PlayerSetting_ChangeAccountShowSkin")]
 async fn change_account_show_skin(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nitem_id = param["nItemID"].as_u64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
+    let nitem_id = param["nItemID"].as_i64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
     let nindex = param["nIndex"].as_u64().with_context(|| format!("Expected 'nIndex' but not found in param {:?}", param))? as usize;
+    let showitem_index = SHOWITEM_SKIN[nindex - 1];
 
     let mut me = conn.manager().await;
-    me.set_show_item(SHOWITEM_SKIN[nindex - 1], nitem_id).await?;
+    if nitem_id > 0 {
+        me.set_show_item(showitem_index, nitem_id as u64).await?;
+    } else {
+        me.set_show_item(showitem_index, 0).await?;
+    }
     conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
 
     let rsp = protocol::NtfCallScript {
