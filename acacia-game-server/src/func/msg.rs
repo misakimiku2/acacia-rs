@@ -1,5 +1,6 @@
 mod none;
 mod ntf_logout;
+mod ntf_readitem;
 mod ntf_setattr;
 mod ntf_setstrattr;
 mod req_callgs;

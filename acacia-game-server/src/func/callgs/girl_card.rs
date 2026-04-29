@@ -1,6 +1,6 @@
 use anyhow::Context;
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::sync::Arc;
 
 use crate::{base::conn::Conn, logic::girl::calc_girl_exp};
