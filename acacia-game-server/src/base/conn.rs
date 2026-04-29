@@ -104,7 +104,7 @@ impl Conn {
 
     pub async fn send_err(&self, err: impl Into<String>) -> anyhow::Result<()> {
         let rsp = protocol::NtfCallScript {
-            api: "AcaciaError".to_string(),
+            api: "DefendLogic_SelectDiff".to_string(),
             arg: json!({
                 "sErr": err.into()
             })

@@ -6,12 +6,12 @@ use acacia_commons::bits::{self, set_template};
 use acacia_database::repositories::player::PlayerRepository;
 use acacia_game_msg::{core, protocol};
 
-const EXP_TABLE: [u32; 101] = [
+const PLAYER_EXP_TABLE: [u32; 101] = [
     0, 6, 6, 6, 12, 33, 34, 35, 42, 47, 55, 61, 68, 75, 83, 90, 95, 100, 105, 110, 115, 115, 115, 115, 115, 120, 120, 120, 120, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 180, 280, 320, 360,
     400, 440, 480, 520, 560, 600, 640, 640, 670, 700, 730, 750, 780, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300, 1350, 1400, 1450, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300,
     2400, 2500, 3200, 3400, 3600, 3800, 4000, 4200, 4400, 4600, 4800, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 0,
 ];
-fn calc_exp(current_level: u32, current_exp: u32, add_exp: u32) -> (u32, u32) {
+fn calc_player_exp(current_level: u32, current_exp: u32, add_exp: u32) -> (u32, u32) {
     let mut level = current_level;
     let mut exp = current_exp;
     let mut gain = add_exp;
@@ -19,7 +19,7 @@ fn calc_exp(current_level: u32, current_exp: u32, add_exp: u32) -> (u32, u32) {
         if level >= 100 {
             return (100, 0);
         }
-        let need = EXP_TABLE[level as usize];
+        let need = PLAYER_EXP_TABLE[level as usize];
         if need == 0 {
             return (level, 0);
         }
@@ -58,7 +58,7 @@ impl PlayerManager {
 
     pub async fn add_exp(&mut self, add_exp: u32) -> anyhow::Result<()> {
         let mut player = self.database.info.find_one().await?.with_context(|| format!("The player has not been initialized"))?;
-        let (level, exp) = calc_exp(player.level, player.exp, add_exp);
+        let (level, exp) = calc_player_exp(player.level, player.exp, add_exp);
         if player.level != level {
             player.level = level;
             self.core.insert(0, level);
@@ -69,6 +69,14 @@ impl PlayerManager {
         }
         self.database.info.update_one(player).await?;
         Ok(())
+    }
+
+    pub async fn get_money(&self, id: u32) -> anyhow::Result<u32> {
+        self.get_attribute(1, 1 + id * 2).await
+    }
+
+    pub async fn set_money(&mut self, id: u32, num: u32) -> anyhow::Result<()> {
+        self.set_attribute(1, 1 + id * 2, num).await
     }
 
     pub async fn get_item(&self, id: u64) -> anyhow::Result<Option<core::Item>> {

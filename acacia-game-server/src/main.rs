@@ -15,40 +15,8 @@ mod listeners {
     pub mod gm_server;
 }
 mod func {
-    mod msg {
-        mod none;
-        mod ntf_logout;
-        mod ntf_setattr;
-        mod ntf_setstrattr;
-        mod req_callgs;
-        mod req_change_world_channel;
-        mod req_login;
-        mod req_reconnect;
-        mod req_rename;
-        mod req_world_chat;
-    }
-    mod callgs {
-        mod activity;
-        mod battle_pass_logic;
-        mod boss_logic;
-        mod boss_pvp_logic;
-        mod chapter;
-        mod dlc_logic;
-        mod gacha;
-        mod general;
-        mod girl_skin;
-        mod girl_weapon_skin;
-        mod guide_logic;
-        mod house;
-        mod launch;
-        mod lineup;
-        mod player_setting;
-        mod rouge3_d;
-        mod shop_logic;
-        mod vir_capture;
-        mod vir_capture_level;
-        mod weapon;
-    }
+    mod callgs;
+    mod msg;
     pub mod gm {
         pub mod gm_script;
     }
@@ -56,6 +24,7 @@ mod func {
 pub mod logic {
     pub mod chapter;
     pub mod drop;
+    pub mod girl;
     pub mod girl_love_level;
     pub mod girl_room_furniture;
     pub mod player;
