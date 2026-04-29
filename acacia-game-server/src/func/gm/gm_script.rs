@@ -39,7 +39,7 @@ impl GMScript {
         let (func_name, raw_args) = lua_func::parse_function_call(code)?;
         let args = lua_func::parse_function_args(raw_args);
         let gm_script = match func_name {
-            "GM.UnLockAllLevel" => Self::UnLockAllLevel(un_lock_all_level::UnLockAllLevel::from_args(&args)),
+            "GM.UnLockAllLevel" => Self::UnLockAllLevel(UnLockAllLevel::from_args(&args)),
             "GM.UnLockLevel" => Self::UnLockLevel(UnLockLevel::from_args(&args)),
             "GM.Add" => {
                 if let Some(gm_script_add) = Add::from_args(&args) {

@@ -10,7 +10,7 @@ use tracing::{debug, error};
 
 use super::dispatcher::DISPATCHER;
 use super::packet::{PacketBuilder, PacketParser};
-use crate::logic::manager::PlayerManager;
+use crate::logic::player::PlayerManager;
 use acacia_database::repositories::player::PlayerRepository;
 use acacia_game_msg::{protocol, protocol::Pf};
 

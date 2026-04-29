@@ -58,7 +58,7 @@ pub mod logic {
     pub mod drop;
     pub mod girl_love_level;
     pub mod girl_room_furniture;
-    pub mod manager;
+    pub mod player;
     pub mod riki;
 }
 

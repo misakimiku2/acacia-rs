@@ -4,7 +4,7 @@ use serde_json::Value;
 use tracing::warn;
 
 use super::drop::drop;
-use super::manager::PlayerManager;
+use super::player::PlayerManager;
 
 pub async fn chapter_level_logger(me: &mut PlayerManager, param: &Value) -> anyhow::Result<()> {
     let nid = param["nID"].as_i64().with_context(|| format!("Expected 'nID' but not found in param {:?}", param))? as u32;
