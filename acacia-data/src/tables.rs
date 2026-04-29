@@ -1,4 +1,4 @@
-use crate::schemas::{self, CashData};
+use crate::schemas;
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -62,6 +62,10 @@ crate::define_tables! {
         #[path="house/open_girl.txt"]
         pub house_open_girl: DataTable<schemas::HouseOpenGirlData>,
 
+        #[path="item/templates/weapon.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub weapon_template: DataTable<schemas::WeaponTemplateData>,
+
         #[path="item/templates/suplies.txt"]
         #[index("gdpl", genre, detail, particular, level)]
         pub suplies_template: DataTable<schemas::SupliesTemplateData>,
@@ -72,5 +76,9 @@ crate::define_tables! {
 
         #[path="riki/Riki.txt"]
         pub riki: DataTable<schemas::RikiData>,
+
+        #[path="item/break.txt"]
+        #[index("id_1", id)]
+        pub item_break: DataTable<schemas::ItemBreakData>,
     }
 }

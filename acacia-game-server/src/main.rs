@@ -29,6 +29,7 @@ pub mod logic {
     pub mod girl_room_furniture;
     pub mod player;
     pub mod riki;
+    pub mod weapon;
 }
 
 #[tokio::main]

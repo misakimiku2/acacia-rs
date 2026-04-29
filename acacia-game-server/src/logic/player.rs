@@ -1,5 +1,5 @@
 use acacia_data::tables::tables;
-use anyhow::{Context, Ok};
+use anyhow::Context;
 use std::collections::HashMap;
 
 use acacia_commons::bits::{self, set_template};
@@ -54,6 +54,11 @@ impl PlayerManager {
             str_attrs: HashMap::new(),
             show_items: Vec::new(),
         }
+    }
+
+    pub async fn level(&self) -> anyhow::Result<u32> {
+        let player = self.database.info.find_one().await?.with_context(|| format!("The player has not been initialized"))?;
+        Ok(player.level)
     }
 
     pub async fn add_exp(&mut self, add_exp: u32) -> anyhow::Result<()> {
