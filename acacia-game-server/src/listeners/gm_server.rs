@@ -3,7 +3,7 @@ use tracing::debug;
 
 use crate::base::config::CONFIG;
 use crate::base::conn::CONNS;
-use crate::gm::gm_script::gm_script::GMScript;
+use crate::func::gm::gm_script::GMScript;
 
 pub async fn listen_gm_server() {
     let addr = format!("{}:{}", CONFIG.game_server.host, 1234);

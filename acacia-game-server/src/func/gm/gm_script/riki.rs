@@ -6,11 +6,11 @@ use crate::{base::conn::Conn, logic::riki::get_task};
 use acacia_game_msg::protocol::Pf;
 
 #[derive(Debug)]
-pub enum GMScriptRiki {
-    GMUnLockRiki(GMScriptRikiGMUnLockRiki),
+pub enum Riki {
+    GMUnLockRiki(RikiGMUnLockRiki),
 }
 
-impl GMScriptRiki {
+impl Riki {
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         match self {
             Self::GMUnLockRiki(s) => s.run(conn).await,
@@ -19,11 +19,11 @@ impl GMScriptRiki {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct GMScriptRikiGMUnLockRiki {
+pub struct RikiGMUnLockRiki {
     pub number: u32,
 }
 
-impl GMScriptRikiGMUnLockRiki {
+impl RikiGMUnLockRiki {
     pub fn from_args(args: &[String]) -> Self {
         Self {
             number: args.get(0).and_then(|s| s.parse::<u32>().ok()).unwrap_or(1),

@@ -8,11 +8,11 @@ use acacia_commons::{bits::set_attribute, lua_utils::lua_serde};
 use acacia_game_msg::{protocol, protocol::Pf};
 
 #[derive(Debug)]
-pub enum GMScriptActivity {
-    DoOpenActivity(GMScriptActivityDoOpenActivity),
+pub enum Activity {
+    DoOpenActivity(ActivityDoOpenActivity),
 }
 
-impl GMScriptActivity {
+impl Activity {
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         match self {
             Self::DoOpenActivity(s) => s.run(conn).await,
@@ -21,7 +21,7 @@ impl GMScriptActivity {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct GMScriptActivityDoOpenActivity {
+pub struct ActivityDoOpenActivity {
     #[serde(rename = "nId")]
     pub id: u32,
     #[serde(rename = "nStartTime")]
@@ -30,7 +30,7 @@ pub struct GMScriptActivityDoOpenActivity {
     pub end_time: i64,
 }
 
-impl GMScriptActivityDoOpenActivity {
+impl ActivityDoOpenActivity {
     pub fn from_args(args: &[String]) -> Option<Self> {
         let param = args.get(0)?;
         lua_serde::from_str::<Self>(param).inspect_err(|e| warn!("Activity.DoOpenActivity parse {param:?} error: {}", e)).ok()

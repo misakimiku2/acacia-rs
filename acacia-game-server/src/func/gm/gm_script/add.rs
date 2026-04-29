@@ -6,14 +6,14 @@ use acacia_commons::{bits::set_template, lua_utils::lua_func};
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[derive(Debug)]
-pub enum GMScriptAdd {
-    AddExp(GMScriptAddExp),
-    AddMoney(GMScriptAddMoney),
-    AddVigor(GMScriptAddVigor),
-    AddItem(GMScriptAddItem),
+pub enum Add {
+    AddExp(AddExp),
+    AddMoney(AddMoney),
+    AddVigor(AddVigor),
+    AddItem(AddItem),
 }
 
-impl GMScriptAdd {
+impl Add {
     pub fn from_args(args: &[String]) -> Option<Self> {
         let sub_fn = args.get(0).map(String::as_str);
         let sub_args = if let Some(sub_args_str) = args.get(1) {
@@ -23,10 +23,10 @@ impl GMScriptAdd {
         };
 
         let add_action = match sub_fn {
-            Some("GM.AddExp") => Self::AddExp(GMScriptAddExp::from_args(&sub_args)),
-            Some("GM.AddMoney") => Self::AddMoney(GMScriptAddMoney::from_args(&sub_args)),
-            Some("GM.AddItem") => Self::AddItem(GMScriptAddItem::from_args(&sub_args)),
-            Some("GM.AddVigor") => Self::AddVigor(GMScriptAddVigor::from_args(&sub_args)),
+            Some("GM.AddExp") => Self::AddExp(AddExp::from_args(&sub_args)),
+            Some("GM.AddMoney") => Self::AddMoney(AddMoney::from_args(&sub_args)),
+            Some("GM.AddItem") => Self::AddItem(AddItem::from_args(&sub_args)),
+            Some("GM.AddVigor") => Self::AddVigor(AddVigor::from_args(&sub_args)),
             _ => {
                 warn!("GM.Add Unknown Code: {:?} {:?}", sub_fn, sub_args);
                 return None;
@@ -46,11 +46,11 @@ impl GMScriptAdd {
 }
 
 #[derive(Debug)]
-pub struct GMScriptAddExp {
+pub struct AddExp {
     pub count: i64,
 }
 
-impl GMScriptAddExp {
+impl AddExp {
     fn from_args(args: &[String]) -> Self {
         Self {
             count: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
@@ -63,12 +63,12 @@ impl GMScriptAddExp {
 }
 
 #[derive(Debug)]
-pub struct GMScriptAddMoney {
+pub struct AddMoney {
     pub typ: u32,
     pub count: u32,
 }
 
-impl GMScriptAddMoney {
+impl AddMoney {
     fn from_args(args: &[String]) -> Self {
         Self {
             typ: args.get(0).and_then(|s| s.parse::<u32>().ok()).unwrap_or(0),
@@ -93,11 +93,11 @@ impl GMScriptAddMoney {
 }
 
 #[derive(Debug)]
-pub struct GMScriptAddVigor {
+pub struct AddVigor {
     pub count: i64,
 }
 
-impl GMScriptAddVigor {
+impl AddVigor {
     fn from_args(args: &[String]) -> Self {
         Self {
             count: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
@@ -110,7 +110,7 @@ impl GMScriptAddVigor {
 }
 
 #[derive(Debug)]
-pub struct GMScriptAddItem {
+pub struct AddItem {
     pub g: u16,
     pub d: u16,
     pub p: u16,
@@ -118,7 +118,7 @@ pub struct GMScriptAddItem {
     pub count: u32,
 }
 
-impl GMScriptAddItem {
+impl AddItem {
     fn from_args(args: &[String]) -> Self {
         Self {
             g: args.get(0).and_then(|s| s.parse::<u16>().ok()).unwrap_or(0),

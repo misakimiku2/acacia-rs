@@ -15,6 +15,18 @@ mod listeners {
     pub mod gm_server;
 }
 mod func {
+    mod msg {
+        mod none;
+        mod ntf_logout;
+        mod ntf_setattr;
+        mod ntf_setstrattr;
+        mod req_callgs;
+        mod req_change_world_channel;
+        mod req_login;
+        mod req_reconnect;
+        mod req_rename;
+        mod req_world_chat;
+    }
     mod callgs {
         mod activity;
         mod battle_pass_logic;
@@ -37,27 +49,8 @@ mod func {
         mod vir_capture_level;
         mod weapon;
     }
-    mod none;
-    mod ntf_logout;
-    mod ntf_setattr;
-    mod ntf_setstrattr;
-    mod req_callgs;
-    mod req_change_world_channel;
-    mod req_login;
-    mod req_reconnect;
-    mod req_rename;
-    mod req_world_chat;
-}
-pub mod gm {
-    pub mod gm_script {
+    pub mod gm {
         pub mod gm_script;
-        pub mod gm_script_activity;
-        pub mod gm_script_add;
-        pub mod gm_script_gacha;
-        pub mod gm_script_house;
-        pub mod gm_script_riki;
-        pub mod gm_script_un_lock_all_level;
-        pub mod gm_script_un_lock_level;
     }
 }
 pub mod logic {

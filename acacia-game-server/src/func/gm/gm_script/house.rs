@@ -6,12 +6,12 @@ use crate::{base::conn::Conn, logic::girl_love_level::GirlLoveLevel};
 use acacia_game_msg::{protocol, protocol::Pf};
 
 #[derive(Debug)]
-pub enum GMScriptHouse {
-    AddGirlLoveNum(GMScriptHouseAddGirlLoveNum),
-    AddAllGirlLoveNum(GMScriptHouseAddAllGirlLoveNum),
+pub enum House {
+    AddGirlLoveNum(HouseAddGirlLoveNum),
+    AddAllGirlLoveNum(HouseAddAllGirlLoveNum),
 }
 
-impl GMScriptHouse {
+impl House {
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         match self {
             Self::AddGirlLoveNum(s) => s.run(conn).await,
@@ -21,12 +21,12 @@ impl GMScriptHouse {
 }
 
 #[derive(Debug)]
-pub struct GMScriptHouseAddGirlLoveNum {
+pub struct HouseAddGirlLoveNum {
     pub girl_id: u32,
     pub num: u32,
 }
 
-impl GMScriptHouseAddGirlLoveNum {
+impl HouseAddGirlLoveNum {
     pub fn from_args(args: &[String]) -> Self {
         Self {
             girl_id: args.get(0).and_then(|s| s.parse::<u32>().ok()).unwrap_or(1),
@@ -49,11 +49,11 @@ impl GMScriptHouseAddGirlLoveNum {
 }
 
 #[derive(Debug)]
-pub struct GMScriptHouseAddAllGirlLoveNum {
+pub struct HouseAddAllGirlLoveNum {
     pub num: u32,
 }
 
-impl GMScriptHouseAddAllGirlLoveNum {
+impl HouseAddAllGirlLoveNum {
     pub fn from_args(args: &[String]) -> Self {
         Self {
             num: args.get(0).and_then(|s| s.parse::<u32>().ok()).unwrap_or(1000),

@@ -3,11 +3,11 @@ use std::sync::Arc;
 use crate::base::conn::Conn;
 
 #[derive(Debug)]
-pub struct GMScriptUnLockAllLevel {
+pub struct UnLockAllLevel {
     pub no_star: i32,
 }
 
-impl GMScriptUnLockAllLevel {
+impl UnLockAllLevel {
     pub fn from_args(args: &[String]) -> Self {
         Self {
             no_star: args.get(0).and_then(|s| s.parse::<i32>().ok()).unwrap_or(0),

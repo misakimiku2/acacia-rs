@@ -3,14 +3,14 @@ use std::sync::Arc;
 use crate::base::conn::Conn;
 
 #[derive(Debug)]
-pub struct GMScriptUnLockLevel {
+pub struct UnLockLevel {
     pub chapter: i32,
     pub diff: i32,
     pub chapter_id: i32,
     pub no_star: i32,
 }
 
-impl GMScriptUnLockLevel {
+impl UnLockLevel {
     pub fn from_args(args: &[String]) -> Self {
         Self {
             chapter: args.get(0).and_then(|s| s.parse::<i32>().ok()).unwrap_or(0),
