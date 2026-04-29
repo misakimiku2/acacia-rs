@@ -62,6 +62,10 @@ crate::define_tables! {
         #[path="house/open_girl.txt"]
         pub house_open_girl: DataTable<schemas::HouseOpenGirlData>,
 
+        #[path="item/templates/suplies.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub suplies_template: DataTable<schemas::SupliesTemplateData>,
+
         #[path="item/templates/dorm_gift.txt"]
         #[index("gdpl", genre, detail, particular, level)]
         pub dorm_gift_template: DataTable<schemas::DormGiftTemplateData>,

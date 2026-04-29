@@ -1,4 +1,4 @@
-use crate::manager::tsv::{with_datetime, with_lua_table, with_gdpl};
+use crate::manager::tsv::{with_datetime, with_gdpl, with_lua_table};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -24,7 +24,6 @@ pub struct RenameData {
     pub r#type: u32,
     pub num: u32,
 }
-
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -93,6 +92,17 @@ pub struct GiftExchangeData {
     pub need_gold: Option<u32>,
     pub sale_off_begin_time: Option<String>,
     pub sale_off_end_time: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct SupliesTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+    pub provide_exp: Option<u32>,
+    pub consume_gold: Option<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
