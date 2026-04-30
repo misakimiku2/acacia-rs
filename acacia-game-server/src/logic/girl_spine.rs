@@ -8,6 +8,7 @@ use acacia_game_msg::core;
 fn get_node(value: u64, sub_idx: usize) -> bool {
     value & (1 << sub_idx - 1) != 0
 }
+
 fn set_node(value: u64, sub_idx: usize, enable: bool) -> u64 {
     if enable { value | (1 << sub_idx - 1) } else { value & !(1 << sub_idx - 1) }
 }
@@ -15,6 +16,7 @@ fn set_node(value: u64, sub_idx: usize, enable: bool) -> u64 {
 fn get_spine_node(spines: &Vec<u64>, mast_idx: usize, sub_idx: usize) -> bool {
     get_node(spines[mast_idx - 1], sub_idx)
 }
+
 fn set_spine_node(spines: &mut Vec<u64>, mast_idx: usize, sub_idx: usize, enable: bool) -> () {
     spines.resize(6, 0);
     spines[mast_idx - 1] = set_node(spines[mast_idx - 1], sub_idx, enable);
