@@ -1,16 +1,12 @@
 use anyhow::Context;
-use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
-use crate::logic::weapon::{weapon_break_up, weapon_level_up};
+use crate::logic::weapon::{weapon_break_up, weapon_has_parts_reward, weapon_level_up};
 use acacia_derive::callgs_reg;
-use acacia_game_msg::{core, protocol, protocol::Pf};
-
-#[derive(Debug, Clone, Deserialize)]
-struct BreakUpgradeStage(u32, Vec<(u64, u32)>, u8);
+use acacia_game_msg::{core, protocol};
 
 #[callgs_reg("Weapon_Upgrade")]
 async fn upgrade(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
@@ -54,16 +50,10 @@ async fn upgrade(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyho
         me.set_item(item).await?;
     }
     let weapon_after_level = weapon.enhance.as_ref().map_or(0, |e| e.level);
-    let b_max_unlock = weapon_before_level < 50 && weapon_after_level >= 50;
+    let b_max_unlock = weapon_before_level < 50 && weapon_after_level >= 50 && weapon_has_parts_reward(&weapon)?;
     me.set_item(weapon).await?;
     me.sync().await?;
-
-    let rsp = protocol::NtfCallScript {
-        api: "Weapon_Upgrade".to_string(),
-        arg: json!({"bMaxUnLock": b_max_unlock}).to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    conn.send_script("Weapon_Upgrade", json!({"bMaxUnLock": b_max_unlock})).await?;
     Ok(())
 }
 
@@ -108,19 +98,14 @@ async fn r#break(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyho
     }
     me.set_item(weapon).await?;
     me.sync().await?;
-
-    let rsp = protocol::NtfCallScript {
-        api: "Weapon_Break".to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    conn.send_script("Weapon_Break", ()).await?;
     Ok(())
 }
 
 #[callgs_reg("Weapon_OneKeyToMax")]
 async fn one_key_to_max(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let weapon_id = param["Id"].as_u64().with_context(|| format!("Expected 'Id' but not found in param {:?}", param))?;
-    let break_upgrade_mat: Vec<BreakUpgradeStage> = serde_json::from_value(param["tbBreakUpgradeMat"].clone())?;
+    let break_upgrade_mat: Vec<(u32, Vec<(u64, u32)>, u8)> = serde_json::from_value(param["tbBreakUpgradeMat"].clone())?;
 
     let mut me = conn.manager().await;
     let mut weapon = me.get_item(weapon_id).await?.with_context(|| format!("Weapon not found {}", weapon_id))?;
@@ -129,7 +114,7 @@ async fn one_key_to_max(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -
     let mut cached_level_mat: HashMap<u64, u32> = HashMap::new();
     let mut cached_break_mat: HashMap<(u16, u16, u16, u16), u32> = HashMap::new();
     let mut total_consume_gold: u32 = 0;
-    for BreakUpgradeStage(target_break, stage_mat, break_flag) in break_upgrade_mat {
+    for (target_break, stage_mat, break_flag) in break_upgrade_mat {
         let current_break = weapon.enhance.as_ref().map_or(0, |e| e.r#break);
         if target_break < current_break {
             conn.send_err("error.weapon_break_cmd_err").await?;
@@ -193,6 +178,8 @@ async fn one_key_to_max(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -
         return Ok(());
     }
     current_gold -= total_consume_gold;
+    let weapon_after_level = weapon.enhance.as_ref().map_or(0, |e| e.level);
+    let b_max_unlock = weapon_before_level < 50 && weapon_after_level >= 50 && weapon_has_parts_reward(&weapon)?;
 
     me.set_money(3, current_gold).await?;
     for item in cached_items {
@@ -201,45 +188,28 @@ async fn one_key_to_max(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -
     for (mat_gdpl, mat_num) in &cached_break_mat {
         me.remove_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3, *mat_num).await?;
     }
-    let weapon_after_level = weapon.enhance.as_ref().map_or(0, |e| e.level);
-    let b_max_unlock = weapon_before_level < 50 && weapon_after_level >= 50;
     me.set_item(weapon).await?;
     me.sync().await?;
-
-    let rsp = protocol::NtfCallScript {
-        api: "Weapon_OneKeyToMax".to_string(),
-        arg: json!({"bMaxUnLock": b_max_unlock}).to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    conn.send_script("Weapon_OneKeyToMax", json!({"bMaxUnLock": b_max_unlock})).await?;
     Ok(())
 }
 
 #[callgs_reg("Weapon_ReplacePart")]
 async fn replace_part(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let database = conn.database().await;
+    let mut me = conn.manager().await;
     let slot_id = param["Type"].as_i64().with_context(|| format!("Expected 'Type' but not found in param {:?}", param))? as u32;
     let part_id = param["PartId"].as_i64().with_context(|| format!("Expected 'PartId' but not found in param {:?}", param))?;
     let weapon_id = param["Id"].as_u64().with_context(|| format!("Expected 'Id' but not found in param {:?}", param))?;
 
-    let mut weapon = database.items.find_one(weapon_id).await?.with_context(|| format!("Weapon not found {}", weapon_id))?;
+    let mut weapon = me.get_item(weapon_id).await?.with_context(|| format!("Weapon not found {}", weapon_id))?;
     if part_id == -1 {
         weapon.slots.remove(&slot_id);
     } else {
         weapon.slots.insert(slot_id, part_id as u64);
     }
-    database.items.update_one(weapon.clone()).await?;
 
-    let rsp = protocol::NtfSyncPlayer {
-        items: vec![weapon],
-        ..protocol::NtfSyncPlayer::default()
-    };
-    conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
-
-    let rsp = protocol::NtfCallScript {
-        api: "Weapon_ReplacePart".to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    me.set_item(weapon).await?;
+    me.sync().await?;
+    conn.send_script("Weapon_ReplacePart", ()).await?;
     Ok(())
 }

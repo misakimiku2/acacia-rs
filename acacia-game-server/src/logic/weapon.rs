@@ -6,19 +6,19 @@ use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
 use acacia_game_msg::core;
 
-pub const WEAPON_EXP_TABLE: [u32; 80] = [
+const WEAPON_EXP_TABLE: [u32; 80] = [
     0, 100, 100, 200, 200, 300, 400, 400, 400, 500, 600, 700, 700, 800, 800, 800, 900, 1000, 1100, 1100, 1200, 1300, 1400, 1500, 1600, 1600, 1700, 1800, 1900, 2000, 2000, 2100, 2200, 2300, 2400,
     2500, 2700, 2700, 2800, 2800, 2900, 3200, 3300, 3600, 3700, 4000, 4100, 4400, 4600, 4800, 5000, 5200, 5500, 5600, 5900, 6100, 6400, 6600, 6800, 7200, 7400, 7700, 8100, 8600, 9000, 9400, 9900,
     10300, 10800, 11200, 11700, 13100, 14300, 15600, 16800, 18100, 19500, 20800, 22100, 23500,
 ];
 
-pub const SSR_WEAPON_EXP_TABLE: [u32; 80] = [
+const SSR_WEAPON_EXP_TABLE: [u32; 80] = [
     0, 200, 200, 300, 300, 400, 500, 500, 600, 700, 800, 900, 900, 1000, 1100, 1100, 1200, 1300, 1400, 1400, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000,
     3200, 3400, 3400, 3500, 3600, 3700, 4000, 4200, 4500, 4700, 5000, 5200, 5500, 5800, 6000, 6300, 6600, 6900, 7100, 7400, 7700, 8000, 8300, 8600, 9000, 9300, 9700, 10200, 10800, 11300, 11800,
     12400, 12900, 13500, 14100, 14700, 16400, 17900, 19500, 21100, 22700, 24400, 26000, 27700, 29400,
 ];
 
-pub fn get_weapon_max_level(break_lv: u32) -> u32 {
+fn get_weapon_max_level(break_lv: u32) -> u32 {
     // break_level_limit.txt
     match break_lv {
         0 => 20,
@@ -32,7 +32,7 @@ pub fn get_weapon_max_level(break_lv: u32) -> u32 {
     }
 }
 
-pub fn get_weapon_break_demand_level(break_lv: u32) -> u32 {
+fn get_weapon_break_demand_level(break_lv: u32) -> u32 {
     match break_lv {
         0 => 0,
         1 => 10,
@@ -41,12 +41,11 @@ pub fn get_weapon_break_demand_level(break_lv: u32) -> u32 {
         4 => 40,
         5 => 50,
         6 => 60,
-        7 => 70,
         _ => 999,
     }
 }
 
-pub fn get_weapon_break_materials(weapon: &core::Item, break_lv: u32) -> Option<&'static Vec<acacia_data::schemas::GDPLN>> {
+fn get_weapon_break_materials(weapon: &core::Item, break_lv: u32) -> Option<&'static Vec<acacia_data::schemas::GDPLN>> {
     let weapon_gdpl = get_template(weapon.template);
     let Some(weapon_template_data) = tables().weapon_template.find_one("gdpl", [weapon_gdpl.0, weapon_gdpl.1, weapon_gdpl.2, weapon_gdpl.3]) else {
         warn!("The specified support_furniture_data does not exist. gdpl={:?}", weapon_gdpl);
@@ -67,7 +66,7 @@ pub fn get_weapon_break_materials(weapon: &core::Item, break_lv: u32) -> Option<
     }
 }
 
-pub fn calc_weapon_exp(current_level: u32, current_exp: u32, add_exp: u32, color: u32, max_level: u32) -> (u32, u32) {
+fn calc_weapon_exp(current_level: u32, current_exp: u32, add_exp: u32, color: u32, max_level: u32) -> (u32, u32) {
     let table = if color >= 5 { &SSR_WEAPON_EXP_TABLE } else { &WEAPON_EXP_TABLE };
     let hard_cap = max_level.min(80);
     let mut level = current_level;
@@ -165,4 +164,12 @@ pub async fn weapon_break_up(me: &PlayerManager, weapon: &mut core::Item) -> any
     let enhance = weapon.enhance.get_or_insert_with(|| core::Enhance { level: 1, ..Default::default() });
     enhance.r#break = current_break + 1;
     Ok((total_consume_gold, mat))
+}
+
+pub fn weapon_has_parts_reward(weapon: &core::Item) -> anyhow::Result<bool> {
+    let weapon_gdpl = get_template(weapon.template);
+    let Some(weapon_template_data) = tables().weapon_template.find_one("gdpl", [weapon_gdpl.0, weapon_gdpl.1, weapon_gdpl.2, weapon_gdpl.3]) else {
+        bail!("weapon_template_data not found {:?}", weapon_gdpl);
+    };
+    Ok(weapon_template_data.weapon_parts_award.is_some())
 }

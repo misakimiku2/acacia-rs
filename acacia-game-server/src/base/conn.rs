@@ -1,5 +1,6 @@
 use dashmap::DashMap;
 use prost::Message;
+use serde::Serialize;
 use serde_json::json;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -99,6 +100,16 @@ impl Conn {
         let mut writer = self.writer.lock().await;
         writer.write_all(&packet).await?;
         writer.flush().await?;
+        Ok(())
+    }
+
+    pub async fn send_script<T: Serialize>(&self, api: impl Into<String>, arg: T) -> anyhow::Result<()> {
+        let rsp = protocol::NtfCallScript {
+            api: api.into(),
+            arg: serde_json::to_string(&arg)?,
+            ..Default::default()
+        };
+        self.send_msg(Pf::NtfScript, &rsp, 0).await?;
         Ok(())
     }
 
