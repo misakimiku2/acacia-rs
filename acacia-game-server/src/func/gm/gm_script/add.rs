@@ -1,3 +1,4 @@
+use acacia_data::tables::tables;
 use std::{collections::HashMap, sync::Arc};
 use tracing::warn;
 
@@ -133,27 +134,20 @@ impl AddItem {
     }
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
-        let template_id = set_template(self.g, self.d, self.p, self.l)?;
-        let database = conn.database().await;
-
-        let item = if let Some(mut item) = database.items.find_one_by_template(template_id).await? {
-            item.count += &self.count;
-            item
+        let mut me = conn.manager().await;
+        if let Some(_weapon_template_data) = tables().suplies_template.find_one("gdpl", [self.g, self.d, self.p, self.l]) {
+            let new_item = core::Item {
+                id: me.new_item_id().await?,
+                template: set_template(self.g, self.d, self.p, self.l)?,
+                count: 1,
+                enhance: Some(core::Enhance { level: 1, ..Default::default() }),
+                ..Default::default()
+            };
+            me.set_item(new_item).await?;
         } else {
-            core::Item {
-                id: database.items.new_id().await?,
-                template: template_id,
-                count: self.count,
-                ..core::Item::default()
-            }
-        };
-
-        database.items.update_one(item.clone()).await?;
-        let rsp = protocol::NtfSyncPlayer {
-            items: vec![item],
-            ..protocol::NtfSyncPlayer::default()
-        };
-        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+            me.add_item_count(self.g, self.d, self.p, self.l, self.count).await?;
+        }
+        conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
         Ok(())
     }
 }

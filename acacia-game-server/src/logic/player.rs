@@ -84,6 +84,10 @@ impl PlayerManager {
         self.set_attribute(1, 1 + id * 2, num).await
     }
 
+    pub async fn new_item_id(&mut self) -> anyhow::Result<u64> {
+        self.database.items.new_id().await
+    }
+
     pub async fn get_item(&self, id: u64) -> anyhow::Result<Option<core::Item>> {
         Ok(self.database.items.find_one(id).await?)
     }
