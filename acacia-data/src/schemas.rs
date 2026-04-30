@@ -134,6 +134,17 @@ pub struct RikiData {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct CardTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+    #[serde(alias = "SpineID")]
+    pub spine_id: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct WeaponTemplateData {
     pub genre: u16,
     pub detail: u16,
@@ -193,4 +204,60 @@ pub struct ItemBreakData {
     pub items5: Vec<GDPLN>,
     #[serde(deserialize_with = "with_lua_table")]
     pub items6: Vec<GDPLN>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ItemSpineData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    pub node1_req: u32,
+    pub node2_req: u32,
+    pub node3_req: u32,
+    pub node4_req: u32,
+    pub node5_req: u32,
+    pub node6_req: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ItemNodeConditionData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node1_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node1_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node2_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node2_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node3_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node3_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node4_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node4_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node5_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node5_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node6_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node6_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node7_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node7_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node8_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node8_condition: Vec<(u32, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node9_cost: Vec<(u16, u16, u16, u16, u32)>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub node9_condition: Vec<(u32, u32)>,
 }

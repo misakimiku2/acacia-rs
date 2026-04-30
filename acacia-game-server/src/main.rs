@@ -30,6 +30,7 @@ pub mod logic {
     pub mod player;
     pub mod riki;
     pub mod weapon;
+    pub mod girl_spine;
 }
 
 #[tokio::main]

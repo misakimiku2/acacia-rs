@@ -8,6 +8,7 @@ mod gacha;
 mod general;
 mod girl_card;
 mod girl_skin;
+mod girl_spine;
 mod girl_weapon_skin;
 mod guide_logic;
 mod house;

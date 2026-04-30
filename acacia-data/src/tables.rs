@@ -62,6 +62,10 @@ crate::define_tables! {
         #[path="house/open_girl.txt"]
         pub house_open_girl: DataTable<schemas::HouseOpenGirlData>,
 
+        #[path="item/templates/card.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub card_template: DataTable<schemas::CardTemplateData>,
+
         #[path="item/templates/weapon.txt"]
         #[index("gdpl", genre, detail, particular, level)]
         pub weapon_template: DataTable<schemas::WeaponTemplateData>,
@@ -80,5 +84,13 @@ crate::define_tables! {
         #[path="item/break.txt"]
         #[index("id_1", id)]
         pub item_break: DataTable<schemas::ItemBreakData>,
+
+        #[path="item/skill/spine.txt"]
+        #[index("id_1", id)]
+        pub item_spine: DataTable<schemas::ItemSpineData>,
+
+        #[path="item/skill/nodecondition.txt"]
+        #[index("id_1", id)]
+        pub item_node_condition: DataTable<schemas::ItemNodeConditionData>,
     }
 }
