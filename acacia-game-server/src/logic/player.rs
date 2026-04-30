@@ -1,10 +1,12 @@
-use acacia_data::tables::tables;
 use anyhow::Context;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use acacia_commons::bits::{self, set_template};
+use acacia_data::tables::tables;
 use acacia_database::repositories::player::PlayerRepository;
-use acacia_game_msg::{core, protocol};
+use acacia_game_msg::{core, protocol, protocol::Pf};
+
+use crate::base::conn::Conn;
 
 const PLAYER_EXP_TABLE: [u32; 101] = [
     0, 6, 6, 6, 12, 33, 34, 35, 42, 47, 55, 61, 68, 75, 83, 90, 95, 100, 105, 110, 115, 115, 115, 115, 115, 120, 120, 120, 120, 120, 125, 130, 135, 140, 145, 150, 155, 160, 165, 180, 280, 320, 360,
@@ -36,6 +38,7 @@ fn calc_player_exp(current_level: u32, current_exp: u32, add_exp: u32) -> (u32, 
 }
 
 pub struct PlayerManager {
+    conn: Arc<Conn>,
     database: PlayerRepository,
     core: HashMap<u32, u32>,
     attrs: HashMap<u32, u32>,
@@ -45,8 +48,10 @@ pub struct PlayerManager {
 }
 
 impl PlayerManager {
-    pub fn new(database: PlayerRepository) -> Self {
+    pub async fn new(conn: Arc<Conn>) -> Self {
+        let database = conn.database().await;
         Self {
+            conn: conn,
             database: database,
             core: HashMap::new(),
             attrs: HashMap::new(),
@@ -243,5 +248,18 @@ impl PlayerManager {
             show_items: self.show_items,
             ..Default::default()
         }
+    }
+
+    pub async fn sync(self) -> anyhow::Result<()> {
+        let rsp = protocol::NtfSyncPlayer {
+            core: self.core,
+            custom: self.attrs,
+            custom_str: self.str_attrs,
+            items: self.items.into_values().collect(),
+            show_items: self.show_items,
+            ..Default::default()
+        };
+        self.conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+        Ok(())
     }
 }

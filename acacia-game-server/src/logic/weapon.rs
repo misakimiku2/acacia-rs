@@ -117,7 +117,7 @@ pub async fn weapon_level_up(me: &PlayerManager, weapon: &mut core::Item, mat: &
             total_consume_gold = total_consume_gold
                 .checked_add(supply_consume_gold.checked_mul(*mat_count).context("Gold overflow")?)
                 .context("Gold overflow")?;
-        } else if let Some(weapon_template_data) = tables().suplies_template.find_one("gdpl", [gdpl.0, gdpl.1, gdpl.2, gdpl.3]) {
+        } else if let Some(weapon_template_data) = tables().weapon_template.find_one("gdpl", [gdpl.0, gdpl.1, gdpl.2, gdpl.3]) {
             let supply_provide_exp = weapon_template_data.provide_exp.unwrap_or(0);
             let supply_consume_gold = weapon_template_data.consume_gold.unwrap_or(0);
             total_upgrade_exp = total_upgrade_exp

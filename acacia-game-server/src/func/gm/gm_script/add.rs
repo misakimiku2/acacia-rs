@@ -1,10 +1,10 @@
-use acacia_data::tables::tables;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use tracing::warn;
 
-use crate::base::conn::{self, Conn};
+use crate::base::conn::Conn;
 use acacia_commons::{bits::set_template, lua_utils::lua_func};
-use acacia_game_msg::{core, protocol, protocol::Pf};
+use acacia_data::tables::tables;
+use acacia_game_msg::{core, protocol::Pf};
 
 #[derive(Debug)]
 pub enum Add {
@@ -81,17 +81,11 @@ impl AddMoney {
     }
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
-        let database = conn.database().await;
-
-        let mut attr = database.attrs.get_attr(1, &self.typ * 2 + 1).await?;
-        attr.1 += &self.count;
-        database.attrs.update_one(attr).await?;
-
-        let rsp = protocol::NtfSyncPlayer {
-            custom: HashMap::from([attr]),
-            ..protocol::NtfSyncPlayer::default()
-        };
-        conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;
+        let mut me = conn.manager().await;
+        let mut money = me.get_money(self.typ).await?;
+        money += self.count;
+        me.set_money(self.typ, money).await?;
+        conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
         Ok(())
     }
 }
@@ -135,7 +129,7 @@ impl AddItem {
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         let mut me = conn.manager().await;
-        if let Some(_weapon_template_data) = tables().suplies_template.find_one("gdpl", [self.g, self.d, self.p, self.l]) {
+        if let Some(_weapon_template_data) = tables().weapon_template.find_one("gdpl", [self.g, self.d, self.p, self.l]) {
             let new_item = core::Item {
                 id: me.new_item_id().await?,
                 template: set_template(self.g, self.d, self.p, self.l)?,

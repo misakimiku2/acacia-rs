@@ -5,7 +5,6 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::base::conn::Conn;
 use crate::base::time::ServerTime;
-use acacia_data::init_data::init_data;
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
 

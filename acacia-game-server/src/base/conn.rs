@@ -57,8 +57,8 @@ impl Conn {
         PlayerRepository::new(uid.expect("conn.database() called before uid was bound"))
     }
 
-    pub async fn manager(&self) -> PlayerManager {
-        PlayerManager::new(self.database().await)
+    pub async fn manager(self: &Arc<Self>) -> PlayerManager {
+        PlayerManager::new(self.clone()).await
     }
 
     pub async fn recv_loop(self: &Arc<Self>, mut reader: tokio::net::tcp::OwnedReadHalf) {

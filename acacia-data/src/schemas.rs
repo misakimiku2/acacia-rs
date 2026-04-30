@@ -148,6 +148,8 @@ pub struct WeaponTemplateData {
     pub level_limit_id: u32,
     #[serde(alias = "BreakLimitID")]
     pub break_limit_id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub weapon_parts_award: Option<Vec<GDPL>>,
     pub provide_exp: Option<u32>,
     pub consume_gold: Option<u32>,
 }
