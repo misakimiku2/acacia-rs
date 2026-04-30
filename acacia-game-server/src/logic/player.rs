@@ -73,6 +73,7 @@ impl PlayerManager {
         let mut player = self.database.info.find_one().await?.with_context(|| format!("The player has not been initialized"))?;
         let (level, exp) = calc_player_exp(player.level, player.exp, add_exp);
         if player.level != level {
+            // WIP: 增加体力药
             player.level = level;
             self.core.insert(0, level);
         }
@@ -215,6 +216,10 @@ impl PlayerManager {
     pub async fn get_items_by_gdpl(&self, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<Vec<core::Item>> {
         let template_id = set_template(g, d, p, l)?;
         Ok(self.database.items.find_many_by_template(template_id).await?)
+    }
+
+    pub async fn get_items_by_slot(&self, slot: u32, value: u64) -> anyhow::Result<Vec<core::Item>> {
+        Ok(self.database.items.find_many_by_slot_value(slot, value).await?)
     }
 
     pub async fn get_attribute(&self, gid: u32, id: u32) -> anyhow::Result<u32> {

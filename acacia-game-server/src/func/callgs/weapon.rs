@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
-use crate::logic::weapon::{weapon_break_up, weapon_has_parts_reward, weapon_level_up};
+use crate::logic::weapon::{weapon_break_up, weapon_has_parts_reward, weapon_level_up, weapon_set_equip};
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{core, protocol};
 
@@ -250,5 +250,62 @@ async fn evolution(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> any
     me.set_item(weapon).await?;
     me.sync().await?;
     conn.send_script("Weapon_Evolution", ()).await?;
+    Ok(())
+}
+
+#[callgs_reg("Weapon_Replace")]
+async fn replace(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let girl_id = param["CardId"].as_u64().with_context(|| format!("Expected 'CardId' but not found in param {:?}", param))?;
+    let weapon_id = param["Id"].as_u64().with_context(|| format!("Expected 'Id' but not found in param {:?}", param))?;
+
+    let mut me = conn.manager().await;
+    let Some(mut weapon) = me.get_item(weapon_id).await? else {
+        conn.send_err("error.weapon_not_found").await?;
+        bail!("Weapon {weapon_id} not found");
+    };
+    let Some(mut girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.weapon_exchange_cmd_err").await?;
+        bail!("Girl {girl_id} not found");
+    };
+    let Some(girl_before_weapon_id) = girl.slots.get(&4).copied() else {
+        conn.send_err("error.weapon_exchange_cmd_err").await?;
+        bail!("Girl {girl_id} has no weapon slot (4)");
+    };
+    let Some(mut girl_before_weapon) = me.get_item(girl_before_weapon_id).await? else {
+        conn.send_err("error.weapon_exchange_cmd_err").await?;
+        bail!("Girl before weapon {girl_before_weapon_id} not found");
+    };
+    let weapon_before_cards = me.get_items_by_slot(4, weapon_id).await?;
+    let weapon_before_card = match weapon_before_cards.len() {
+        0 => None,
+        1 => Some(weapon_before_cards.into_iter().next().unwrap()),
+        n => {
+            conn.send_err("error.weapon_exchange_cmd_err").await?;
+            bail!("Weapon {weapon_id} equipped by multiple cards, count={n}");
+        }
+    };
+
+    if weapon_before_card.is_none() {
+        weapon_set_equip(&mut weapon, true);
+        weapon_set_equip(&mut girl_before_weapon, false);
+        girl.slots.insert(4, weapon_id);
+
+        me.set_item(weapon).await?;
+        me.set_item(girl_before_weapon).await?;
+        me.set_item(girl).await?;
+    } else {
+        let mut weapon_before_card = weapon_before_card.unwrap();
+        weapon_set_equip(&mut weapon, true);
+        weapon_set_equip(&mut girl_before_weapon, true);
+        girl.slots.insert(4, weapon_id);
+        weapon_before_card.slots.insert(4, girl_before_weapon_id);
+
+        me.set_item(weapon).await?;
+        me.set_item(girl_before_weapon).await?;
+        me.set_item(girl).await?;
+        me.set_item(weapon_before_card).await?;
+    }
+    me.sync().await?;
+    conn.send_script("Weapon_Replace", ()).await?;
     Ok(())
 }

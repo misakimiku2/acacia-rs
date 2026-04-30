@@ -24,3 +24,4 @@ DEFINE FIELD IF NOT EXISTS slots.*           ON player_item TYPE int DEFAULT 0;
 DEFINE INDEX IF NOT EXISTS idx_item_pid          ON player_item FIELDS pid;
 DEFINE INDEX IF NOT EXISTS idx_item_pid_sid      ON player_item FIELDS pid, sid UNIQUE;
 DEFINE INDEX IF NOT EXISTS idx_item_pid_template ON player_item FIELDS pid, template;
+DEFINE INDEX IF NOT EXISTS idx_item_pid_slots_4  ON player_item FIELDS pid, slots["4"];

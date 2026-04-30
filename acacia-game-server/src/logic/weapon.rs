@@ -173,3 +173,12 @@ pub fn weapon_has_parts_reward(weapon: &core::Item) -> anyhow::Result<bool> {
     };
     Ok(weapon_template_data.weapon_parts_award.is_some())
 }
+
+
+pub fn weapon_set_equip(weapon: &mut core::Item, enabled: bool) {
+    if enabled {
+        weapon.flag |= 1;
+    } else {
+        weapon.flag &= !1;
+    }
+}

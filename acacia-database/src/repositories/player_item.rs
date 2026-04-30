@@ -96,4 +96,28 @@ impl PlayerItemRepository {
         let items = resp.take::<Vec<PlayerItem>>(0)?.into_iter().map(|i| i.to_prost()).collect();
         Ok(items)
     }
+
+    pub async fn find_one_by_slot_value(&self, slot_id: u32, slot_value: u64) -> Result<Option<core::Item>> {
+        let slot_key = slot_id.to_string();
+        let mut resp = db()
+            .query("SELECT * FROM player_item WHERE pid = $pid AND slots[$slot_key] = $slot_value LIMIT 1")
+            .bind(("pid", self.pid))
+            .bind(("slot_key", slot_key))
+            .bind(("slot_value", slot_value))
+            .await?;
+        let item = resp.take::<Vec<PlayerItem>>(0)?.into_iter().next().map(PlayerItem::to_prost);
+        Ok(item)
+    }
+
+    pub async fn find_many_by_slot_value(&self, slot_id: u32, slot_value: u64) -> Result<Vec<core::Item>> {
+        let slot_key = slot_id.to_string();
+        let mut resp = db()
+            .query("SELECT * FROM player_item WHERE pid = $pid AND slots[$slot_key] = $slot_value")
+            .bind(("pid", self.pid))
+            .bind(("slot_key", slot_key))
+            .bind(("slot_value", slot_value))
+            .await?;
+        let items = resp.take::<Vec<PlayerItem>>(0)?.into_iter().map(|i| i.to_prost()).collect();
+        Ok(items)
+    }
 }
