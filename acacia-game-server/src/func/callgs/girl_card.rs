@@ -1,13 +1,16 @@
-use anyhow::Context;
+use anyhow::{Context, bail};
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::{base::conn::Conn, logic::girl::calc_girl_exp};
+use crate::{
+    base::conn::Conn,
+    logic::{girl::calc_girl_exp, girl_spine::get_girl_spine_max_count},
+};
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
-use acacia_game_msg::{core, protocol, protocol::Pf};
+use acacia_game_msg::{core, protocol};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -18,10 +21,23 @@ struct Material {
 
 #[callgs_reg("GirlCard_UpdateLevel")]
 async fn update_level(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let girl_id = param["Id"].as_u64().with_context(|| format!("Expected 'Id' but not found in param {:?}", param))?;
-    let materials: Vec<Material> = serde_json::from_value(param["tbMaterials"].clone())?;
+    let Some(girl_id) = param["Id"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'Id' but not found in param {:?}", param);
+    };
+    let materials: Vec<Material> = match serde_json::from_value(param["tbMaterials"].clone()) {
+        Ok(v) => v,
+        Err(_) => {
+            conn.send_err("error.BadParam").await?;
+            bail!("Expected 'tbMaterials' but not found in param {:?}", param);
+        }
+    };
+
     let mut me = conn.manager().await;
-    let mut girl = me.get_item(girl_id).await?.with_context(|| format!("Girl not found {}", girl_id))?;
+    let Some(mut girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.card_not_found").await?;
+        bail!("Girl not found {}", girl_id);
+    };
 
     let mut total_provide_exp: u32 = 0;
     let mut total_consume_gold: u32 = 0;
@@ -65,12 +81,41 @@ async fn update_level(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> 
     enhance.level = result.0;
     enhance.exp = result.1;
     me.set_item(girl).await?;
-    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
+    me.sync().await?;
 
-    let rsp = protocol::NtfCallScript {
-        api: "GirlCard_UpdateLevel".to_string(),
-        ..protocol::NtfCallScript::default()
+    conn.send_script("GirlCard_UpdateLevel", ()).await?;
+    Ok(())
+}
+
+#[callgs_reg("GirlCard_ProLevelPromote")]
+async fn pro_level_promote(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Some(girl_id) = param["nID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nID' but not found in param {:?}", param);
     };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+
+    let mut me = conn.manager().await;
+    let Some(mut girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.card_not_found").await?;
+        bail!("Girl not found {}", girl_id);
+    };
+
+    let spine_max_count = get_girl_spine_max_count(&girl);
+    let max_pro_level = match spine_max_count {
+        1 | 2 => 1,
+        3 | 4 => 2,
+        5 | 6 => 3,
+        _ => 0,
+    };
+    let enhance = girl.enhance.get_or_insert_with(|| core::Enhance { level: 1, ..Default::default() });
+    if enhance.pro_level + 1 > max_pro_level {
+        conn.send_err("error.girlcard_update_failed").await?;
+        bail!("Girl card pro_level reached max: current pro_level={}, max_pro_level={}", enhance.pro_level, max_pro_level);
+    }
+    enhance.pro_level += 1;
+    me.set_item(girl).await?;
+    me.sync().await?;
+
+    conn.send_script("GirlCard_ProLevelPromote", ()).await?;
     Ok(())
 }

@@ -22,7 +22,7 @@ fn set_spine_node(spines: &mut Vec<u64>, mast_idx: usize, sub_idx: usize, enable
     spines[mast_idx - 1] = set_node(spines[mast_idx - 1], sub_idx, enable);
 }
 
-fn get_girl_spine_max_count(girl: &core::Item) -> usize {
+pub fn get_girl_spine_max_count(girl: &core::Item) -> usize {
     girl.enhance.as_ref().map_or(0, |enhance| enhance.spines.iter().filter(|&&x| get_node(x, 9)).count())
 }
 
