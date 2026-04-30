@@ -66,7 +66,10 @@ impl PlayerManager {
         Ok(player.level)
     }
 
-    pub async fn add_exp(&mut self, add_exp: u32) -> anyhow::Result<()> {
+    pub async fn add_exp(&mut self, mut add_exp: u32) -> anyhow::Result<()> {
+        if self.level().await? < 60 {
+            add_exp = add_exp * 3 / 2;
+        }
         let mut player = self.database.info.find_one().await?.with_context(|| format!("The player has not been initialized"))?;
         let (level, exp) = calc_player_exp(player.level, player.exp, add_exp);
         if player.level != level {
