@@ -184,7 +184,7 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         item
     } else {
         core::Item {
-            id: database.items.new_id().await?,
+            id: database.info.new_item_id().await?,
             template: template_id,
             count: 1,
             ..core::Item::default()

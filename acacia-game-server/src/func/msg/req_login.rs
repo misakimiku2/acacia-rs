@@ -57,7 +57,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
 
         let item = core::Item {
-            id: database.items.new_id().await?,
+            id: database.info.new_item_id().await?,
             template: set_template(1, 2, 1, 1)?,
             count: 1,
             enhance: Some(core::Enhance { level: 1, ..Default::default() }),
@@ -67,7 +67,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         database.items.update_one(item).await?;
 
         let item = core::Item {
-            id: database.items.new_id().await?,
+            id: database.info.new_item_id().await?,
             template: set_template(2, 1, 255, 1)?,
             count: 1,
             flag: 0b1,
@@ -77,7 +77,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         database.items.update_one(item).await?;
 
         let item = core::Item {
-            id: database.items.new_id().await?,
+            id: database.info.new_item_id().await?,
             template: set_template(7, 2, 1, 1)?,
             count: 1,
             flag: 0b1,
@@ -86,7 +86,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         database.items.update_one(item).await?;
 
         let item = core::Item {
-            id: database.items.new_id().await?,
+            id: database.info.new_item_id().await?,
             template: set_template(9, 1, 2, 1)?,
             count: 1,
             ..Default::default()
@@ -94,7 +94,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         database.items.update_one(item).await?;
 
         let item = core::Item {
-            id: database.items.new_id().await?,
+            id: database.info.new_item_id().await?,
             template: set_template(9, 10, 1, 1)?,
             count: 1,
             ..Default::default()

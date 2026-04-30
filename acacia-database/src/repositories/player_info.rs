@@ -13,6 +13,15 @@ impl PlayerInfoRepository {
         Self { pid }
     }
 
+    pub async fn new_item_id(&self) -> Result<u64> {
+        let mut resp = db()
+            .query("UPDATE ONLY type::record('player_info', $pid) SET item_id_alloc += 1 RETURN VALUE item_id_alloc")
+            .bind(("pid", self.pid))
+            .await?;
+        let id: Option<u64> = resp.take(0)?;
+        id.ok_or_else(|| anyhow::anyhow!("player_info:{} not found", self.pid))
+    }
+
     pub async fn find_one(&self) -> Result<Option<core::Player>> {
         let mut resp = db().query("SELECT * FROM ONLY type::record('player_info', $pid)").bind(("pid", self.pid)).await?;
         let player: Option<PlayerInfo> = resp.take(0)?;

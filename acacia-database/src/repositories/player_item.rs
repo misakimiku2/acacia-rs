@@ -13,14 +13,14 @@ impl PlayerItemRepository {
         Self { pid }
     }
 
-    pub async fn new_id(&self) -> Result<u64> {
-        let mut resp: surrealdb::IndexedResults = db()
-            .query("UPSERT type::record('counter', $pid) SET player_item_counter += 1 RETURN player_item_counter")
-            .bind(("pid", self.pid))
-            .await?;
-        let id: Option<u64> = resp.take("player_item_counter")?;
-        Ok(id.unwrap_or(1))
-    }
+    // pub async fn new_id(&self) -> Result<u64> {
+    //    let mut resp: surrealdb::IndexedResults = db()
+    //         .query("UPSERT type::record('counter', $pid) SET player_item_counter += 1 RETURN player_item_counter")
+    //         .bind(("pid", self.pid))
+    //         .await?;
+    //     let id: Option<u64> = resp.take("player_item_counter")?;
+    //     Ok(id.unwrap_or(1))
+    // }
 
     pub async fn find_all(&self) -> Result<Vec<core::Item>> {
         let mut resp = db().query("SELECT * FROM player_item WHERE pid = $pid").bind(("pid", self.pid)).await?;

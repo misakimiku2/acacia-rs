@@ -90,7 +90,7 @@ impl PlayerManager {
     }
 
     pub async fn new_item_id(&mut self) -> anyhow::Result<u64> {
-        self.database.items.new_id().await
+        self.database.info.new_item_id().await
     }
 
     pub async fn get_item(&self, id: u64) -> anyhow::Result<Option<core::Item>> {
@@ -100,6 +100,19 @@ impl PlayerManager {
     pub async fn set_item(&mut self, item: core::Item) -> anyhow::Result<()> {
         self.database.items.update_one(item.clone()).await?;
         self.items.insert(item.id, item);
+        Ok(())
+    }
+
+    pub async fn remove_item(&mut self, id: u64) -> anyhow::Result<()> {
+        self.database.items.delete_one(id).await?;
+        self.items.insert(
+            id,
+            core::Item {
+                id: id,
+                count: 0,
+                ..Default::default()
+            },
+        );
         Ok(())
     }
 
@@ -147,7 +160,7 @@ impl PlayerManager {
             item
         } else {
             core::Item {
-                id: self.database.items.new_id().await?,
+                id: self.database.info.new_item_id().await?,
                 template: template_id,
                 count: n,
                 ..Default::default()
