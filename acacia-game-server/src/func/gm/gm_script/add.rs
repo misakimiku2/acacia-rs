@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 use tracing::warn;
 
-use crate::base::conn::Conn;
+use crate::base::conn::{self, Conn};
 use acacia_commons::{bits::set_template, lua_utils::lua_func};
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
@@ -47,17 +47,20 @@ impl Add {
 
 #[derive(Debug)]
 pub struct AddExp {
-    pub count: i64,
+    pub count: u32,
 }
 
 impl AddExp {
     fn from_args(args: &[String]) -> Self {
         Self {
-            count: args.get(0).and_then(|s| s.parse::<i64>().ok()).unwrap_or(0),
+            count: args.get(0).and_then(|s| s.parse::<u32>().ok()).unwrap_or(0),
         }
     }
 
-    pub async fn run(&self, _: Arc<Conn>) -> anyhow::Result<()> {
+    pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
+        let mut me = conn.manager().await;
+        me.add_exp(self.count).await?;
+        conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
         Ok(())
     }
 }
