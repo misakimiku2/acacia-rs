@@ -16,13 +16,24 @@ async fn change_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
 
     let mut me = conn.manager().await;
     me.set_show_item(3, nid).await?;
-    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
+    me.sync().await?;
 
     let rsp = protocol::NtfCallScript {
         api: "PlayerSetting_ChangeShowCard".to_string(),
         ..protocol::NtfCallScript::default()
     };
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+#[callgs_reg("PlayerSetting_SetProfileFace")]
+async fn set_profile_face(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let nhead_item_id = param["nHeadItemID"].as_i64().with_context(|| format!("Expected 'nHeadItemID' but not found in param {:?}", param))?;
+
+    let mut me = conn.manager().await;
+    me.set_show_item(4, nhead_item_id as u64).await?;
+    me.sync().await?;
+    conn.send_script("PlayerSetting_SetProfileFace", ()).await?;
     Ok(())
 }
 
@@ -38,13 +49,8 @@ async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param
     } else {
         me.set_show_item(showitem_index, 0).await?;
     }
-    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
-
-    let rsp = protocol::NtfCallScript {
-        api: "PlayerSetting_ChangeAccountShowCard".to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    me.sync().await?;
+    conn.send_script("PlayerSetting_ChangeAccountShowCard", ()).await?;
     Ok(())
 }
 
@@ -60,12 +66,7 @@ async fn change_account_show_skin(conn: Arc<Conn>, _: protocol::ReqCallGs, param
     } else {
         me.set_show_item(showitem_index, 0).await?;
     }
-    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
-
-    let rsp = protocol::NtfCallScript {
-        api: "PlayerSetting_ChangeAccountShowSkin".to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    me.sync().await?;
+    conn.send_script("PlayerSetting_ChangeAccountShowSkin", ()).await?;
     Ok(())
 }
