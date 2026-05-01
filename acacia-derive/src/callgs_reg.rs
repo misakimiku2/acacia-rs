@@ -1,11 +1,25 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{ItemFn, LitStr, parse_macro_input};
+use syn::{ItemFn, LitStr, Stmt, parse_macro_input, parse_quote};
 
 pub fn impl_callgs_reg(attr: TokenStream, item: TokenStream) -> TokenStream {
     let api_name = parse_macro_input!(attr as LitStr);
-    let input = parse_macro_input!(item as ItemFn);
+    let mut input = parse_macro_input!(item as ItemFn);
     let fn_name = &input.sig.ident;
+
+    let api_name_for_macro = api_name.clone();
+    let call_script_macro: Stmt = parse_quote! {
+        #[allow(unused_macros)]
+        macro_rules! call_script {
+            ($name:literal, $($json:tt)+) => {{
+                conn.send_script($name, serde_json::json!($($json)+)).await?;
+            }};
+            ($($json:tt)+) => {{
+                conn.send_script(#api_name_for_macro, serde_json::json!($($json)+)).await?;
+            }};
+        }
+    };
+    input.block.stmts.insert(0, call_script_macro);
 
     let expanded = quote! {
         #input
