@@ -146,6 +146,8 @@ pub struct CardTemplateData {
     #[serde(alias = "profile")]
     #[serde(deserialize_with = "with_lua_table")]
     pub profile: Vec<GDPLN>,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub pieces: Option<Vec<GDPLN>>,
     #[serde(alias = "SpineID")]
     pub spine_id: u32,
 }

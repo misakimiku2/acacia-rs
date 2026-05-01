@@ -1,10 +1,11 @@
 use anyhow::{Context, bail};
 use serde::Deserialize;
 use serde_json::{Value, json};
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
-use crate::logic::girl::{calc_girl_exp, get_girl_break_materials};
+use crate::logic::girl::{calc_girl_exp, get_girl_break_materials, new_girl};
 use crate::logic::girl_spine::{SpineConfigs, get_girl_spine_max_count};
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
@@ -227,5 +228,54 @@ async fn up_by_break(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> a
     me.sync().await?;
 
     conn.send_script("GirlCard_UpByBreak", ()).await?;
+    Ok(())
+}
+
+#[callgs_reg("GirlCard_UnLockCharacter")]
+async fn un_lock_character(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(g) = u16::deserialize(&param["g"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'g' as u16 in param {:?}", param);
+    };
+    let Ok(d) = u16::deserialize(&param["d"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'd' as u16 in param {:?}", param);
+    };
+    let Ok(p) = u16::deserialize(&param["p"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'p' as u16 in param {:?}", param);
+    };
+    let Ok(l) = u16::deserialize(&param["l"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'l' as u16 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let Some(card_template_data) = tables().card_template.find_one("gdpl", [g, d, p, l]) else {
+        bail!("The specified card_template_data does not exist. gdpl={:?}", [g, d, p, l]);
+    };
+    let Some(pieces) = &card_template_data.pieces else {
+        bail!("The specified card_template_data does not have pieces. gdpl={:?}", [g, d, p, l]);
+    };
+    let mut pieces_items = HashMap::<(u16, u16, u16, u16), u32>::new();
+    for (g, d, p, l, n) in pieces {
+        pieces_items.insert((*g, *d, *p, *l), *n);
+    }
+
+    for (mat_gdpl, mat_num) in &pieces_items {
+        let item_count = me.get_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3).await?;
+        if item_count < *mat_num {
+            conn.send_err("error.mat_not_found").await?;
+            return Ok(());
+        }
+    }
+
+    for (mat_gdpl, mat_num) in &pieces_items {
+        me.remove_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3, *mat_num).await?;
+    }
+    new_girl(&mut me, g, d, p, l).await?;
+    me.sync().await?;
+
+    conn.send_script("GirlCard_UnLockCharacter", ()).await?;
     Ok(())
 }

@@ -1,9 +1,9 @@
 use anyhow::bail;
 use std::collections::HashMap;
 
-use acacia_commons::bits::get_template;
+use crate::logic::player::PlayerManager;
+use acacia_commons::bits::{get_template, set_template};
 use acacia_data::tables::tables;
-
 use acacia_game_msg::core;
 
 const GIRL_EXP_TABLE: [u32; 81] = [
@@ -110,4 +110,50 @@ pub fn get_girl_break_materials(girl: &core::Item, break_lv: u32) -> anyhow::Res
         result.insert((*g, *d, *p, *l), *n);
     }
     Ok(result)
+}
+
+pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<()> {
+    let Some(card_template_data) = tables().card_template.find_one("gdpl", [g, d, p, l]) else {
+        bail!("The specified card_template_data does not exist. gdpl={:?}", [g, d, p, l]);
+    };
+
+    let mut girl = core::Item {
+        id: me.new_item_id().await?,
+        template: set_template(g, d, p, l)?,
+        count: 1,
+        enhance: Some(core::Enhance { level: 1, ..Default::default() }),
+        ..Default::default()
+    };
+
+    let df_weapon = card_template_data.default_weapon_gpdl;
+    let mut weapon = core::Item {
+        id: me.new_item_id().await?,
+        template: set_template(df_weapon.0, df_weapon.1, df_weapon.2, df_weapon.3)?,
+        count: 1,
+        enhance: Some(core::Enhance { level: 1, ..Default::default() }),
+        ..Default::default()
+    };
+    weapon.flag |= 1;
+
+    let skins = me.get_items_by_gdpl(7, d, p, 1).await?;
+    let mut skin = match skins.into_iter().next() {
+        Some(skin) => skin,
+        None => core::Item {
+            id: me.new_item_id().await?,
+            template: set_template(7, d, p, 1)?,
+            ..Default::default()
+        },
+    };
+    skin.flag |= 1;
+
+    girl.slots.insert(4, weapon.id);
+    girl.slots.insert(5, skin.id);
+
+    me.set_item(girl).await?;
+    me.set_item(weapon).await?;
+    me.set_item(skin).await?;
+    for profile in &card_template_data.profile {
+        me.add_item_count(profile.0, profile.1, profile.2, profile.3, profile.4).await?;
+    }
+    Ok(())
 }
