@@ -2,9 +2,37 @@ use anyhow::bail;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::logic::player::PlayerManager;
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
 use acacia_game_msg::core;
+
+#[derive(Debug, Default)]
+pub struct SpineConfigs {
+    configs: Vec<Option<SpineConfig>>,
+    gdpl: (u16, u16, u16, u16),
+}
+
+impl SpineConfigs {
+    pub async fn from(me: &PlayerManager, girl: &core::Item) -> anyhow::Result<Self> {
+        let girl_gdpl = get_template(girl.template);
+        let mut configs: Vec<Option<SpineConfig>> = match me.get_str_attribute(30, girl_gdpl.1 as u32).await?.trim() {
+            "" => Vec::new(),
+            s => serde_json::from_str(s)?,
+        };
+        configs.resize_with(girl_gdpl.2 as usize, || None);
+        Ok(Self { configs, gdpl: girl_gdpl })
+    }
+
+    pub fn get_config(&mut self) -> &mut SpineConfig {
+        let index = self.gdpl.2 as usize - 1;
+        self.configs[index].get_or_insert_with(SpineConfig::default)
+    }
+
+    pub fn to_string(&self) -> anyhow::Result<String> {
+        Ok(serde_json::to_string(&self.configs)?)
+    }
+}
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct SpineConfig {

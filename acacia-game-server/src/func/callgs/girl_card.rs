@@ -1,11 +1,11 @@
 use anyhow::{Context, bail};
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
 use crate::logic::girl::{calc_girl_exp, get_girl_break_materials};
-use crate::logic::girl_spine::get_girl_spine_max_count;
+use crate::logic::girl_spine::{SpineConfigs, get_girl_spine_max_count};
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;
@@ -20,16 +20,13 @@ struct Material {
 
 #[callgs_reg("GirlCard_UpdateLevel")]
 async fn update_level(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let Some(girl_id) = param["Id"].as_u64() else {
+    let Ok(girl_id) = u64::deserialize(&param["Id"]) else {
         conn.send_err("error.BadParam").await?;
-        bail!("Expected 'Id' but not found in param {:?}", param);
+        bail!("Expected 'Id' as u64 in param {:?}", param);
     };
-    let materials: Vec<Material> = match serde_json::from_value(param["tbMaterials"].clone()) {
-        Ok(v) => v,
-        Err(_) => {
-            conn.send_err("error.BadParam").await?;
-            bail!("Expected 'tbMaterials' but not found in param {:?}", param);
-        }
+    let Ok(materials) = Vec::<Material>::deserialize(&param["tbMaterials"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'tbMaterials' as Vec<Material> in param {:?}", param);
     };
 
     let mut me = conn.manager().await;
@@ -116,6 +113,71 @@ async fn pro_level_promote(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value
     me.sync().await?;
 
     conn.send_script("GirlCard_ProLevelPromote", ()).await?;
+    Ok(())
+}
+
+#[callgs_reg("GirlCard_ReceiveProLevelAward")]
+async fn receive_pro_level_award(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(girl_id) = u64::deserialize(&param["nID"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nID' as u64 in param {:?}", param);
+    };
+    let pro_level: Option<u32> = match param.get("nProLevel") {
+        None => None,
+        Some(value) => {
+            let Ok(pro_level) = u32::deserialize(value) else {
+                conn.send_err("error.BadParam").await?;
+                bail!("Expected 'nProLevel' as u32 in param {:?}", param);
+            };
+            if pro_level > 3 {
+                conn.send_err("error.BadParam").await?;
+                bail!("Bad pro_level {}", pro_level);
+            }
+            Some(pro_level)
+        }
+    };
+
+    let mut me = conn.manager().await;
+    let Some(girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.card_not_found").await?;
+        bail!("Girl not found {}", girl_id);
+    };
+    let current_pro_level = girl.enhance.as_ref().map_or(0, |e| e.pro_level);
+    let girl_gdpl = get_template(girl.template);
+
+    let mut configs = SpineConfigs::from(&me, &girl).await?;
+    let config = configs.get_config();
+    config.tbr.resize(3, 0);
+
+    let mut reward_count: u32 = 0;
+    if let Some(level) = pro_level {
+        if current_pro_level < level {
+            conn.send_err("tip.star_not_enough").await?;
+            return Ok(());
+        }
+        if config.tbr[level as usize - 1] == 1 {
+            conn.send_err("tip.star_award_geted").await?;
+            bail!("Award already received, girl_id: {}, pro_level: {}", girl_id, level);
+        }
+        config.tbr[level as usize - 1] = 1;
+        reward_count += 1;
+    } else {
+        for (index, value) in config.tbr.iter_mut().enumerate() {
+            if current_pro_level < (index + 1) as u32 {
+                continue;
+            }
+            if *value == 1 {
+                continue;
+            }
+            *value = 1;
+            reward_count += 1;
+        }
+    }
+    me.add_item_count(5, 21, 1, 4, reward_count).await?;
+    me.set_str_attribute(30, girl_gdpl.1 as u32, configs.to_string()?).await?;
+    me.sync().await?;
+
+    conn.send_script("GirlCard_ReceiveProLevelAward", json!({"tbAward": [[5, 21, 1, 4, reward_count]]})).await?;
     Ok(())
 }
 
