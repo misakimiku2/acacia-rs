@@ -106,7 +106,8 @@ async fn r#break(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyho
 #[callgs_reg("Weapon_OneKeyToMax")]
 async fn one_key_to_max(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let weapon_id = param["Id"].as_u64().with_context(|| format!("Expected 'Id' but not found in param {:?}", param))?;
-    let break_upgrade_mat: Vec<(u32, Vec<(u64, u32)>, u8)> = serde_json::from_value(param["tbBreakUpgradeMat"].clone())?;
+    let mut break_upgrade_mat: Vec<(u32, Vec<(u64, u32)>, u8)> = serde_json::from_value(param["tbBreakUpgradeMat"].clone())?;
+    break_upgrade_mat.sort_by_key(|e| e.0);
 
     let mut me = conn.manager().await;
     let mut weapon = me.get_item(weapon_id).await?.with_context(|| format!("Weapon not found {}", weapon_id))?;

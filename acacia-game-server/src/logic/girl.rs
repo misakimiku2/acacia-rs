@@ -141,6 +141,7 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
         None => core::Item {
             id: me.new_item_id().await?,
             template: set_template(7, d, p, 1)?,
+            count: 1,
             ..Default::default()
         },
     };
