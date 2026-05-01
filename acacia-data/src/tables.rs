@@ -17,6 +17,7 @@ crate::define_tables! {
     pub struct Tables {
         #[path="activity/activities.txt"]
         #[index("id_1", id)]
+        #[index("class_1", class)]
         pub activity: DataTable<schemas::ActivityData>,
 
         #[path="player/rename.txt"]

@@ -1,3 +1,4 @@
+use acacia_commons::bits::set_bit;
 use anyhow::bail;
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -21,6 +22,27 @@ async fn refresh(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyho
     let mut me = conn.manager().await;
     me.set_attribute(50, nid * 10, activity_data.start_time.unwrap_or(0) as u32).await?;
     me.sync().await?;
+    Ok(())
+}
+
+#[callgs_reg("Activity_Flag")]
+async fn flag(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(nid) = u32::deserialize(&param["nId"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nId' as u32 in param {:?}", param);
+    };
+    let Ok(ntype) = u32::deserialize(&param["nType"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nType' as u32 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let val = me.get_attribute(50, nid * 10 + 1).await?;
+    let val = set_bit(val, ntype, true);
+    me.set_attribute(50, nid * 10 + 1, val).await?;
+    me.sync().await?;
+
+    call_script!("ActivityQuest_Flag", {"nId": nid});
     Ok(())
 }
 
