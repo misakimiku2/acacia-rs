@@ -26,7 +26,7 @@ where
     D: Deserializer<'de>,
 {
     let s = String::deserialize(deserializer)?;
-    let offset = FixedOffset::east_opt(8 * 3600).ok_or_else(|| serde::de::Error::custom("The time_offset should not be error"))?;
+    let offset = FixedOffset::east_opt(0 * 3600).ok_or_else(|| serde::de::Error::custom("The time_offset should not be error"))?;
     let naive = NaiveDateTime::parse_from_str(&s, "[%Y%m%d%H%M]").map_err(serde::de::Error::custom)?;
     let dt = offset.from_local_datetime(&naive).single().ok_or_else(|| serde::de::Error::custom("invalid datetime {s}"))?;
     Ok(dt.timestamp())
@@ -43,7 +43,7 @@ where
     if s.trim().is_empty() {
         return Ok(None);
     }
-    let offset = FixedOffset::east_opt(8 * 3600).ok_or_else(|| serde::de::Error::custom("The time_offset should not be error"))?;
+    let offset = FixedOffset::east_opt(0 * 3600).ok_or_else(|| serde::de::Error::custom("The time_offset should not be error"))?;
     let naive = NaiveDateTime::parse_from_str(&s, "[%Y%m%d%H%M]").map_err(serde::de::Error::custom)?;
     let dt = offset.from_local_datetime(&naive).single().ok_or_else(|| serde::de::Error::custom(format!("invalid datetime {s}")))?;
     Ok(Some(dt.timestamp()))

@@ -1,10 +1,10 @@
-use acacia_commons::bits::set_template;
+use acacia_data::tables::tables;
 use anyhow::Context;
 use serde_json::json;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
-use crate::base::conn::Conn;
 use crate::base::time::ServerTime;
+use crate::{base::conn::Conn, logic::girl::new_girl};
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
 
@@ -38,11 +38,15 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
     }
 
     conn.send_msg(Pf::RspLogin, &rsp, 0).await?;
+    conn.send_script("NtfWorldChatHostUrl", json!({"HostUrl": "https://snowbreak-ea-chat.amazingseasuncdn.com/chat/"}))
+        .await?;
     Ok(())
 }
 
 async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
     let database = conn.database().await;
+    let mut me = conn.manager().await;
+
     if database.info.find_one().await?.is_none() {
         let player = core::Player {
             pid: conn.uid().with_context(|| format!("The pid should not be None"))?,
@@ -54,63 +58,28 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
             ..Default::default()
         };
         database.info.update_one(player).await?;
-        database.attrs.set_attr(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
 
-        let item = core::Item {
-            id: database.info.new_item_id().await?,
-            template: set_template(1, 2, 1, 1)?,
-            count: 1,
-            enhance: Some(core::Enhance { level: 1, ..Default::default() }),
-            slots: HashMap::from([(4, 2), (5, 3)]),
-            ..Default::default()
-        };
-        database.items.update_one(item).await?;
-
-        let item = core::Item {
-            id: database.info.new_item_id().await?,
-            template: set_template(2, 1, 255, 1)?,
-            count: 1,
-            flag: 0b1,
-            enhance: Some(core::Enhance { level: 1, ..Default::default() }),
-            ..Default::default()
-        };
-        database.items.update_one(item).await?;
-
-        let item = core::Item {
-            id: database.info.new_item_id().await?,
-            template: set_template(7, 2, 1, 1)?,
-            count: 1,
-            flag: 0b1,
-            ..Default::default()
-        };
-        database.items.update_one(item).await?;
-
-        let item = core::Item {
-            id: database.info.new_item_id().await?,
-            template: set_template(9, 1, 2, 1)?,
-            count: 1,
-            ..Default::default()
-        };
-        database.items.update_one(item).await?;
-
-        let item = core::Item {
-            id: database.info.new_item_id().await?,
-            template: set_template(9, 10, 1, 1)?,
-            count: 1,
-            ..Default::default()
-        };
-        database.items.update_one(item).await?;
+        me.set_attribute(99, 6, 1).await?; // 绕过第一次登录 SDK 请求
+        new_girl(&mut me, 1, 2, 1, 1).await?;
+        me.add_item_count(9, 10, 1, 1, 1).await?;
 
         // database.attrs.update_many(init_data().attrs.iter().map(|(&k, &v)| (k, v))).await?;
         // database.items.update_many(init_data().items.iter().cloned()).await?;
         // database.attrs.set_attr(4, 0, 5).await?;
     }
 
-    let rsp = protocol::NtfCallScript {
-        api: "NtfWorldChatHostUrl".to_string(),
-        arg: json!({"HostUrl": "https://snowbreak-ea-chat.amazingseasuncdn.com/chat/"}).to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    let current_time = ServerTime::now();
+    for activity_data in tables().activity.all() {
+        if activity_data.start_time > current_time {
+            continue;
+        }
+        if let Some(end_time) = activity_data.end_time {
+            if end_time < current_time {
+                continue;
+            }
+        }
+        me.set_attribute(50, activity_data.id * 10, activity_data.start_time as u32).await?;
+    }
+
     Ok(())
 }
