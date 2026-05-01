@@ -15,10 +15,86 @@ pub fn load_tables() -> anyhow::Result<()> {
 
 crate::define_tables! {
     pub struct Tables {
+
+        // Activity
+
         #[path="activity/activities.txt"]
         #[index("id_1", id)]
         #[index("class_1", class)]
         pub activity: DataTable<schemas::ActivityData>,
+
+        #[path="activity/gacha_try/gacha_try.txt"]
+        #[index("act_id_1", act_id)]
+        pub activity_gacha_try: DataTable<schemas::ActivityGachaTryData>,
+
+        #[path="activity/gacha_try/try_girl.txt"]
+        #[index("id_1", id)]
+        pub activity_gacha_try_girl: DataTable<schemas::ActivityGachaTryGirlData>,
+
+        // Item
+
+        #[path="item/templates/card.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub card_template: DataTable<schemas::CardTemplateData>,
+
+        #[path="item/templates/weapon.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub weapon_template: DataTable<schemas::WeaponTemplateData>,
+
+        #[path="item/templates/suplies.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub suplies_template: DataTable<schemas::SupliesTemplateData>,
+
+        #[path="item/templates/dorm_gift.txt"]
+        #[index("gdpl", genre, detail, particular, level)]
+        pub dorm_gift_template: DataTable<schemas::DormGiftTemplateData>,
+
+        #[path="item/break.txt"]
+        #[index("id_1", id)]
+        pub item_break: DataTable<schemas::ItemBreakData>,
+
+        #[path="item/skill/spine.txt"]
+        #[index("id_1", id)]
+        pub item_spine: DataTable<schemas::ItemSpineData>,
+
+        #[path="item/skill/nodecondition.txt"]
+        #[index("id_1", id)]
+        pub item_node_condition: DataTable<schemas::ItemNodeConditionData>,
+
+        #[path="item/cardbreak/break.txt"]
+        #[index("id_1", id)]
+        pub card_break: DataTable<schemas::CardBreakData>,
+
+        #[path="item/cardbreak/breaknew.txt"]
+        #[index("id_1", id)]
+        pub card_break_new: DataTable<schemas::CardBreakNewData>,
+
+        // House
+
+        #[path="house/gift.txt"]
+        #[index("gift_id_1", gift_id)]
+        pub gift: DataTable<schemas::GiftData>,
+
+        #[path="house/gift_exchange.txt"]
+        #[index("index_1", index)]
+        #[index("gift_id_1", gift_id)]
+        pub gift_exchange: DataTable<schemas::GiftExchangeData>,
+
+        #[path="house/FurniturePos.txt"]
+        #[index("area_id_1", area_id)]
+        #[index("area_id_group_id_1", area_id, group_id)]
+        pub furniture_pos: DataTable<schemas::FurniturePosData>,
+
+        #[path="house/support_furniture.txt"]
+        #[index("area_id_1", area_id)]
+        #[index("area_id_index_1", area_id, index)]
+        #[index("furniture_tmp_id_1", furniture_tmp_id)]
+        pub support_furniture: DataTable<schemas::SupportFurnitureData>,
+
+        #[path="house/open_girl.txt"]
+        pub house_open_girl: DataTable<schemas::HouseOpenGirlData>,
+
+        // Others
 
         #[path="player/rename.txt"]
         #[index("times_1", times)]
@@ -44,75 +120,8 @@ crate::define_tables! {
         #[index("id_1", id)]
         pub drop_grop: DataTable<schemas::DropGropData>,
 
-        #[path="house/gift.txt"]
-        #[index("gift_id_1", gift_id)]
-        pub gift: DataTable<schemas::GiftData>,
-
-        #[path="house/gift_exchange.txt"]
-        #[index("index_1", index)]
-        #[index("gift_id_1", gift_id)]
-        pub gift_exchange: DataTable<schemas::GiftExchangeData>,
-
-        #[path="house/FurniturePos.txt"]
-        #[index("area_id_1", area_id)]
-        #[index("area_id_group_id_1", area_id, group_id)]
-        pub furniture_pos: DataTable<schemas::FurniturePosData>,
-
-        #[path="house/support_furniture.txt"]
-        #[index("area_id_1", area_id)]
-        #[index("area_id_index_1", area_id, index)]
-        #[index("furniture_tmp_id_1", furniture_tmp_id)]
-        pub support_furniture: DataTable<schemas::SupportFurnitureData>,
-
-        #[path="house/open_girl.txt"]
-        pub house_open_girl: DataTable<schemas::HouseOpenGirlData>,
-
-        #[path="item/templates/card.txt"]
-        #[index("gdpl", genre, detail, particular, level)]
-        pub card_template: DataTable<schemas::CardTemplateData>,
-
-        #[path="item/templates/weapon.txt"]
-        #[index("gdpl", genre, detail, particular, level)]
-        pub weapon_template: DataTable<schemas::WeaponTemplateData>,
-
-        #[path="item/templates/suplies.txt"]
-        #[index("gdpl", genre, detail, particular, level)]
-        pub suplies_template: DataTable<schemas::SupliesTemplateData>,
-
-        #[path="item/templates/dorm_gift.txt"]
-        #[index("gdpl", genre, detail, particular, level)]
-        pub dorm_gift_template: DataTable<schemas::DormGiftTemplateData>,
-
         #[path="riki/Riki.txt"]
         #[index("type_condition_1", r#type, condition)]
         pub riki: DataTable<schemas::RikiData>,
-
-        #[path="item/break.txt"]
-        #[index("id_1", id)]
-        pub item_break: DataTable<schemas::ItemBreakData>,
-
-        #[path="item/skill/spine.txt"]
-        #[index("id_1", id)]
-        pub item_spine: DataTable<schemas::ItemSpineData>,
-
-        #[path="item/skill/nodecondition.txt"]
-        #[index("id_1", id)]
-        pub item_node_condition: DataTable<schemas::ItemNodeConditionData>,
-
-        #[path="item/cardbreak/break.txt"]
-        #[index("id_1", id)]
-        pub card_break: DataTable<schemas::CardBreakData>,
-
-        #[path="item/cardbreak/breaknew.txt"]
-        #[index("id_1", id)]
-        pub card_break_new: DataTable<schemas::CardBreakNewData>,
-
-        #[path="activity/gacha_try/gacha_try.txt"]
-        #[index("act_id_1", act_id)]
-        pub activity_gacha_try: DataTable<schemas::ActivityGachaTryData>,
-
-        #[path="activity/gacha_try/try_girl.txt"]
-        #[index("id_1", id)]
-        pub activity_gacha_try_girl: DataTable<schemas::ActivityGachaTryGirlData>,
     }
 }
