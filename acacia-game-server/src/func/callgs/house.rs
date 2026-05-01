@@ -1,6 +1,8 @@
 use anyhow::{Context, bail};
+use serde::Deserialize;
 use serde_json::{Value, from_value, json};
 use std::{collections::HashMap, sync::Arc};
+use tracing::warn;
 
 use crate::base::conn::Conn;
 use crate::logic::girl_love_level::GirlLoveLevel;
@@ -23,7 +25,11 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "ReadGirlLoveStory" => request_read_girl_love_story(conn, msgdata, param).await?,
         "ArcadeGameEnterMainUI" => request_arcade_game_enter_main_ui(conn, msgdata, param).await?,
         "ArcadeGameEnter" => request_arcade_game_enter(conn, msgdata, param).await?,
-        _ => {}
+        "ArcadeGameSettlement" => request_arcade_game_settlement(conn, msgdata, param).await?,
+        "ArcadeGameLogSettlement" => request_arcade_game_log_settlement(conn, msgdata, param).await?,
+        _ => {
+            warn!("House_Request fn: {} not exists", func_name);
+        }
     };
     Ok(())
 }
@@ -429,5 +435,27 @@ async fn request_arcade_game_enter(conn: Arc<Conn>, _: protocol::ReqCallGs, _: V
         ..protocol::NtfCallScript::default()
     };
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    Ok(())
+}
+
+async fn request_arcade_game_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(mode_type) = u32::deserialize(&param["nModeType"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nModeType' as u32 in param {:?}", param);
+    };
+
+    if mode_type == 3 {
+        let mut me = conn.manager().await;
+        let val = me.get_attribute(101, 18000 + 36 + 8).await?;
+        me.set_attribute(101, 18000 + 36 + 8, val + 1).await?;
+        me.sync().await?;
+    }
+
+    conn.send_script("House_Request", json!({"FuncName": "ArcadeGameSettlement", "nAddExp": 0})).await?;
+    Ok(())
+}
+
+async fn request_arcade_game_log_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    conn.send_script("House_Request", json!({"FuncName": "ArcadeGameLogSettlement"})).await?;
     Ok(())
 }
