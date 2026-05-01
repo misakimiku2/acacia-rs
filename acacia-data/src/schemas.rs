@@ -8,8 +8,8 @@ pub type GDPLN = (u16, u16, u16, u16, u32);
 #[serde(rename_all = "PascalCase")]
 pub struct ActivityData {
     pub id: u32,
-    #[serde(deserialize_with = "with_datetime")]
-    pub start_time: i64,
+    #[serde(deserialize_with = "with_datetime_option")]
+    pub start_time: Option<i64>,
     #[serde(deserialize_with = "with_datetime_option")]
     pub end_time: Option<i64>,
 }

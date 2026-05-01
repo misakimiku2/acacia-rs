@@ -67,19 +67,5 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         // database.items.update_many(init_data().items.iter().cloned()).await?;
         // database.attrs.set_attr(4, 0, 5).await?;
     }
-
-    let current_time = ServerTime::now();
-    for activity_data in tables().activity.all() {
-        if activity_data.start_time > current_time {
-            continue;
-        }
-        if let Some(end_time) = activity_data.end_time {
-            if end_time < current_time {
-                continue;
-            }
-        }
-        me.set_attribute(50, activity_data.id * 10, activity_data.start_time as u32).await?;
-    }
-
     Ok(())
 }

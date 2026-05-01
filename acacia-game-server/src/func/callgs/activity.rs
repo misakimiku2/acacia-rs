@@ -9,7 +9,7 @@ use acacia_derive::callgs_reg;
 use acacia_game_msg::protocol;
 
 #[callgs_reg("Activity_Refresh")]
-async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+async fn refresh(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let Ok(nid) = u32::deserialize(&param["nId"]) else {
         conn.send_err("error.BadParam").await?;
         bail!("Expected 'nId' as u32 in param {:?}", param);
@@ -19,7 +19,7 @@ async fn check_open_act(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -
     };
 
     let mut me = conn.manager().await;
-    me.set_attribute(50, nid * 10, activity_data.start_time as u32).await?;
+    me.set_attribute(50, nid * 10, activity_data.start_time.unwrap_or(0) as u32).await?;
     me.sync().await?;
 
     call_script!({"nId": param["nId"]});
