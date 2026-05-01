@@ -67,5 +67,18 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         // database.items.update_many(init_data().items.iter().cloned()).await?;
         // database.attrs.set_attr(4, 0, 5).await?;
     }
+    let now_month = ServerTime::month_u32();
+    if now_month != me.get_attribute(0, 0).await? {
+        me.set_attribute(50, 13, 0).await?;
+        me.set_attribute(0, 2, now_month).await?;
+    }
+
+    let now_day = ServerTime::day_u32();
+    if now_day != me.get_attribute(0, 0).await? {
+        let day_sign = me.get_attribute(50, 13).await?;
+        me.set_attribute(50, 13, day_sign + 1).await?;
+        me.set_attribute(50, 14, 1).await?;
+        me.set_attribute(0, 0, now_day).await?;
+    }
     Ok(())
 }
