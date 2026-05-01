@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::base::conn::Conn;
 use acacia_derive::callgs_reg;
-use acacia_game_msg::{protocol, protocol::Pf};
+use acacia_game_msg::protocol;
 
 const SHOWITEM_CARD: [usize; 5] = [0, 1, 2, 6, 7];
 const SHOWITEM_SKIN: [usize; 5] = [8, 9, 10, 11, 12];
@@ -104,7 +104,7 @@ async fn set_birthday(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> 
     me.set_show_attr(22, nmouth as u32).await?;
     // me.set_attribute(151, 1, 2026).await?;
     me.sync().await?;
-    
+
     conn.send_script("PlayerSetting_SetBirthday", ()).await?;
     Ok(())
 }

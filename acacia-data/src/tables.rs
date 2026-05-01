@@ -1,4 +1,4 @@
-use crate::schemas;
+use crate::schemas::{self, CardBreakData};
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -92,5 +92,13 @@ crate::define_tables! {
         #[path="item/skill/nodecondition.txt"]
         #[index("id_1", id)]
         pub item_node_condition: DataTable<schemas::ItemNodeConditionData>,
+
+        #[path="item/cardbreak/break.txt"]
+        #[index("id_1", id)]
+        pub card_break: DataTable<schemas::CardBreakData>,
+
+        #[path="item/cardbreak/breaknew.txt"]
+        #[index("id_1", id)]
+        pub card_break_new: DataTable<schemas::CardBreakNewData>,
     }
 }

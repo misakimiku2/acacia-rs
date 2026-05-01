@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::sync::Arc;
 
 use crate::base::conn::Conn;
-use crate::logic::girl::calc_girl_exp;
+use crate::logic::girl::{calc_girl_exp, get_girl_break_materials};
 use crate::logic::girl_spine::get_girl_spine_max_count;
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
@@ -88,9 +88,9 @@ async fn update_level(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> 
 
 #[callgs_reg("GirlCard_ProLevelPromote")]
 async fn pro_level_promote(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let Some(girl_id) = param["nID"].as_u64() else {
+    let Ok(girl_id) = u64::deserialize(&param["nID"]) else {
         conn.send_err("error.BadParam").await?;
-        bail!("Expected 'nID' but not found in param {:?}", param);
+        bail!("Expected 'nID' as u64 in param {:?}", param);
     };
 
     let mut me = conn.manager().await;
@@ -116,5 +116,54 @@ async fn pro_level_promote(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value
     me.sync().await?;
 
     conn.send_script("GirlCard_ProLevelPromote", ()).await?;
+    Ok(())
+}
+
+#[callgs_reg("GirlCard_UpByBreak")]
+async fn up_by_break(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(girl_id) = u64::deserialize(&param["pId"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'pId' as u64 in param {:?}", param);
+    };
+    let Ok(break_lv) = u32::deserialize(&param["nBreakLv"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nBreakLv' as u32 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let Some(mut girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.card_not_found").await?;
+        bail!("Girl not found {}", girl_id);
+    };
+    let cached_break_mat = match get_girl_break_materials(&girl, break_lv) {
+        Ok(v) => v,
+        Err(e) => {
+            conn.send_err("error.BadParam").await?;
+            return Err(e);
+        }
+    };
+
+    for (mat_gdpl, mat_num) in &cached_break_mat {
+        let item_count = me.get_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3).await?;
+        if item_count < *mat_num {
+            conn.send_err("error.mat_not_found").await?;
+            return Ok(());
+        }
+    }
+
+    let enhance = girl.enhance.get_or_insert_with(|| core::Enhance { level: 1, ..Default::default() });
+    if enhance.r#break + 1 != break_lv {
+        conn.send_err("error.girlcard_update_failed").await?;
+        bail!("Girl card break mismatched: current break={}, break_lv={}", enhance.r#break, break_lv);
+    }
+    enhance.r#break += 1;
+
+    for (mat_gdpl, mat_num) in &cached_break_mat {
+        me.remove_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3, *mat_num).await?;
+    }
+    me.set_item(girl).await?;
+    me.sync().await?;
+
+    conn.send_script("GirlCard_UpByBreak", ()).await?;
     Ok(())
 }
