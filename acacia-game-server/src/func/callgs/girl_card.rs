@@ -279,3 +279,31 @@ async fn un_lock_character(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value
     conn.send_script("GirlCard_UnLockCharacter", ()).await?;
     Ok(())
 }
+
+#[callgs_reg("GirlCard_SetRoleLikeFlag")]
+async fn set_role_like_flag(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(girl_id) = u64::deserialize(&param["nCardID"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nCardID' as u64 in param {:?}", param);
+    };
+    let Ok(flag) = u8::deserialize(&param["nFlag"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nFlag' as u8 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let Some(mut girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.card_not_found").await?;
+        bail!("Girl not found {}", girl_id);
+    };
+    if flag != 0 {
+        girl.flag |= 64;
+    } else {
+        girl.flag &= !64;
+    }
+    me.set_item(girl).await?;
+    me.sync().await?;
+
+    conn.send_script("GirlCard_SetRoleLikeFlag", ()).await?;
+    Ok(())
+}
