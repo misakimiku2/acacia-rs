@@ -3,10 +3,9 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::{
-    base::conn::Conn,
-    logic::{girl::calc_girl_exp, girl_spine::get_girl_spine_max_count},
-};
+use crate::base::conn::Conn;
+use crate::logic::girl::calc_girl_exp;
+use crate::logic::girl_spine::get_girl_spine_max_count;
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
 use acacia_derive::callgs_reg;

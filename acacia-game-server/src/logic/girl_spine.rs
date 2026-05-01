@@ -1,9 +1,17 @@
 use anyhow::bail;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use acacia_commons::bits::get_template;
 use acacia_data::tables::tables;
 use acacia_game_msg::core;
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct SpineConfig {
+    pub ns: u64,
+    pub tbn: (u32, u32),
+    pub tbr: Vec<i32>,
+}
 
 fn get_node(value: u64, sub_idx: usize) -> bool {
     value & (1 << sub_idx - 1) != 0

@@ -1,19 +1,12 @@
 use anyhow::bail;
-use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::sync::Arc;
 
-use crate::{base::conn::Conn, logic::girl_spine::girl_spine_unlock};
+use crate::base::conn::Conn;
+use crate::logic::girl_spine::{SpineConfig, girl_spine_unlock};
 use acacia_commons::bits::get_template;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::protocol;
-
-#[derive(Debug, Default, Serialize, Deserialize)]
-struct SpineConfig {
-    ns: u64,
-    tbn: (u32, u32),
-    tbr: Vec<i32>,
-}
 
 #[callgs_reg("GirlSpine_ChildUnLock")]
 async fn child_un_lock(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {

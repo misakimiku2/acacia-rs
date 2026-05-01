@@ -45,6 +45,7 @@ pub struct PlayerManager {
     items: HashMap<u64, core::Item>,
     str_attrs: HashMap<u32, String>,
     show_items: Vec<u64>,
+    show_attrs: Vec<u32>,
 }
 
 impl PlayerManager {
@@ -58,6 +59,7 @@ impl PlayerManager {
             items: HashMap::new(),
             str_attrs: HashMap::new(),
             show_items: Vec::new(),
+            show_attrs: Vec::new(),
         }
     }
 
@@ -260,6 +262,22 @@ impl PlayerManager {
         Ok(())
     }
 
+    pub async fn get_show_attr(&self, idx: usize) -> anyhow::Result<u32> {
+        let player = self.database.info.find_one().await?.with_context(|| format!("The pid should not be None"))?;
+        Ok(player.show_attrs.get(idx).copied().unwrap_or(0))
+    }
+
+    pub async fn set_show_attr(&mut self, idx: usize, value: u32) -> anyhow::Result<()> {
+        let mut player = self.database.info.find_one().await?.with_context(|| format!("The pid should not be None"))?;
+        if idx >= player.show_attrs.len() {
+            player.show_attrs.resize(idx + 1, 0);
+        }
+        player.show_attrs[idx] = value;
+        self.show_attrs = player.show_attrs.clone();
+        self.database.info.update_one(player).await?;
+        Ok(())
+    }
+
     pub fn as_sync_player(self) -> protocol::NtfSyncPlayer {
         protocol::NtfSyncPlayer {
             core: self.core,
@@ -278,6 +296,7 @@ impl PlayerManager {
             custom_str: self.str_attrs,
             items: self.items.into_values().collect(),
             show_items: self.show_items,
+            show_attrs: self.show_attrs,
             ..Default::default()
         };
         self.conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;

@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::bail;
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -12,36 +12,45 @@ const SHOWITEM_BADGE: [usize; 3] = [13, 14, 15];
 
 #[callgs_reg("PlayerSetting_ChangeShowCard")]
 async fn change_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nid = param["nID"].as_u64().with_context(|| format!("Expected 'nID' but not found in param {:?}", param))?;
+    let Some(nid) = param["nID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nID' but not found in param {:?}", param);
+    };
 
     let mut me = conn.manager().await;
     me.set_show_item(3, nid).await?;
     me.sync().await?;
 
-    let rsp = protocol::NtfCallScript {
-        api: "PlayerSetting_ChangeShowCard".to_string(),
-        ..protocol::NtfCallScript::default()
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    conn.send_script("PlayerSetting_ChangeShowCard", ()).await?;
     Ok(())
 }
 
 #[callgs_reg("PlayerSetting_SetProfileFace")]
 async fn set_profile_face(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nhead_item_id = param["nHeadItemID"].as_i64().with_context(|| format!("Expected 'nHeadItemID' but not found in param {:?}", param))?;
+    let Some(nhead_item_id) = param["nHeadItemID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nHeadItemID' but not found in param {:?}", param);
+    };
 
     let mut me = conn.manager().await;
     me.set_show_item(4, nhead_item_id as u64).await?;
     me.sync().await?;
+
     conn.send_script("PlayerSetting_SetProfileFace", ()).await?;
     Ok(())
 }
 
 #[callgs_reg("PlayerSetting_ChangeAccountShowCard")]
 async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nitem_id = param["nItemID"].as_i64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
-    let nindex = param["nIndex"].as_u64().with_context(|| format!("Expected 'nIndex' but not found in param {:?}", param))? as usize;
-    let showitem_index = SHOWITEM_CARD[nindex - 1];
+    let Some(nitem_id) = param["nItemID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nItemID' but not found in param {:?}", param);
+    };
+    let Some(nindex) = param["nIndex"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nIndex' but not found in param {:?}", param);
+    };
+    let showitem_index = SHOWITEM_CARD[nindex as usize - 1];
 
     let mut me = conn.manager().await;
     if nitem_id > 0 {
@@ -50,15 +59,22 @@ async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param
         me.set_show_item(showitem_index, 0).await?;
     }
     me.sync().await?;
+
     conn.send_script("PlayerSetting_ChangeAccountShowCard", ()).await?;
     Ok(())
 }
 
 #[callgs_reg("PlayerSetting_ChangeAccountShowSkin")]
 async fn change_account_show_skin(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    let nitem_id = param["nItemID"].as_i64().with_context(|| format!("Expected 'nItemID' but not found in param {:?}", param))?;
-    let nindex = param["nIndex"].as_u64().with_context(|| format!("Expected 'nIndex' but not found in param {:?}", param))? as usize;
-    let showitem_index = SHOWITEM_SKIN[nindex - 1];
+    let Some(nitem_id) = param["nItemID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nItemID' but not found in param {:?}", param);
+    };
+    let Some(nindex) = param["nIndex"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nIndex' but not found in param {:?}", param);
+    };
+    let showitem_index = SHOWITEM_SKIN[nindex as usize - 1];
 
     let mut me = conn.manager().await;
     if nitem_id > 0 {
@@ -67,6 +83,28 @@ async fn change_account_show_skin(conn: Arc<Conn>, _: protocol::ReqCallGs, param
         me.set_show_item(showitem_index, 0).await?;
     }
     me.sync().await?;
+
     conn.send_script("PlayerSetting_ChangeAccountShowSkin", ()).await?;
+    Ok(())
+}
+
+#[callgs_reg("PlayerSetting_SetBirthday")]
+async fn set_birthday(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Some(nday) = param["nDay"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nDay' but not found in param {:?}", param);
+    };
+    let Some(nmouth) = param["nMouth"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nMouth' but not found in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    me.set_show_attr(21, nday as u32).await?;
+    me.set_show_attr(22, nmouth as u32).await?;
+    // me.set_attribute(151, 1, 2026).await?;
+    me.sync().await?;
+    
+    conn.send_script("PlayerSetting_SetBirthday", ()).await?;
     Ok(())
 }
