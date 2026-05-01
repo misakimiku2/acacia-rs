@@ -4,7 +4,7 @@ use serde_json::json;
 use std::sync::Arc;
 
 use crate::base::time::ServerTime;
-use crate::logic::riki::riki_unlock_item;
+use crate::logic::activity::{activity_is_open, get_activity_diy_data, get_activity_sign_max_days, set_activity_diy_data};
 use crate::{base::conn::Conn, logic::girl::new_girl};
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};
@@ -68,19 +68,33 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         // database.items.update_many(init_data().items.iter().cloned()).await?;
         // database.attrs.set_attr(4, 0, 5).await?;
     }
+
     let now_month = ServerTime::month_u32();
     if now_month != me.get_attribute(0, 0).await? {
-        me.set_attribute(50, 13, 0).await?;
+        for activity_data in tables().activity.find("class_1", "signin_monthly") {
+            if !activity_is_open(&activity_data) {
+                continue;
+            };
+            if tables().activity_sign_day.find_one("activity_id_1", activity_data.id).is_some() {
+                set_activity_diy_data(&mut me, activity_data.id, 3, 0).await?;
+                set_activity_diy_data(&mut me, activity_data.id, 4, 0).await?;
+            };
+        }
         me.set_attribute(0, 2, now_month).await?;
     }
 
     let now_day = ServerTime::day_u32();
     if now_day != me.get_attribute(0, 0).await? {
-        let day_sign_status = me.get_attribute(50, 14).await?;
-        if day_sign_status == 2 {
-            let day_sign = me.get_attribute(50, 13).await?;
-            me.set_attribute(50, 13, day_sign + 1).await?;
-            me.set_attribute(50, 14, 1).await?;
+        for activity_data in tables().activity.find("class_1", "signin_monthly") {
+            if !activity_is_open(&activity_data) {
+                continue;
+            };
+            let day_sign_days = get_activity_diy_data(&me, activity_data.id, 3).await?;
+            let day_sign_status = get_activity_diy_data(&me, activity_data.id, 4).await?;
+            if day_sign_status != 1 && day_sign_days < get_activity_sign_max_days(activity_data.id) {
+                set_activity_diy_data(&mut me, activity_data.id, 3, day_sign_days + 1).await?;
+                set_activity_diy_data(&mut me, activity_data.id, 4, 1).await?;
+            };
         }
         me.set_attribute(0, 0, now_day).await?;
     }

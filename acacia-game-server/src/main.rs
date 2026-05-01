@@ -22,6 +22,7 @@ mod func {
     }
 }
 pub mod logic {
+    pub mod activity;
     pub mod chapter;
     pub mod drop;
     pub mod girl;
