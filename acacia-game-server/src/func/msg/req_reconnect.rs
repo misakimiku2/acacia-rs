@@ -8,7 +8,7 @@ use acacia_game_msg::{protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqReconnect)]
 async fn req_reconnect(conn: Arc<Conn>, _: protocol::ReqReconnect) -> anyhow::Result<()> {
-    conn.bind_uid(10000).await;
+    conn.bind_uid(10002).await;
 
     let database = conn.database().await;
     let mut player = database.info.find_one().await?.with_context(|| format!("The player {:?} has not been initialized", conn.uid()))?;

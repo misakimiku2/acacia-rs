@@ -11,7 +11,7 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqLogin)]
 async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<()> {
-    conn.bind_uid(10000).await;
+    conn.bind_uid(10002).await;
     init_userdata(&conn).await?;
 
     let database = conn.database().await;
@@ -70,7 +70,7 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
     }
 
     let now_month = ServerTime::month_u32();
-    if now_month != me.get_attribute(0, 0).await? {
+    if now_month != me.get_attribute(0, 2).await? {
         for activity_data in tables().activity.find("class_1", "signin_monthly") {
             if !activity_is_open(&activity_data) {
                 continue;

@@ -52,6 +52,24 @@ pub struct WeaponTemplateData {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct SupportCardTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct OthersTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct SupliesTemplateData {
     pub genre: u16,
     pub detail: u16,
@@ -63,12 +81,120 @@ pub struct SupliesTemplateData {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct WeaponPartsTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CardSkinTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct DormGiftTemplateData {
     pub genre: u16,
     pub detail: u16,
     pub particular: u16,
     pub level: u16,
     pub param1: u32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ProfileTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct WeaponSkinTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct MonsterCardTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManifestationTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct MainSceneTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct HousePhotoTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct HouseCommonphotoTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ArItemTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CallItemTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct CardSkinPartsTemplateData {
+    pub genre: u16,
+    pub detail: u16,
+    pub particular: u16,
+    pub level: u16,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -27,10 +27,9 @@ pub async fn riki_unlock_item(me: &mut PlayerManager, r#type: u32, g: u16, d: u1
             me.set_show_attr(0, me.get_show_attr(0).await? + 1).await?;
         } else if r#type == 2 {
             me.set_show_attr(19, me.get_show_attr(19).await? + 1).await?;
+        } else if r#type == 5 {
+            me.set_show_attr(18, me.get_show_attr(18).await? + 1).await?;
         }
-        // else if r#type == 5 {
-        //     me.set_show_attr(18, me.get_show_attr(18).await? + 1).await?;
-        // }
     }
     Ok(())
 }

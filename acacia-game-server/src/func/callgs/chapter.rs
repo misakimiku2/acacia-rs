@@ -16,7 +16,7 @@ async fn deal_level_settlement(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, pa
 
     match cmd {
         "Chapter_LevelSettlement" => level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
-        "Chapter_NewPrologueSettlement" => new_prologue_settlement(conn.clone(), msgdata, param["tbParam"].clone(), true).await?,
+        "Chapter_NewPrologueSettlement" => new_prologue_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         "BossPvpLogic_LevelSettlement" => boss_pvp_logic::level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         "BossPvpLogic_LevelFail" => boss_pvp_logic::level_fail(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         "GachaTry_LevelSettlement" => gacha_try::level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
@@ -81,39 +81,16 @@ async fn level_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
 }
 
 #[callgs_reg("Chapter_NewPrologueSettlement")]
-async fn new_prologue_settlement_(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
-    new_prologue_settlement(conn, msgdata, param, true).await?;
-    Ok(())
-}
-
-async fn new_prologue_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value, from_deal_level_settlement: bool) -> anyhow::Result<()> {
+async fn new_prologue_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let mut me = conn.manager().await;
+    let mut show_award = Vec::new();
     let drop_result = chapter_level_drop(&mut me, &param).await?;
+    if !drop_result.is_empty() {
+        show_award.push(drop_result);
+    }
     chapter_level_logger(&mut me, &param).await?;
-    conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
+    me.sync().await?;
 
-    let tb_param = json!({
-        "bWaitServer": param["bWaitServer"],
-        "tbShowAward": [drop_result],
-    });
-
-    let rsp = if from_deal_level_settlement {
-        protocol::NtfCallScript {
-            api: "Chapter_DealLevelSettlement".to_string(),
-            arg: json!({
-                "sCmd": "Chapter_NewPrologueSettlement",
-                "tbParam": tb_param,
-            })
-            .to_string(),
-            ..protocol::NtfCallScript::default()
-        }
-    } else {
-        protocol::NtfCallScript {
-            api: "Chapter_NewPrologueSettlement".to_string(),
-            arg: tb_param.to_string(),
-            ..protocol::NtfCallScript::default()
-        }
-    };
-    conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
+    call_script!({"bWaitServer": param["bWaitServer"], "tbShowAward": show_award});
     Ok(())
 }

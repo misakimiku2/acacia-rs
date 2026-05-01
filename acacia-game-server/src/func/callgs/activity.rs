@@ -80,7 +80,7 @@ async fn get_award_day_sign(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Valu
         bail!("day_status={:?}", day_status);
     }
     let Some(activity_sign_day_data) = tables().activity_sign_day.find_one("activity_id_day_id_1", (activity_id, day_id)) else {
-        conn.send_err("error.congif_rewardid_err").await?;
+        conn.send_err("tip.congif_rewardid_err").await?;
         bail!("The specified activity_sign_day_data does not exist. activity_id={:?}, day_id={:?}", activity_id, day_id);
     };
     let items = Items::from(&activity_sign_day_data.sign_reward);
@@ -105,7 +105,7 @@ async fn get_award_short_sign(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Va
         bail!("day_status={:?}", day_status);
     }
     let Some(activity_sign_short_data) = tables().activity_sign_short.find_one("activity_id_day_id_1", (activity_id, day_id)) else {
-        conn.send_err("error.congif_rewardid_err").await?;
+        conn.send_err("tip.congif_rewardid_err").await?;
         bail!("The specified activity_sign_short_data does not exist. activity_id={:?}, day_id={:?}", activity_id, day_id);
     };
     let items = Items::from(&activity_sign_short_data.sign_reward);
@@ -113,6 +113,6 @@ async fn get_award_short_sign(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Va
     items.commit_add(&mut me).await?;
     me.sync().await?;
 
-    conn.send_script("ShortSign", json!({"nType": 1, "nId": activity_id, "tbRewards": items.as_vec()})).await?;
+    conn.send_script("ShortSign", json!({"nType": 2, "nId": activity_id, "tbRewards": items.as_vec()})).await?;
     Ok(())
 }
