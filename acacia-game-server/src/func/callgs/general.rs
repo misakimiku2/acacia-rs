@@ -6,6 +6,11 @@ use crate::base::conn::Conn;
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
+#[callgs_reg("SettingChange")]
+async fn setting_change(_: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
+    Ok(())
+}
+
 #[callgs_reg("ReqEntranceGreenLevel")]
 async fn req_entrance_green_level(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     let rsp = protocol::NtfCallScript {
