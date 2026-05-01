@@ -137,6 +137,7 @@ pub struct HouseOpenGirlData {
 pub struct RikiData {
     pub r#type: u32,
     pub id: u32,
+    pub condition: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -11,6 +11,10 @@ fn test_data() -> anyhow::Result<()> {
     println!("{:?}", data);
     let data = tables::tables().chapter_level.find_one("id_1", 50174);
     println!("{:?}", data);
-    println!("{:?}", tables::tables().battlepass_timelist.all());
+    let (g, d, p, l) = (1, 1, 2, 1);
+    let condition = format!("{{{g},{d},{p},{l}}}");
+    let data = tables::tables().riki.find_one("type_condition_1", (1, &condition));
+    println!("{:?}", data);
+    // println!("{:?}", tables::tables().battlepass_timelist.all());
     Ok(())
 }

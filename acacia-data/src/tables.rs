@@ -83,6 +83,7 @@ crate::define_tables! {
         pub dorm_gift_template: DataTable<schemas::DormGiftTemplateData>,
 
         #[path="riki/Riki.txt"]
+        #[index("type_condition_1", r#type, condition)]
         pub riki: DataTable<schemas::RikiData>,
 
         #[path="item/break.txt"]

@@ -4,6 +4,7 @@ use serde_json::json;
 use std::sync::Arc;
 
 use crate::base::time::ServerTime;
+use crate::logic::riki::riki_unlock_item;
 use crate::{base::conn::Conn, logic::girl::new_girl};
 use acacia_derive::func_reg;
 use acacia_game_msg::{core, protocol, protocol::Pf};

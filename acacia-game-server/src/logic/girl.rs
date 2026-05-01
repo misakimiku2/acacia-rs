@@ -1,7 +1,7 @@
 use anyhow::bail;
 use std::collections::HashMap;
 
-use crate::logic::player::PlayerManager;
+use crate::logic::{player::PlayerManager, riki::riki_unlock_item};
 use acacia_commons::bits::{get_template, set_template};
 use acacia_data::tables::tables;
 use acacia_game_msg::core;
@@ -116,6 +116,10 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
     let Some(card_template_data) = tables().card_template.find_one("gdpl", [g, d, p, l]) else {
         bail!("The specified card_template_data does not exist. gdpl={:?}", [g, d, p, l]);
     };
+    if !me.get_items_by_gdpl(g, d, p, l).await?.is_empty() {
+        bail!("Girl already exists. gdpl={:?}", [g, d, p, l]);
+    }
+    
 
     let mut girl = core::Item {
         id: me.new_item_id().await?,
@@ -156,5 +160,7 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
     for profile in &card_template_data.profile {
         me.add_item_count(profile.0, profile.1, profile.2, profile.3, profile.4).await?;
     }
+    riki_unlock_item(me, 1, g, d, p, l).await?;
+    riki_unlock_item(me, 2, df_weapon.0, df_weapon.1, df_weapon.2, df_weapon.3).await?;
     Ok(())
 }
