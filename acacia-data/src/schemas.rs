@@ -447,3 +447,22 @@ pub struct CardBreakNewData {
     #[serde(deserialize_with = "with_lua_table")]
     pub items4_1: Vec<GDPLN>,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ActivityGachaTryData {
+    pub act_id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub try_girl: Vec<u32>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ActivityGachaTryGirlData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub girl: GDPL,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub reward: Vec<GDPLN>,
+}

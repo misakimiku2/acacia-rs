@@ -27,10 +27,11 @@ pub mod logic {
     pub mod girl;
     pub mod girl_love_level;
     pub mod girl_room_furniture;
+    pub mod girl_spine;
+    pub mod item;
     pub mod player;
     pub mod riki;
     pub mod weapon;
-    pub mod girl_spine;
 }
 
 #[tokio::main]

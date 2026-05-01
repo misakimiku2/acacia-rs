@@ -123,7 +123,7 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
 
     let mut girl = core::Item {
         id: me.new_item_id().await?,
-        template: set_template(g, d, p, l)?,
+        template: set_template(g, d, p, l),
         count: 1,
         enhance: Some(core::Enhance { level: 1, ..Default::default() }),
         ..Default::default()
@@ -132,7 +132,7 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
     let df_weapon = card_template_data.default_weapon_gpdl;
     let mut weapon = core::Item {
         id: me.new_item_id().await?,
-        template: set_template(df_weapon.0, df_weapon.1, df_weapon.2, df_weapon.3)?,
+        template: set_template(df_weapon.0, df_weapon.1, df_weapon.2, df_weapon.3),
         count: 1,
         enhance: Some(core::Enhance { level: 1, ..Default::default() }),
         ..Default::default()
@@ -144,7 +144,7 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
         Some(skin) => skin,
         None => core::Item {
             id: me.new_item_id().await?,
-            template: set_template(7, d, p, 1)?,
+            template: set_template(7, d, p, 1),
             count: 1,
             ..Default::default()
         },

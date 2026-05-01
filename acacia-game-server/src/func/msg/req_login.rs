@@ -76,9 +76,12 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
 
     let now_day = ServerTime::day_u32();
     if now_day != me.get_attribute(0, 0).await? {
-        let day_sign = me.get_attribute(50, 13).await?;
-        me.set_attribute(50, 13, day_sign + 1).await?;
-        me.set_attribute(50, 14, 1).await?;
+        let day_sign_status = me.get_attribute(50, 14).await?;
+        if day_sign_status == 2 {
+            let day_sign = me.get_attribute(50, 13).await?;
+            me.set_attribute(50, 13, day_sign + 1).await?;
+            me.set_attribute(50, 14, 1).await?;
+        }
         me.set_attribute(0, 0, now_day).await?;
     }
     Ok(())

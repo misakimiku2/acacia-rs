@@ -132,7 +132,7 @@ impl AddItem {
         if let Some(_weapon_template_data) = tables().weapon_template.find_one("gdpl", [self.g, self.d, self.p, self.l]) {
             let new_item = core::Item {
                 id: me.new_item_id().await?,
-                template: set_template(self.g, self.d, self.p, self.l)?,
+                template: set_template(self.g, self.d, self.p, self.l),
                 count: 1,
                 enhance: Some(core::Enhance { level: 1, ..Default::default() }),
                 ..Default::default()

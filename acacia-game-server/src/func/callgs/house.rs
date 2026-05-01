@@ -59,7 +59,7 @@ async fn request_girl_register(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
         bail!("Insufficient slots for FloorId: {}", floor_id);
     }
 
-    let cost_item_id = set_template(5, 26, 1, 4)?;
+    let cost_item_id = set_template(5, 26, 1, 4);
     let Some(mut item) = database.items.find_one_by_template(cost_item_id).await? else {
         bail!("Insufficient quantity for ItemId: {}", cost_item_id);
     };
@@ -178,7 +178,7 @@ async fn request_exchange_gift(conn: Arc<Conn>, _: protocol::ReqCallGs, param: V
     }
 
     let gift = gift_exchange_data.gift;
-    let template_id = set_template(gift[0], gift[1], gift[2], gift[3])?;
+    let template_id = set_template(gift[0], gift[1], gift[2], gift[3]);
     let item = if let Some(mut item) = database.items.find_one_by_template(template_id).await? {
         item.count += 1;
         item
@@ -246,7 +246,7 @@ async fn request_give_gift_to_area(conn: Arc<Conn>, _: protocol::ReqCallGs, para
             .with_context(|| format!("The specified gift_data {gift_id} does not exist."))?;
 
         if gift_data.default_had.unwrap_or(0) == 0 {
-            let cost_item_id = set_template(gdpln.0, gdpln.1, gdpln.2, gdpln.3)?;
+            let cost_item_id = set_template(gdpln.0, gdpln.1, gdpln.2, gdpln.3);
             let Some(mut item) = database.items.find_one_by_template(cost_item_id).await? else {
                 bail!("Insufficient quantity for ItemId: {}", cost_item_id);
             };

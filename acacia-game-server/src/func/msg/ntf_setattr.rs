@@ -7,7 +7,7 @@ use acacia_game_msg::protocol::{self, Pf};
 
 #[func_reg(Pf::NtfSetattr)]
 async fn ntf_setattr(conn: Arc<Conn>, msgdata: protocol::NtfSetAttr) -> anyhow::Result<()> {
-    let key = set_attribute(msgdata.gid, msgdata.sid)?;
+    let key = set_attribute(msgdata.gid, msgdata.sid);
     let rsp = protocol::NtfSyncPlayer {
         custom: HashMap::<u32, u32>::from([(key, msgdata.val)]),
         ..protocol::NtfSyncPlayer::default()

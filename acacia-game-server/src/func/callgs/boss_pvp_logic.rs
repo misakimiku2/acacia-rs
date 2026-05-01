@@ -18,10 +18,10 @@ async fn get_opem_id(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyho
         }),
     };
     if let Some(sync) = rsp.extra_sync.as_mut() {
-        sync.custom_str.insert(set_attribute(51, 0)?, "1".to_string());
-        sync.custom_str.insert(set_attribute(51, 1)?, "4".to_string());
+        sync.custom_str.insert(set_attribute(51, 0), "1".to_string());
+        sync.custom_str.insert(set_attribute(51, 1), "4".to_string());
         for i in (1..=246).rev() {
-            sync.custom_str.insert(set_attribute(51, 10 * i + 100 + 8)?, "5".to_string());
+            sync.custom_str.insert(set_attribute(51, 10 * i + 100 + 8), "5".to_string());
         }
     }
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;

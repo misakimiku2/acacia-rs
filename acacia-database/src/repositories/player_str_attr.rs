@@ -55,13 +55,13 @@ impl PlayerStrAttrRepository {
     }
 
     pub async fn get_attr(&self, gid: u32, sid: u32) -> anyhow::Result<(u32, String)> {
-        let key = set_attribute(gid, sid)?;
+        let key = set_attribute(gid, sid);
         let value = self.find_one(key).await?;
         Ok((key, value))
     }
 
     pub async fn set_attr(&self, gid: u32, sid: u32, value: String) -> anyhow::Result<(u32, String)> {
-        let key = set_attribute(gid, sid)?;
+        let key = set_attribute(gid, sid);
         self.update_one((key, value.clone())).await?;
         Ok((key, value))
     }

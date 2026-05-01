@@ -38,7 +38,7 @@ impl ActivityDoOpenActivity {
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         let rsp = protocol::NtfSyncPlayer {
-            custom: HashMap::<u32, u32>::from([(set_attribute(50, self.id * 10)?, 1 as u32)]),
+            custom: HashMap::<u32, u32>::from([(set_attribute(50, self.id * 10), 1 as u32)]),
             ..protocol::NtfSyncPlayer::default()
         };
         conn.send_msg(Pf::NtfSyncattr, &rsp, 0).await?;

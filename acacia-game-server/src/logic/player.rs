@@ -126,7 +126,7 @@ impl PlayerManager {
         if let Some(cash_data) = tables().cash.find_one("gdpl_1", Some((g, d, p, l))) {
             return self.get_attribute(1, 1 + cash_data.id * 2).await;
         }
-        let template_id = set_template(g, d, p, l)?;
+        let template_id = set_template(g, d, p, l);
         let items = self.database.items.find_many_by_template(template_id).await?;
         let count = items.iter().map(|item| item.count).sum();
         Ok(count)
@@ -160,7 +160,7 @@ impl PlayerManager {
             self.set_attribute(1, 1 + cash_data.id * 2, current_count + n).await?;
             return Ok(());
         }
-        let template_id = set_template(g, d, p, l)?;
+        let template_id = set_template(g, d, p, l);
         let item = if let Some(mut item) = self.database.items.find_one_by_template(template_id).await? {
             item.count += n;
             item
@@ -188,7 +188,7 @@ impl PlayerManager {
             self.set_attribute(1, 1 + cash_data.id * 2, current_count - n).await?;
             return Ok(());
         }
-        let template_id = set_template(g, d, p, l)?;
+        let template_id = set_template(g, d, p, l);
         let mut items = self.database.items.find_many_by_template(template_id).await?;
         let current_count: u32 = items.iter().map(|item| item.count).sum();
         if current_count < n {
@@ -216,7 +216,7 @@ impl PlayerManager {
     }
 
     pub async fn get_items_by_gdpl(&self, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<Vec<core::Item>> {
-        let template_id = set_template(g, d, p, l)?;
+        let template_id = set_template(g, d, p, l);
         Ok(self.database.items.find_many_by_template(template_id).await?)
     }
 
@@ -225,22 +225,22 @@ impl PlayerManager {
     }
 
     pub async fn get_attribute(&self, gid: u32, id: u32) -> anyhow::Result<u32> {
-        self.database.attrs.find_one(bits::set_attribute(gid, id)?).await
+        self.database.attrs.find_one(bits::set_attribute(gid, id)).await
     }
 
     pub async fn set_attribute(&mut self, gid: u32, id: u32, value: u32) -> anyhow::Result<()> {
-        let key = bits::set_attribute(gid, id)?;
+        let key = bits::set_attribute(gid, id);
         self.database.attrs.update_one((key, value)).await?;
         self.attrs.insert(key, value);
         Ok(())
     }
 
     pub async fn get_str_attribute(&self, gid: u32, id: u32) -> anyhow::Result<String> {
-        self.database.str_attrs.find_one(bits::set_attribute(gid, id)?).await
+        self.database.str_attrs.find_one(bits::set_attribute(gid, id)).await
     }
 
     pub async fn set_str_attribute(&mut self, gid: u32, id: u32, value: String) -> anyhow::Result<()> {
-        let key = bits::set_attribute(gid, id)?;
+        let key = bits::set_attribute(gid, id);
         self.database.str_attrs.update_one((key, value.clone())).await?;
         self.str_attrs.insert(key, value);
         Ok(())

@@ -105,5 +105,13 @@ crate::define_tables! {
         #[path="item/cardbreak/breaknew.txt"]
         #[index("id_1", id)]
         pub card_break_new: DataTable<schemas::CardBreakNewData>,
+
+        #[path="activity/gacha_try/gacha_try.txt"]
+        #[index("act_id_1", act_id)]
+        pub activity_gacha_try: DataTable<schemas::ActivityGachaTryData>,
+
+        #[path="activity/gacha_try/try_girl.txt"]
+        #[index("id_1", id)]
+        pub activity_gacha_try_girl: DataTable<schemas::ActivityGachaTryGirlData>,
     }
 }
