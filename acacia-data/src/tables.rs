@@ -23,6 +23,16 @@ crate::define_tables! {
         #[index("class_1", class)]
         pub activity: DataTable<schemas::ActivityData>,
 
+        #[path="activity/sign/signday.txt"]
+        #[index("activity_id_1", activity_id)]
+        #[index("activity_id_day_id_1", activity_id, day_id)]
+        pub activity_sign_day: DataTable<schemas::ActivitySignDayData>,
+
+        #[path="activity/sign/signshort.txt"]
+        #[index("activity_id_1", activity_id)]
+        #[index("activity_id_day_id_1", activity_id, day_id)]
+        pub activity_sign_short: DataTable<schemas::ActivitySignShortData>,
+
         #[path="activity/gacha_try/gacha_try.txt"]
         #[index("act_id_1", act_id)]
         pub activity_gacha_try: DataTable<schemas::ActivityGachaTryData>,
@@ -123,5 +133,29 @@ crate::define_tables! {
         #[path="riki/Riki.txt"]
         #[index("type_condition_1", r#type, condition)]
         pub riki: DataTable<schemas::RikiData>,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::tables;
+
+    #[test]
+    fn test_data() -> anyhow::Result<()> {
+        tables::load_tables()?;
+        let data = tables::tables().gift_exchange.find_one("gift_id_1", 2306);
+        println!("{:?}", data);
+        let data = tables::tables().dorm_gift_template.find_one("gdpl", [8, 23, 11, 3]).unwrap();
+        println!("{:?}", data);
+        let data = tables::tables().gift.find_one("gift_id_1", data.param1);
+        println!("{:?}", data);
+        let data = tables::tables().chapter_level.find_one("id_1", 50174);
+        println!("{:?}", data);
+        let (g, d, p, l) = (1, 1, 2, 1);
+        let condition = format!("{{{g},{d},{p},{l}}}");
+        let data = tables::tables().riki.find_one("type_condition_1", (1, &condition));
+        println!("{:?}", data);
+        // println!("{:?}", tables::tables().battlepass_timelist.all());
+        Ok(())
     }
 }

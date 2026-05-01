@@ -4,9 +4,16 @@ pub mod manager {
     pub mod parser;
     pub mod tsv;
 }
-pub mod init_data;
-pub mod schemas;
-pub mod tables;
+pub mod schemas {
+    mod activity;
+    mod house;
+    mod item;
+    mod others;
 
-#[cfg(test)]
-mod tests;
+    pub use activity::*;
+    pub use house::*;
+    pub use item::*;
+    pub use others::*;
+}
+pub mod init_data;
+pub mod tables;

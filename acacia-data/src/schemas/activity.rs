@@ -15,6 +15,24 @@ pub struct ActivityData {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
+pub struct ActivitySignDayData {
+    pub activity_id: u32,
+    pub day_id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub sign_reward: Vec<GDPLN>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ActivitySignShortData {
+    pub activity_id: u32,
+    pub day_id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub sign_reward: Vec<GDPLN>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
 pub struct ActivityGachaTryData {
     pub act_id: u32,
     #[serde(deserialize_with = "with_lua_table")]
