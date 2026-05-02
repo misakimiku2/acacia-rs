@@ -2,7 +2,7 @@ use super::response::ApiResponse;
 use crate::routes::api::base::response::{ApiResponseResult, Empty};
 use axum::http::HeaderMap;
 
-const ADMIN_TOKEN: &str = "QmTFrJLb0j0dcymXAaQJKbxYnhCe6t2WkTZLp4NY5ikccb21iPjR7hgrxzqViUPB"; // Temporary
+const ADMIN_TOKEN: &str = "8vCzZoprtbQALRt1VzrJi60Xw6RTjjUHxLwk5v69f3VuHzgyXZ1xmd3Ydhz072kA"; // Temporary
 
 pub enum AccessRequirement {
     Public,

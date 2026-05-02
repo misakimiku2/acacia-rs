@@ -25,6 +25,17 @@ impl<T> ApiResponse<T> {
 }
 
 impl ApiResponse<Empty> {
+    pub fn as_bad_request(message: String) -> ApiResponseResult<Empty> {
+        (
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse {
+                code: 400,
+                message: message,
+                data: None,
+            }),
+        )
+    }
+
     pub fn as_internal_server_error() -> ApiResponseResult<Empty> {
         (
             StatusCode::INTERNAL_SERVER_ERROR,
