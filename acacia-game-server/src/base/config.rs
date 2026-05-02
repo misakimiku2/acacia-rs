@@ -29,6 +29,7 @@ impl Default for Config {
 pub struct GameServerConfig {
     pub host: String,
     pub port: u16,
+    pub uid: u64,
     pub time_offset: i64,
 }
 
@@ -37,6 +38,7 @@ impl Default for GameServerConfig {
         Self {
             host: "127.0.0.1".to_string(),
             port: 5200,
+            uid: 10000,
             time_offset: 0,
         }
     }

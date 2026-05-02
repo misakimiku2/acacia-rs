@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::logic::player::PlayerManager;
+use acacia_data::tables::tables;
+use anyhow::Ok;
+
+use crate::logic::{girl::new_girl, player::PlayerManager, weapon::new_weapon};
 
 #[derive(Debug, Default)]
 pub struct Items {
@@ -36,4 +39,13 @@ impl Items {
     }
 }
 
-pub fn items_check() {}
+pub async fn new_item(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16, n: u32) -> anyhow::Result<()> {
+    if let Some(_) = tables().card_template.find_one("gdpl", [g, d, p, l]) {
+        new_girl(me, g, d, p, l).await?;
+    } else if let Some(_) = tables().weapon_template.find_one("gdpl", [g, d, p, l]) {
+        new_weapon(me, g, d, p, l).await?;
+    } else if let Some(_) = tables().support_card_template.find_one("gdpl", [g, d, p, l]) {
+    } else if let Some(_) = tables().others_template.find_one("gdpl", [g, d, p, l]) {
+    }
+    Ok(())
+}

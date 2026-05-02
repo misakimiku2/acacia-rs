@@ -1,7 +1,8 @@
-use std::sync::Arc;
-use tracing::warn;
+use axum::{Json, extract::ConnectInfo, http::StatusCode};
+use std::{net::SocketAddr, sync::Arc};
+use tracing::{debug, warn};
 
-use crate::base::conn::Conn;
+use crate::base::conn::{CONNS, Conn};
 use acacia_commons::lua_utils::lua_func;
 
 mod activity;
@@ -86,4 +87,22 @@ impl GMScript {
             Self::Riki(s) => s.run(conn).await,
         }
     }
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct GmScriptPayload {
+    pid: u64,
+    // target: i32,
+    code: String,
+}
+
+pub async fn handle_gm_script(ConnectInfo(addr): ConnectInfo<SocketAddr>, Json(payload): Json<GmScriptPayload>) -> (StatusCode, &'static str) {
+    let _client_ip = addr.ip();
+    if let Some(conn) = CONNS.get_by_uid(payload.pid) {
+        if let Some(gm_script) = GMScript::from_code(&payload.code) {
+            debug!("GMScript: {:?} {:?}", conn.uid(), gm_script);
+            gm_script.run(conn).await.expect("Failed to run GMScript");
+        }
+    }
+    (StatusCode::OK, "success")
 }

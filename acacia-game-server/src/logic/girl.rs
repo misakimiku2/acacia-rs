@@ -119,7 +119,6 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
     if !me.get_items_by_gdpl(g, d, p, l).await?.is_empty() {
         bail!("Girl already exists. gdpl={:?}", [g, d, p, l]);
     }
-    
 
     let mut girl = core::Item {
         id: me.new_item_id().await?,
@@ -162,5 +161,24 @@ pub async fn new_girl(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) ->
     }
     riki_unlock_item(me, 1, g, d, p, l).await?;
     riki_unlock_item(me, 2, df_weapon.0, df_weapon.1, df_weapon.2, df_weapon.3).await?;
+    Ok(())
+}
+
+pub async fn new_girl_skin(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<()> {
+    let Some(_) = tables().card_skin_template.find_one("gdpl", [g, d, p, l]) else {
+        bail!("The specified card_skin_template_data does not exist. gdpl={:?}", [g, d, p, l]);
+    };
+    if !me.get_items_by_gdpl(g, d, p, l).await?.is_empty() {
+        return Ok(());
+    };
+
+    let skin = core::Item {
+        id: me.new_item_id().await?,
+        template: set_template(g, d, p, l),
+        count: 1,
+        ..Default::default()
+    };
+    me.set_item(skin).await?;
+    riki_unlock_item(me, 5, g, d, p, l).await?;
     Ok(())
 }

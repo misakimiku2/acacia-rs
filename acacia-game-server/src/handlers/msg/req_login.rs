@@ -3,6 +3,7 @@ use anyhow::Context;
 use serde_json::json;
 use std::sync::Arc;
 
+use crate::base::config::CONFIG;
 use crate::base::time::ServerTime;
 use crate::logic::activity::{activity_is_open, get_activity_diy_data, get_activity_sign_max_days, set_activity_diy_data};
 use crate::{base::conn::Conn, logic::girl::new_girl};
@@ -11,7 +12,7 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqLogin)]
 async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<()> {
-    conn.bind_uid(10002).await;
+    conn.bind_uid(CONFIG.game_server.uid).await;
     init_userdata(&conn).await?;
 
     let database = conn.database().await;

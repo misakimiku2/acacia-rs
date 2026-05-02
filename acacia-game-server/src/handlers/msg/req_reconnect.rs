@@ -1,14 +1,14 @@
 use anyhow::Context;
 use std::sync::Arc;
 
-use crate::base::conn::Conn;
+use crate::base::{config::CONFIG, conn::Conn};
 use crate::base::time::ServerTime;
 use acacia_derive::func_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqReconnect)]
 async fn req_reconnect(conn: Arc<Conn>, _: protocol::ReqReconnect) -> anyhow::Result<()> {
-    conn.bind_uid(10002).await;
+    conn.bind_uid(CONFIG.game_server.uid).await;
 
     let database = conn.database().await;
     let mut player = database.info.find_one().await?.with_context(|| format!("The player {:?} has not been initialized", conn.uid()))?;

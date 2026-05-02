@@ -1,8 +1,8 @@
 use anyhow::{Context, bail};
 use tracing::warn;
 
-use crate::logic::player::PlayerManager;
-use acacia_commons::bits::get_template;
+use crate::logic::{player::PlayerManager, riki::riki_unlock_item};
+use acacia_commons::bits::{get_template, set_template};
 use acacia_data::tables::tables;
 use acacia_game_msg::core;
 
@@ -174,11 +174,26 @@ pub fn weapon_has_parts_reward(weapon: &core::Item) -> anyhow::Result<bool> {
     Ok(weapon_template_data.weapon_parts_award.is_some())
 }
 
-
 pub fn weapon_set_equip(weapon: &mut core::Item, enabled: bool) {
     if enabled {
         weapon.flag |= 1;
     } else {
         weapon.flag &= !1;
     }
+}
+
+pub async fn new_weapon(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<()> {
+    let Some(_) = tables().weapon_template.find_one("gdpl", [g, d, p, l]) else {
+        bail!("The specified weapon_template_data does not exist. gdpl={:?}", [g, d, p, l]);
+    };
+    let weapon = core::Item {
+        id: me.new_item_id().await?,
+        template: set_template(g, d, p, l),
+        count: 1,
+        enhance: Some(core::Enhance { level: 1, ..Default::default() }),
+        ..Default::default()
+    };
+    me.set_item(weapon).await?;
+    riki_unlock_item(me, 2, g, d, p, l).await?;
+    Ok(())
 }

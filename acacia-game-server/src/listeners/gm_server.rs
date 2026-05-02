@@ -1,33 +1,16 @@
-use axum::{Json, Router, http::StatusCode, routing::post};
-use tracing::debug;
+use std::net::SocketAddr;
 
 use crate::base::config::CONFIG;
-use crate::base::conn::CONNS;
-use crate::func::gm::gm_script::GMScript;
+use crate::routes::gm;
 
 pub async fn listen_gm_server() {
     let addr = format!("{}:{}", CONFIG.game_server.host, 1234);
-    let app = Router::new().route("/gm/script", post(handle_gm_script));
-    let listener = tokio::net::TcpListener::bind(&addr).await.expect("GMServer failed to bind portFailed to bind GM port");
+    let app = gm::routes();
+    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap_or_else(|err| {
+        panic!("GMServer failed to bind addr {}: {}", addr, err);
+    });
     tracing::info!("GMServer listening on {}", addr);
-    if let Err(e) = axum::serve(listener, app).await {
+    if let Err(e) = axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await {
         tracing::error!("GMServer server error: {}", e);
     }
-}
-
-#[derive(Debug, serde::Deserialize)]
-struct GmScriptPayload {
-    pid: u64,
-    // target: i32,
-    code: String,
-}
-
-async fn handle_gm_script(Json(payload): Json<GmScriptPayload>) -> (StatusCode, &'static str) {
-    if let Some(conn) = CONNS.get_by_uid(payload.pid) {
-        if let Some(gm_script) = GMScript::from_code(&payload.code) {
-            debug!("GMScript: {:?} {:?}", conn.uid(), gm_script);
-            gm_script.run(conn).await.expect("Failed to run GMScript");
-        }
-    }
-    (StatusCode::OK, "success")
 }

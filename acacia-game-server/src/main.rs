@@ -1,3 +1,5 @@
+use crate::base::config::CONFIG;
+
 mod base {
     pub mod dispatcher {
         mod callgs_handler;
@@ -9,17 +11,6 @@ mod base {
     pub mod conn;
     pub mod packet;
     pub mod time;
-}
-mod listeners {
-    pub mod game_server;
-    pub mod gm_server;
-}
-mod func {
-    mod callgs;
-    mod msg;
-    pub mod gm {
-        pub mod gm_script;
-    }
 }
 pub mod logic {
     pub mod activity;
@@ -33,6 +24,19 @@ pub mod logic {
     pub mod player;
     pub mod riki;
     pub mod weapon;
+}
+mod listeners {
+    pub mod api_server;
+    pub mod game_server;
+    pub mod gm_server;
+}
+mod handlers {
+    mod callgs;
+    mod msg;
+}
+mod routes {
+    pub mod api;
+    pub mod gm;
 }
 
 #[tokio::main]
@@ -58,15 +62,16 @@ async fn main() -> anyhow::Result<()> {
         acacia_database::db::init_db("surrealkv://data/database").await?;
     }
 
-    let game_server_task = tokio::spawn(listeners::game_server::listen_game_server());
-    let gm_server_task = tokio::spawn(listeners::gm_server::listen_gm_server());
-    tokio::select! {
-        ret = game_server_task => {
-            tracing::error!("GameServer unexpectedly exited: {:?}", ret);
-        }
-        ret = gm_server_task => {
-            tracing::error!("GMServer unexpectedly exited: {:?}", ret);
-        }
+    let mut tasks = tokio::task::JoinSet::new();
+    tasks.spawn(async { listeners::game_server::listen_game_server().await });
+    tasks.spawn(async { listeners::api_server::listen_api_server().await });
+    if CONFIG.gm_server.enable {
+        tasks.spawn(async { listeners::gm_server::listen_gm_server().await });
+    } else {
+        tracing::info!("GMServer disabled");
+    }
+    if let Some(ret) = tasks.join_next().await {
+        tracing::error!("A server unexpectedly exited: {:?}", ret);
     }
     Ok(())
 }

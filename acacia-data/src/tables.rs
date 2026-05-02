@@ -1,7 +1,4 @@
-use crate::schemas::{
-    self, ArItemTemplateData, CallItemTemplateData, CardSkinPartsTemplateData, CardSkinTemplateData, HouseCommonphotoTemplateData, HousePhotoTemplateData, MainSceneTemplateData,
-    ManifestationTemplateData, MonsterCardTemplateData, OthersTemplateData, ProfileTemplateData, SupportCardTemplateData, WeaponPartsTemplateData,
-};
+use crate::schemas;
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -68,11 +65,11 @@ crate::define_tables! {
 
         #[path="item/templates/weapon_parts.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub weapon_parts: DataTable<schemas::WeaponPartsTemplateData>,
+        pub weapon_parts_template: DataTable<schemas::WeaponPartsTemplateData>,
 
         #[path="item/templates/card_skin.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub card_skin: DataTable<schemas::CardSkinTemplateData>,
+        pub card_skin_template: DataTable<schemas::CardSkinTemplateData>,
 
         #[path="item/templates/dorm_gift.txt"]
         #[index("gdpl", genre, detail, particular, level)]
@@ -80,43 +77,43 @@ crate::define_tables! {
 
         #[path="item/templates/profile.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub profile: DataTable<schemas::ProfileTemplateData>,
+        pub profile_template: DataTable<schemas::ProfileTemplateData>,
 
         #[path="item/templates/weapon_skin.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub weapon_skin: DataTable<schemas::WeaponSkinTemplateData>,
+        pub weapon_skin_template: DataTable<schemas::WeaponSkinTemplateData>,
 
         #[path="item/templates/monster_card.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub monster_card: DataTable<schemas::MonsterCardTemplateData>,
+        pub monster_card_template: DataTable<schemas::MonsterCardTemplateData>,
 
         #[path="item/templates/manifestation.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub manifestation: DataTable<schemas::ManifestationTemplateData>,
+        pub manifestation_template: DataTable<schemas::ManifestationTemplateData>,
 
         #[path="item/templates/main_scene.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub main_scene: DataTable<schemas::MainSceneTemplateData>,
+        pub main_scene_template: DataTable<schemas::MainSceneTemplateData>,
 
         #[path="item/templates/house_photo.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub house_photo: DataTable<schemas::HousePhotoTemplateData>,
+        pub house_photo_template: DataTable<schemas::HousePhotoTemplateData>,
 
         #[path="item/templates/house_commonphoto.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub house_commonphoto: DataTable<schemas::HouseCommonphotoTemplateData>,
+        pub house_commonphoto_template: DataTable<schemas::HouseCommonphotoTemplateData>,
 
         #[path="item/templates/ar_item.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub ar_item: DataTable<schemas::ArItemTemplateData>,
+        pub ar_item_template: DataTable<schemas::ArItemTemplateData>,
 
         #[path="item/templates/call_item.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub call_item: DataTable<schemas::CallItemTemplateData>,
+        pub call_item_template: DataTable<schemas::CallItemTemplateData>,
 
         #[path="item/templates/card_skin_parts.txt"]
         #[index("gdpl", genre, detail, particular, level)]
-        pub card_skin_parts: DataTable<schemas::CardSkinPartsTemplateData>,
+        pub card_skin_parts_template: DataTable<schemas::CardSkinPartsTemplateData>,
 
         #[path="item/break.txt"]
         #[index("id_1", id)]
