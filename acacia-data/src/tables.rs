@@ -1,4 +1,4 @@
-use crate::schemas;
+use crate::schemas::{self, BosspvpBossChallengeData};
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -189,6 +189,9 @@ crate::define_tables! {
         #[path="riki/Riki.txt"]
         #[index("type_condition_1", r#type, condition)]
         pub riki: DataTable<schemas::RikiData>,
+
+        #[path="challenge/bosspvp/boss_challenge.txt"]
+        pub bosspvp_boss_challenge: DataTable<schemas::BosspvpBossChallengeData>,
     }
 }
 

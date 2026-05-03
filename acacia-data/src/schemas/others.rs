@@ -79,3 +79,15 @@ pub struct RikiData {
     pub id: u32,
     pub condition: String,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct BosspvpBossChallengeData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(deserialize_with = "with_datetime")]
+    pub start_time: i64,
+    #[serde(deserialize_with = "with_datetime")]
+    pub end_time: i64,
+}
+
