@@ -6,4 +6,7 @@ edition.workspace = true
 [dependencies]
 ratatui = "0"
 crossterm = "0"
-anyhow = "1"
+ansi-to-tui = "8"
+arboard = "3"
+unicode-width = "0"
+color-eyre = "0.6"
