@@ -17,6 +17,7 @@ mod house;
 mod launch;
 mod lineup;
 mod player_setting;
+mod role;
 mod rouge3_d;
 mod shop_logic;
 mod vir_capture;
