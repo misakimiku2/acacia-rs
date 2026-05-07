@@ -9,6 +9,7 @@ mod gacha_try;
 mod general;
 mod girl_card;
 mod girl_skin;
+mod girl_skin_parts;
 mod girl_spine;
 mod girl_weapon_skin;
 mod guide_logic;
