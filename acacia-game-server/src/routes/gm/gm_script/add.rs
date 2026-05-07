@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use tracing::warn;
 
-use crate::base::conn::Conn;
+use crate::{base::conn::Conn, logic::item::new_item};
 use acacia_commons::{bits::set_template, lua_utils::lua_func};
 use acacia_data::tables::tables;
 use acacia_game_msg::{core, protocol::Pf};
@@ -129,19 +129,8 @@ impl AddItem {
 
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         let mut me = conn.manager().await;
-        if let Some(_weapon_template_data) = tables().weapon_template.find_one("gdpl", [self.g, self.d, self.p, self.l]) {
-            let new_item = core::Item {
-                id: me.new_item_id().await?,
-                template: set_template(self.g, self.d, self.p, self.l),
-                count: 1,
-                enhance: Some(core::Enhance { level: 1, ..Default::default() }),
-                ..Default::default()
-            };
-            me.set_item(new_item).await?;
-        } else {
-            me.add_item_count(self.g, self.d, self.p, self.l, self.count).await?;
-        }
-        conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
+        new_item(&mut me, self.g, self.d, self.p, self.l, self.count).await?;
+        me.sync().await?;
         Ok(())
     }
 }
