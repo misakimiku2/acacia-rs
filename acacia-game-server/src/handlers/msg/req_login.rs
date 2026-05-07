@@ -1,6 +1,7 @@
 use acacia_data::tables::tables;
 use anyhow::Context;
 use serde_json::json;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use crate::base::config::CONFIG;
@@ -28,6 +29,7 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
         session_id: "123456".into(),
         data: Some(player),
         timestamp: ServerTime::now() as u32,
+        global_str_attrs: HashMap::from([]),
         ..Default::default()
     };
 
