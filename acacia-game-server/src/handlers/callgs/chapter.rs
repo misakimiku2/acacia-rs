@@ -6,6 +6,7 @@ use tracing::warn;
 use super::boss_pvp_logic;
 use super::gacha_try;
 use crate::base::conn::Conn;
+use crate::handlers::callgs::role;
 use crate::logic::chapter::{chapter_level_drop, chapter_level_logger};
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
@@ -20,6 +21,7 @@ async fn deal_level_settlement(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, pa
         "BossPvpLogic_LevelSettlement" => boss_pvp_logic::level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         "BossPvpLogic_LevelFail" => boss_pvp_logic::level_fail(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         "GachaTry_LevelSettlement" => gacha_try::level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
+        "Role_LevelSettlement" => role::level_settlement(conn.clone(), msgdata, param["tbParam"].clone()).await?,
         _ => {
             warn!("Chapter_DealLevelSettlement fn: {} not exists", param["sCmd"]);
         }
