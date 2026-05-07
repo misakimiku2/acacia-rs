@@ -15,7 +15,7 @@ fn random_affix(id: u32) -> u32 {
 }
 
 pub async fn new_support(me: &mut PlayerManager, g: u16, d: u16, p: u16, l: u16) -> anyhow::Result<()> {
-    let Some(_) = tables().suplies_template.find_one("gdpl", [g, d, p, l]) else {
+    let Some(_) = tables().support_card_template.find_one("gdpl", [g, d, p, l]) else {
         bail!("The specified suplies_template_data does not exist. gdpl={:?}", [g, d, p, l]);
     };
     let support = core::Item {

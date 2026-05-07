@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::base::conn::Conn;
+use crate::{base::conn::Conn, logic::item::new_item};
 use acacia_data::tables::tables;
 use acacia_game_msg::protocol::Pf;
 
@@ -10,15 +10,52 @@ pub struct AddAllItem {}
 impl AddAllItem {
     pub async fn run(&self, conn: Arc<Conn>) -> anyhow::Result<()> {
         let mut me = conn.manager().await;
-        for suplies_template_data in tables().suplies_template.all() {
-            me.set_item_count(
-                suplies_template_data.genre,
-                suplies_template_data.detail,
-                suplies_template_data.particular,
-                suplies_template_data.level,
-                9999999,
-            )
-            .await?;
+        for template_data in tables().weapon_template.all() {
+            let g = template_data.genre;
+            let d = template_data.detail;
+            let p = template_data.particular;
+            let l = template_data.level;
+            if me.get_item_count(g, d, p, l).await? != 0 {
+                continue;
+            }
+            new_item(&mut me, g, d, p, l, 1).await?;
+        }
+        for template_data in tables().support_card_template.all() {
+            let g = template_data.genre;
+            let d = template_data.detail;
+            let p = template_data.particular;
+            let l = template_data.level;
+            if me.get_item_count(g, d, p, l).await? != 0 {
+                continue;
+            }
+            new_item(&mut me, g, d, p, l, 1).await?;
+        }
+        for template_data in tables().card_skin_template.all() {
+            let g = template_data.genre;
+            let d = template_data.detail;
+            let p = template_data.particular;
+            let l = template_data.level;
+            if me.get_item_count(g, d, p, l).await? != 0 {
+                continue;
+            }
+            new_item(&mut me, g, d, p, l, 1).await?;
+        }
+        for template_data in tables().card_skin_parts_template.all() {
+            let g = template_data.genre;
+            let d = template_data.detail;
+            let p = template_data.particular;
+            let l = template_data.level;
+            if me.get_item_count(g, d, p, l).await? != 0 {
+                continue;
+            }
+            new_item(&mut me, g, d, p, l, 1).await?;
+        }
+        for template_data in tables().suplies_template.all() {
+            let g = template_data.genre;
+            let d = template_data.detail;
+            let p = template_data.particular;
+            let l = template_data.level;
+            me.set_item_count(g, d, p, l, 9999999).await?;
         }
         conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
         Ok(())
