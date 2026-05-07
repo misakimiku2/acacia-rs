@@ -307,3 +307,45 @@ async fn set_role_like_flag(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Valu
     conn.send_script("GirlCard_SetRoleLikeFlag", ()).await?;
     Ok(())
 }
+
+#[callgs_reg("GirlCard_UpBySpecialBreak")]
+async fn up_by_special_break(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(girl_id) = u64::deserialize(&param["nCardId"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nCardId' as u64 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let Some(mut girl) = me.get_item(girl_id).await? else {
+        conn.send_err("error.card_not_found").await?;
+        bail!("Girl not found {}", girl_id);
+    };
+    let current_break = girl.enhance.as_ref().map_or(0, |e| e.r#break);
+    let cached_break_mat = match get_girl_break_materials(&girl, current_break + 1) {
+        Ok(v) => v,
+        Err(e) => {
+            conn.send_err("error.BadParam").await?;
+            return Err(e);
+        }
+    };
+
+    for (mat_gdpl, mat_num) in &cached_break_mat {
+        let item_count = me.get_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3).await?;
+        if item_count < *mat_num {
+            conn.send_err("error.mat_not_found").await?;
+            return Ok(());
+        }
+    }
+
+    let enhance = girl.enhance.get_or_insert_with(|| core::Enhance { level: 1, ..Default::default() });
+    enhance.r#break += 1;
+
+    for (mat_gdpl, mat_num) in &cached_break_mat {
+        me.remove_item_count(mat_gdpl.0, mat_gdpl.1, mat_gdpl.2, mat_gdpl.3, *mat_num).await?;
+    }
+    me.set_item(girl).await?;
+    me.sync().await?;
+
+    call_script!(null);
+    Ok(())
+}
