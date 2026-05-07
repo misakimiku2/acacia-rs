@@ -437,3 +437,12 @@ pub struct CardBreakNewData {
     #[serde(deserialize_with = "with_lua_table")]
     pub items4_1: Vec<GDPLN>,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct SupportAffixPoolData {
+    #[serde(alias = "ID")]
+    pub id: u32,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub affix_group1: Vec<u32>,
+}

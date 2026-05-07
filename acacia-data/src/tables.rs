@@ -1,4 +1,4 @@
-use crate::schemas::{self, BosspvpBossChallengeData};
+use crate::schemas::{self, BosspvpBossChallengeData, SupportAffixPoolData};
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();
@@ -134,6 +134,10 @@ crate::define_tables! {
         #[path="item/cardbreak/breaknew.txt"]
         #[index("id_1", id)]
         pub card_break_new: DataTable<schemas::CardBreakNewData>,
+
+        #[path="item/support/affix_pool.txt"]
+        #[index("id_1", id)]
+        pub support_affix_pool: DataTable<schemas::SupportAffixPoolData>,
 
         // House
 

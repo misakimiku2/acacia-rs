@@ -23,6 +23,7 @@ pub mod logic {
     pub mod item;
     pub mod player;
     pub mod riki;
+    pub mod support;
     pub mod weapon;
 }
 mod listeners {
