@@ -102,8 +102,8 @@ async fn set_birthday(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> 
     };
 
     let mut me = conn.manager().await;
-    me.set_show_attr(21, nday as u32).await?;
-    me.set_show_attr(22, nmouth as u32).await?;
+    me.set_show_attr(21, nmouth as u32).await?;
+    me.set_show_attr(22, nday as u32).await?;
     // me.set_attribute(151, 1, 2026).await?;
     me.sync().await?;
 
