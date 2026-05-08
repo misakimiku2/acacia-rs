@@ -20,6 +20,7 @@ mod player_setting;
 mod role;
 mod rouge3_d;
 mod shop_logic;
+mod supporter_card;
 mod vir_capture;
 mod vir_capture_level;
 mod weapon;
