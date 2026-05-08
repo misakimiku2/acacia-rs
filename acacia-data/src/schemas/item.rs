@@ -57,6 +57,8 @@ pub struct SupportCardTemplateData {
     pub detail: u16,
     pub particular: u16,
     pub level: u16,
+    #[serde(deserialize_with = "with_lua_table")]
+    pub affix_pool: Vec<u32>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
