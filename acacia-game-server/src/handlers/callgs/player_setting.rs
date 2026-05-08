@@ -31,9 +31,11 @@ async fn set_profile_face(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
         conn.send_err("error.BadParam").await?;
         bail!("Expected 'nHeadItemID' but not found in param {:?}", param);
     };
+    let nframe_item_id = param["nFrameItemID"].as_u64().unwrap_or(0);
 
     let mut me = conn.manager().await;
-    me.set_show_item(4, nhead_item_id as u64).await?;
+    me.set_show_item(4, nhead_item_id).await?;
+    me.set_show_item(5, nframe_item_id ).await?;
     me.sync().await?;
 
     conn.send_script("PlayerSetting_SetProfileFace", ()).await?;
