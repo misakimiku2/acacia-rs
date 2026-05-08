@@ -21,7 +21,7 @@ async fn change_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
     me.set_show_item(3, nid).await?;
     me.sync().await?;
 
-    conn.send_script("PlayerSetting_ChangeShowCard", ()).await?;
+    call_script!(null);
     Ok(())
 }
 
@@ -38,7 +38,7 @@ async fn set_profile_face(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
     me.set_show_item(5, nframe_item_id ).await?;
     me.sync().await?;
 
-    conn.send_script("PlayerSetting_SetProfileFace", ()).await?;
+    call_script!(null);
     Ok(())
 }
 
@@ -62,7 +62,7 @@ async fn change_account_show_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param
     }
     me.sync().await?;
 
-    conn.send_script("PlayerSetting_ChangeAccountShowCard", ()).await?;
+    call_script!(null);
     Ok(())
 }
 
@@ -86,7 +86,22 @@ async fn change_account_show_skin(conn: Arc<Conn>, _: protocol::ReqCallGs, param
     }
     me.sync().await?;
 
-    conn.send_script("PlayerSetting_ChangeAccountShowSkin", ()).await?;
+    call_script!(null);
+    Ok(())
+}
+
+#[callgs_reg("PlayerSetting_SetShowCover")]
+async fn set_show_cover(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Some(nid) = param["nID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nID' but not found in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    me.set_show_item(16, nid).await?;
+    me.sync().await?;
+
+    call_script!(null);
     Ok(())
 }
 
@@ -107,6 +122,6 @@ async fn set_birthday(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> 
     // me.set_attribute(151, 1, 2026).await?;
     me.sync().await?;
 
-    conn.send_script("PlayerSetting_SetBirthday", ()).await?;
+    call_script!(null);
     Ok(())
 }
