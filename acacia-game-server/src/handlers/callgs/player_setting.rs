@@ -120,6 +120,21 @@ async fn set_show_name_card(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Valu
     Ok(())
 }
 
+#[callgs_reg("PlayerSetting_SetShowBubble")]
+async fn set_show_bubble(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Some(nid) = param["nID"].as_u64() else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'nID' but not found in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    me.set_show_item(18, nid).await?;
+    me.sync().await?;
+
+    call_script!(null);
+    Ok(())
+}
+
 #[callgs_reg("PlayerSetting_SetBirthday")]
 async fn set_birthday(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
     let Some(nday) = param["nDay"].as_u64() else {
