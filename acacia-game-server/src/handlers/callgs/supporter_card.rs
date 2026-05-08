@@ -1,9 +1,14 @@
+use acacia_commons::bits::get_template;
+use acacia_data::tables::tables;
 use anyhow::bail;
 use serde::Deserialize;
 use serde_json::Value;
 use std::sync::Arc;
 
-use crate::{base::conn::Conn, logic::support::{SusLevelUpMat, support_card_level_up}};
+use crate::{
+    base::conn::Conn,
+    logic::support::{SusLevelUpMat, random_affix_pool, support_card_level_up},
+};
 use acacia_derive::callgs_reg;
 use acacia_game_msg::{core, protocol};
 
@@ -38,7 +43,6 @@ async fn equip(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow:
     call_script!("Logistics_Equip", null);
     Ok(())
 }
-
 
 #[callgs_reg("SupporterCard_Upgrade")]
 async fn upgrade(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
@@ -93,5 +97,45 @@ async fn upgrade(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyho
     me.sync().await?;
 
     call_script!("Logistics_Upgrade", null);
+    Ok(())
+}
+
+#[callgs_reg("SupporterCard_ResetAffix")]
+async fn reset_affix(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(eq_id) = u64::deserialize(&param["Id"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'Id' as u32 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let Some(mut sus) = me.get_item(eq_id).await? else {
+        conn.send_err("error.logistics_not").await?;
+        bail!("SupporterCard {eq_id} not found");
+    };
+    let sus_gdpl = get_template(sus.template);
+    let Some(support_card_template_data) = tables().support_card_template.find_one("gdpl", [sus_gdpl.0, sus_gdpl.1, sus_gdpl.2, sus_gdpl.3]) else {
+        conn.send_err("error.logistic_cmd_err").await?;
+        bail!("support_card_template_data not found {:?}", sus_gdpl);
+    };
+    let enhance = sus.enhance.get_or_insert_with(|| core::Enhance { level: 1, ..Default::default() });
+    if support_card_template_data.affix_pool.len() < 3 {
+        conn.send_err("error.logistic_cmd_err").await?;
+        bail!("affix_pool: {:?}", support_card_template_data.affix_pool);
+    }
+    if me.get_item_count(5, 6, 1, 2).await? < 1 {
+        conn.send_err("error.logistic_cmd_err").await?;
+        bail!("Insufficient item quantity.");
+    }
+
+    let new_affix = random_affix_pool(support_card_template_data.affix_pool[2])?;
+    enhance.affixs.resize(8, 0);
+    enhance.affixs[6] = new_affix.0;
+    enhance.affixs[7] = new_affix.1;
+
+    me.remove_item_count(5, 6, 1, 2, 1).await?;
+    me.set_item(sus).await?;
+    me.sync().await?;
+
+    call_script!({});
     Ok(())
 }

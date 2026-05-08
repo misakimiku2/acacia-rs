@@ -78,7 +78,7 @@ pub async fn support_card_level_up(me: &PlayerManager, sus: &mut core::Item, mat
     Ok(total_consume_gold)
 }
 
-fn random_affix_pool(id: u32) -> anyhow::Result<(u32, u32)> {
+pub fn random_affix_pool(id: u32) -> anyhow::Result<(u32, u32)> {
     let Some(support_affix_pool_data) = tables().support_affix_pool.find_one("id_1", id) else {
         bail!("The specified support_affix_pool_data does not exist. id={:?}", id);
     };
