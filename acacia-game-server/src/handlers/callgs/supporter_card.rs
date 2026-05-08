@@ -139,3 +139,35 @@ async fn reset_affix(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> a
     call_script!({});
     Ok(())
 }
+
+#[callgs_reg("SupporterCard_SelectAffix")]
+async fn select_affix(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(eq_id) = u64::deserialize(&param["Id"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'Id' as u32 in param {:?}", param);
+    };
+    let Ok(select_new) = bool::deserialize(&param["SelectNew"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'SelectNew' as bool in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    let Some(mut sus) = me.get_item(eq_id).await? else {
+        conn.send_err("error.logistics_not").await?;
+        bail!("SupporterCard {eq_id} not found");
+    };
+    let enhance = sus.enhance.get_or_insert_with(|| core::Enhance { level: 1, ..Default::default() });
+    enhance.affixs.resize(8, 0);
+    if select_new {
+        enhance.affixs[4] = enhance.affixs[6];
+        enhance.affixs[5] = enhance.affixs[7];
+    }
+    enhance.affixs[6] = 0;
+    enhance.affixs[7] = 0;
+
+    me.set_item(sus).await?;
+    me.sync().await?;
+
+    call_script!({});
+    Ok(())
+}
