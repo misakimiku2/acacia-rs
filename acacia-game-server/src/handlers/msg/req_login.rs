@@ -24,12 +24,22 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
     player.solutions = database.solutions.find_all().await?;
     player.attrs = database.attrs.find_all().await?;
     player.str_attrs = database.str_attrs.find_all().await?;
+    let enable_amend = HashMap::from([
+        ("GROWTHACTION_SWITCH".to_string(), 1),
+        ("LOCALIZATION_TIME_SWITCH".to_string(), 1688140800),
+        ("SKIN_AMEND_SWITCH".to_string(), 1),
+        ("BUTTOCK_SWITCH".to_string(), 1),
+        ("ENABLE_SYNC_LOAD_OPTIMIZE".to_string(), 0),
+        ("LOCALIZATION_TIME_OVER_SWITCH".to_string(), 0),
+        ("AGE_PROTECT_LEVEL".to_string(), 27),
+        ("BREASTS_SWITCH".to_string(), 1),
+    ]);
 
     let mut rsp = protocol::RspLogin {
-        session_id: "123456".into(),
+        session_id: msgdata.token,
         data: Some(player),
         timestamp: ServerTime::now() as u32,
-        global_str_attrs: HashMap::from([]),
+        global_attrs: HashMap::new(),
         ..Default::default()
     };
 

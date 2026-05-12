@@ -7,7 +7,7 @@ use acacia_derive::func_reg;
 use acacia_game_msg::{protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqReconnect)]
-async fn req_reconnect(conn: Arc<Conn>, _: protocol::ReqReconnect) -> anyhow::Result<()> {
+async fn req_reconnect(conn: Arc<Conn>, msgdata: protocol::ReqReconnect) -> anyhow::Result<()> {
     conn.bind_uid(CONFIG.game_server.uid).await;
 
     let database = conn.database().await;

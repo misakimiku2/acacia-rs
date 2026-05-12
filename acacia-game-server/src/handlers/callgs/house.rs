@@ -27,6 +27,7 @@ async fn request(conn: Arc<Conn>, msgdata: protocol::ReqCallGs, param: Value) ->
         "ArcadeGameEnter" => request_arcade_game_enter(conn, msgdata, param).await?,
         "ArcadeGameSettlement" => request_arcade_game_settlement(conn, msgdata, param).await?,
         "ArcadeGameLogSettlement" => request_arcade_game_log_settlement(conn, msgdata, param).await?,
+        "ChangeNpcSuit" => request_change_npc_suit(conn, msgdata, param).await?,
         _ => {
             warn!("House_Request fn: {} not exists", func_name);
         }
@@ -457,5 +458,23 @@ async fn request_arcade_game_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs,
 
 async fn request_arcade_game_log_settlement(conn: Arc<Conn>, _: protocol::ReqCallGs, _: Value) -> anyhow::Result<()> {
     conn.send_script("House_Request", json!({"FuncName": "ArcadeGameLogSettlement"})).await?;
+    Ok(())
+}
+
+async fn request_change_npc_suit(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    let Ok(suit_id) = u32::deserialize(&param["SuitId"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'SuitId' as u32 in param {:?}", param);
+    };
+    let Ok(npc_id) = u32::deserialize(&param["NpcId"]) else {
+        conn.send_err("error.BadParam").await?;
+        bail!("Expected 'NpcId' as u32 in param {:?}", param);
+    };
+
+    let mut me = conn.manager().await;
+    me.set_attribute(101, npc_id * 50 + 7, suit_id).await?;
+    me.sync().await?;
+
+    conn.send_script("House_Request", json!({"FuncName": "ChangeNpcSuitSuccess"})).await?;
     Ok(())
 }
