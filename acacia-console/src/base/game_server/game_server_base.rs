@@ -11,6 +11,7 @@ pub fn game_server_path() -> color_eyre::Result<PathBuf> {
 
 pub type GameServerMessage = (GameServerEvent, String);
 
+#[derive(Clone, Copy)]
 pub enum GameServerEvent {
     Debug,
     Info,

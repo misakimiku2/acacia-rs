@@ -5,6 +5,8 @@ use std::{
     thread,
 };
 
+use crate::base::utils::strip_ansi;
+
 use super::game_server_base::{GameServerEvent, GameServerMessage, game_server_path};
 
 pub struct GameServerProcess {
@@ -32,9 +34,10 @@ impl GameServerProcess {
     ];
 
     fn stdout_to_event(body: String) -> GameServerMessage {
+        let plain_body = strip_ansi(&body);
         for (prefix, level) in Self::STDOUT_PREFIX {
-            if let Some(body) = body.strip_prefix(prefix) {
-                return (level, body.to_owned());
+            if let Some(plain_body) = plain_body.strip_prefix(prefix) {
+                return (level, plain_body.to_owned());
             }
         }
         (GameServerEvent::Line, body)

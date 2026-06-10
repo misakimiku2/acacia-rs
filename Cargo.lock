@@ -22,6 +22,7 @@ dependencies = [
  "color-eyre",
  "crossterm",
  "ratatui",
+ "regex",
  "unicode-width",
 ]
 

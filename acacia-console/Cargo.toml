@@ -4,9 +4,10 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-ratatui = "0"
-crossterm = "0"
 ansi-to-tui = "8"
 arboard = "3"
+ratatui = "0"
+crossterm = "0"
 unicode-width = "0"
 color-eyre = "0.6"
+regex = "1"
