@@ -56,4 +56,15 @@ impl AccountDeleteCommand {
     pub fn is_execute(text: &str) -> bool {
         EXECUTE_REGEX.is_match(text)
     }
+
+    pub fn execute(text: &str) -> String {
+        let Some(caps) = EXECUTE_REGEX.captures(text) else {
+            return format!("[ERR] Invalid parameter.");
+        };
+        let uid = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+        let Ok(uid) = uid.parse::<u64>() else {
+            return format!("[ERR] uid must be u64, but got '{uid}'.");
+        };
+        crate::acacia_api_post!("/account/delete", {"pid": uid})
+    }
 }

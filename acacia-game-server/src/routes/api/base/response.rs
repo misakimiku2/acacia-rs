@@ -56,6 +56,17 @@ impl ApiResponse<Empty> {
             }),
         )
     }
+
+    pub fn as_not_found() -> ApiResponseResult<Empty> {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse {
+                code: 404,
+                message: "Not found".to_string(),
+                data: None,
+            }),
+        )
+    }
 }
 
 pub trait ApiResponseError<T> {

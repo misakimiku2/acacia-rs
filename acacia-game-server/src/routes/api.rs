@@ -13,5 +13,12 @@ mod account;
 mod hello;
 
 pub fn routes() -> Router {
-    Router::new().route("/", get(hello::handle_hello)).route("/account/create", post(account::handle_account_create))
+    Router::new()
+        .route("/", get(hello::handle_hello))
+        .route("/account/create", post(account::handle_account_create))
+        .fallback(handle_not_found)
+}
+
+async fn handle_not_found() -> base::ApiResponseResult<base::Empty> {
+    base::ApiResponse::as_not_found()
 }

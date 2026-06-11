@@ -40,15 +40,15 @@ impl AcaciaApi {
 
     pub fn response_to_string(result: Result<String, Error>) -> String {
         match result {
-            Ok(body) => Self::parse_response(&body).unwrap_or_else(|error| format!("Error: {error}")),
-            Err(error) => format!("Error: {error}"),
+            Ok(body) => Self::parse_response(&body).unwrap_or_else(|error| format!("[ERR] {error}")),
+            Err(error) => format!("[ERR] {error}"),
         }
     }
 
     fn parse_response(body: &str) -> Result<String, serde_json::Error> {
         let response = serde_json::from_str::<ApiResponse<serde_json::Value>>(body)?;
         if response.code != 0 {
-            return Ok(format!("Error {}: {}", response.code, response.message));
+            return Ok(format!("[ERR] {}", response.message));
         }
         if let Some(data) = response.data.as_str() {
             return Ok(data.to_string());

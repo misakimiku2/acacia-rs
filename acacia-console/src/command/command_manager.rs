@@ -75,6 +75,9 @@ impl CommandManager {
         if AccountCreateCommand::is_execute(text) {
             return AccountCreateCommand::execute(text);
         }
+        if AccountDeleteCommand::is_execute(text) {
+            return AccountDeleteCommand::execute(text);
+        }
         format!("Unknown command: {text}")
     }
 }

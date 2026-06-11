@@ -29,7 +29,7 @@ static COMMAND_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(COMMAND_PATT
 const KEYWORD_PATTERN: &str = r"^/account\s+create\s+(\S*)";
 static KEYWORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(KEYWORD_PATTERN).unwrap());
 
-const EXECUTE_PATTERN: &str = r"^/account\s+create\s+(\S+)(?:\s+(\S+))?$";
+const EXECUTE_PATTERN: &str = r"^/account\s+create\s+(\S*)(?:\s+(\S+))?$";
 static EXECUTE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(EXECUTE_PATTERN).unwrap());
 
 #[derive(Clone)]
@@ -58,11 +58,11 @@ impl AccountCreateCommand {
 
     pub fn execute(text: &str) -> String {
         let Some(caps) = EXECUTE_REGEX.captures(text) else {
-            return format!("Error: 参数错误");
+            return format!("[ERR] Invalid parameter.");
         };
         let uid = caps.get(1).map(|m| m.as_str()).unwrap_or("");
         let Ok(uid) = uid.parse::<u64>() else {
-            return format!("Error: uid must be u64, but got {uid}.");
+            return format!("[ERR] uid must be u64, but got '{uid}'.");
         };
 
         let _token = caps.get(2).map(|m| m.as_str()).unwrap_or("");
