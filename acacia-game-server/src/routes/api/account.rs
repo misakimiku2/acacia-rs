@@ -22,3 +22,10 @@ pub async fn handle_account_create(headers: HeaderMap, Json(payload): Json<Accou
     config_database.update_one(config).await.internal()?;
     Ok(ApiResponse::as_success(None))
 }
+
+pub async fn handle_account_list(headers: HeaderMap) -> ApiResult<Vec<u64>> {
+    check_auth(&headers, AccessRequirement::Admin)?;
+    let configs = PlayerConfigRepository::find_all().await.internal()?;
+    let pids = configs.into_iter().map(|config| config.pid).collect();
+    Ok(ApiResponse::as_success(pids))
+}

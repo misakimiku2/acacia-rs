@@ -18,6 +18,12 @@ impl PlayerConfigRepository {
         Ok(config)
     }
 
+    pub async fn find_all() -> Result<Vec<PlayerConfig>> {
+        let mut resp = db().query("SELECT * FROM player_config ORDER BY pid").await?;
+        let configs: Vec<PlayerConfig> = resp.take(0)?;
+        Ok(configs)
+    }
+
     pub async fn update_one(&self, src_config: PlayerConfig) -> Result<()> {
         db().query("UPSERT type::record('player_config', $pid) MERGE $player")
             .bind(("pid", self.pid))

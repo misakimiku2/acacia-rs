@@ -16,6 +16,7 @@ pub fn routes() -> Router {
     Router::new()
         .route("/", get(hello::handle_hello))
         .route("/account/create", post(account::handle_account_create))
+        .route("/account/list", get(account::handle_account_list))
         .fallback(handle_not_found)
 }
 
