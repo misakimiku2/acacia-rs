@@ -36,4 +36,10 @@ impl PlayerConfigRepository {
         db().query("DELETE ONLY type::record('player_config', $pid)").bind(("pid", self.pid)).await?;
         Ok(())
     }
+
+    pub async fn find_one_by_token(ptoken: String) -> Result<Option<PlayerConfig>> {
+        let mut resp = db().query("SELECT * FROM ONLY player_config WHERE ptoken = $ptoken LIMIT 1").bind(("ptoken", ptoken)).await?;
+        let config: Option<PlayerConfig> = resp.take(0)?;
+        Ok(config)
+    }
 }

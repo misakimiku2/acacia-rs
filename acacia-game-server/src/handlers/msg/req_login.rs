@@ -1,10 +1,10 @@
 use acacia_data::tables::tables;
+use acacia_database::repositories::player_config::PlayerConfigRepository;
 use anyhow::Context;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::base::config::CONFIG;
 use crate::base::time::ServerTime;
 use crate::logic::activity::{activity_is_open, get_activity_diy_data, get_activity_sign_max_days, set_activity_diy_data};
 use crate::{base::conn::Conn, logic::girl::new_girl};
@@ -13,7 +13,15 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqLogin)]
 async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<()> {
-    conn.bind_uid(CONFIG.game_server.uid).await;
+    let Some(player_config) = PlayerConfigRepository::find_one_by_token(msgdata.token.clone()).await? else {
+        let rsp = protocol::RspLogin {
+            error_code: 304,
+            ..Default::default()
+        };
+        conn.send_msg(Pf::RspLogin, &rsp, 0).await?;
+        return Ok(());
+    };
+    conn.bind_uid(player_config.pid).await;
     init_userdata(&conn).await?;
 
     let database = conn.database().await;
