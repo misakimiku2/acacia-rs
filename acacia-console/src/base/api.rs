@@ -15,14 +15,25 @@ impl AcaciaApi {
 
     pub fn get(path: &str) -> Result<String, Error> {
         let url = format!("{}{}", Self::ADDRESS, path);
-        let mut response = ureq::get(&url).header("X-Token", Self::ADMIN_TOKEN).call()?;
+        let mut response = ureq::get(&url)
+            .header("X-Token", Self::ADMIN_TOKEN)
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .call()?;
         let body_string = response.body_mut().read_to_string()?;
         Ok(body_string)
     }
 
     pub fn post(path: &str, body: String) -> Result<String, Error> {
         let url = format!("{}{}", Self::ADDRESS, path);
-        let mut response = ureq::post(&url).header("X-Token", Self::ADMIN_TOKEN).header("Content-Type", "application/json").send(body)?;
+        let mut response = ureq::post(&url)
+            .header("X-Token", Self::ADMIN_TOKEN)
+            .header("Content-Type", "application/json")
+            .config()
+            .http_status_as_error(false)
+            .build()
+            .send(body)?;
         let body_string = response.body_mut().read_to_string()?;
         Ok(body_string)
     }

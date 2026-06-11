@@ -72,6 +72,9 @@ impl CommandManager {
         if HelloCommand::is_execute(text) {
             return HelloCommand::execute();
         }
+        if AccountCreateCommand::is_execute(text) {
+            return AccountCreateCommand::execute(text);
+        }
         format!("Unknown command: {text}")
     }
 }
