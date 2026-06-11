@@ -1,13 +1,9 @@
-use std::{
-    io::{Read, Write},
-    net::TcpStream,
-};
-
 use crate::command::{
     command_base::{CommandItem, CommandItemAction},
     commands::{
         CommandKind,
         account::{account::AccountCommand, account_create::AccountCreateCommand, account_delete::AccountDeleteCommand},
+        hello::HelloCommand,
         slash::SlashCommand,
     },
 };
@@ -72,22 +68,10 @@ impl CommandManager {
         result
     }
 
-    pub fn run(&mut self, text: &str) -> String {
-        if text.starts_with("/hello") {
-            let result = match get_http_text("127.0.0.1:52000", "/") {
-                Ok(text) => text,
-                Err(error) => format!("Request failed: {error}"),
-            };
-            return result;
+    pub fn execute(&mut self, text: &str) -> String {
+        if HelloCommand::is_execute(text) {
+            return HelloCommand::execute();
         }
         format!("Unknown command: {text}")
     }
-}
-
-fn get_http_text(address: &str, path: &str) -> std::io::Result<String> {
-    let mut stream = TcpStream::connect(address)?;
-    stream.write_all(format!("GET {path} HTTP/1.1\r\nHost: {address}\r\nConnection: close\r\n\r\n").as_bytes())?;
-    let mut response = String::new();
-    stream.read_to_string(&mut response)?;
-    Ok(response.split_once("\r\n\r\n").map_or(response.clone(), |(_, body)| body.to_owned()))
 }

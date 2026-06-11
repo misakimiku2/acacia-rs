@@ -1,7 +1,11 @@
 use regex::Regex;
+use serde_json::json;
 use std::sync::LazyLock;
 
-use crate::command::command_base::{CommandItem, CommandItemAction};
+use crate::{
+    base::api::AcaciaApi,
+    command::command_base::{CommandItem, CommandItemAction},
+};
 
 static STATIC_ITEMS: LazyLock<Vec<CommandItem>> = LazyLock::new(|| {
     vec![
@@ -29,6 +33,9 @@ static COMMAND_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(COMMAND_PATT
 const KEYWORD_PATTERN: &str = r"^/account\s+create\s+(\S*)";
 static KEYWORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(KEYWORD_PATTERN).unwrap());
 
+const EXECUTE_PATTERN: &str = r"^/account\s+create\s+(\S*)\s+(\S*)";
+static EXECUTE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(EXECUTE_PATTERN).unwrap());
+
 #[derive(Clone)]
 pub struct AccountCreateCommand {}
 
@@ -47,5 +54,21 @@ impl AccountCreateCommand {
 
     pub fn items() -> Vec<CommandItem> {
         STATIC_ITEMS.to_vec()
+    }
+
+    pub fn is_execute(text: &str) -> bool {
+        EXECUTE_REGEX.is_match(text)
+    }
+
+    pub fn execute(text: &str) -> String {
+        if let Some(caps) = EXECUTE_REGEX.captures(text) {
+            let uid = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+            let _token = caps.get(2).map(|m| m.as_str()).unwrap_or("");
+            return match AcaciaApi::post("/account/create", json!({"pid": uid}).to_string()) {
+                Ok(text) => text,
+                Err(error) => format!("[ERROR] {error}"),
+            };
+        }
+        "参数错误".to_string()
     }
 }

@@ -1,3 +1,4 @@
+pub mod hello;
 pub mod slash;
 pub mod account {
     pub mod account;

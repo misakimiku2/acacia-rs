@@ -4,6 +4,7 @@ mod base {
         pub mod game_server_manager;
         pub mod game_server_process;
     }
+    pub mod api;
     pub mod time_tick;
     pub mod utils;
 }

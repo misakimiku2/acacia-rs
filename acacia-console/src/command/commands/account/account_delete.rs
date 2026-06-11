@@ -24,6 +24,9 @@ static COMMAND_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(COMMAND_PATT
 const KEYWORD_PATTERN: &str = r"^/account\s+delete\s+(\S*)$";
 static KEYWORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(KEYWORD_PATTERN).unwrap());
 
+const EXECUTE_PATTERN: &str = r"^/account\s+delete\s+(\S*)";
+static EXECUTE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(EXECUTE_PATTERN).unwrap());
+
 #[derive(Clone)]
 pub struct AccountDeleteCommand {}
 
@@ -48,5 +51,9 @@ impl AccountDeleteCommand {
             action: CommandItemAction::Insert("/account delete 10000 ".to_string()),
         });
         items
+    }
+    
+    pub fn is_execute(text: &str) -> bool {
+        EXECUTE_REGEX.is_match(text)
     }
 }

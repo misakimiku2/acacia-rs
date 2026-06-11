@@ -48,7 +48,7 @@ impl GameServerManager {
         Ok(())
     }
 
-    pub fn restart(&mut self) -> color_eyre::Result<()> {
+    pub fn _restart(&mut self) -> color_eyre::Result<()> {
         self.stop()?;
         self.start()?;
 

@@ -210,7 +210,7 @@ impl ConsolePage {
         let text = self.console_composer.input.take_text();
         let message = ConsoleMessage::User(text.clone());
         self.console_conversation.messages.push(message);
-        let result: String = self.console_command.command_manager.run(&text);
+        let result: String = self.console_command.command_manager.execute(&text);
         let message = ConsoleMessage::Ret(result);
         self.console_conversation.messages.push(message);
     }
