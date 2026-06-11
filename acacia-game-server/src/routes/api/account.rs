@@ -14,7 +14,7 @@ pub async fn handle_account_create(headers: HeaderMap, Json(payload): Json<Accou
     if let Some(_) = config_database.find_one().await.internal()? {
         return Err(ApiResponse::as_bad_request(format!("The specified pid {} already exists.", payload.pid)));
     }
-    let config = PlayerConfig {
+    let config: PlayerConfig = PlayerConfig {
         pid: payload.pid,
         token: payload.pid.to_string(),
         ..Default::default()

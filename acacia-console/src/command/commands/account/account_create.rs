@@ -1,11 +1,7 @@
 use regex::Regex;
-use serde_json::json;
 use std::sync::LazyLock;
 
-use crate::{
-    base::api::AcaciaApi,
-    command::command_base::{CommandItem, CommandItemAction},
-};
+use crate::command::command_base::{CommandItem, CommandItemAction};
 
 static STATIC_ITEMS: LazyLock<Vec<CommandItem>> = LazyLock::new(|| {
     vec![
@@ -61,14 +57,15 @@ impl AccountCreateCommand {
     }
 
     pub fn execute(text: &str) -> String {
-        if let Some(caps) = EXECUTE_REGEX.captures(text) {
-            let uid = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-            let _token = caps.get(2).map(|m| m.as_str()).unwrap_or("");
-            return match AcaciaApi::post("/account/create", json!({"pid": uid}).to_string()) {
-                Ok(text) => text,
-                Err(error) => format!("[ERROR] {error}"),
-            };
-        }
-        "参数错误".to_string()
+        let Some(caps) = EXECUTE_REGEX.captures(text) else {
+            return format!("Error: 参数错误");
+        };
+        let uid = caps.get(1).map(|m| m.as_str()).unwrap_or("");
+        let Ok(uid) = uid.parse::<u64>() else {
+            return format!("Error: uid must be u64, but got {uid}.");
+        };
+
+        let _token = caps.get(2).map(|m| m.as_str()).unwrap_or("");
+        return crate::acacia_api_post!("/account/create", {"pid": uid});
     }
 }
