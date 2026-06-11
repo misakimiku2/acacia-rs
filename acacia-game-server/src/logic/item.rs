@@ -3,7 +3,12 @@ use std::collections::HashMap;
 use acacia_data::tables::tables;
 use anyhow::Ok;
 
-use crate::logic::{girl::{new_girl, new_girl_skin}, player::PlayerManager, support::new_support, weapon::new_weapon};
+use crate::logic::{
+    girl::{new_girl, new_girl_skin},
+    player::PlayerManager,
+    support::new_support,
+    weapon::new_weapon,
+};
 
 #[derive(Debug, Default)]
 pub struct Items {

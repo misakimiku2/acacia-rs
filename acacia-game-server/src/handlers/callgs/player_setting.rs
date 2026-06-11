@@ -35,7 +35,7 @@ async fn set_profile_face(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value)
 
     let mut me = conn.manager().await;
     me.set_show_item(4, nhead_item_id).await?;
-    me.set_show_item(5, nframe_item_id ).await?;
+    me.set_show_item(5, nframe_item_id).await?;
     me.sync().await?;
 
     call_script!(null);

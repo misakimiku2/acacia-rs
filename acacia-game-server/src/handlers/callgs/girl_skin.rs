@@ -14,7 +14,11 @@ async fn change(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow
     let database = conn.database().await;
     let mut girl = database.items.find_one(card_id).await?.with_context(|| format!("Girl not found {}", card_id))?;
     let before_skin_id = girl.slots.get(&5).with_context(|| format!("Girl skin slot not found {:?}", girl))?;
-    let before_skin = database.items.find_one(*before_skin_id).await?.with_context(|| format!("Girl before skin not found {:?}", before_skin_id))?;
+    let before_skin = database
+        .items
+        .find_one(*before_skin_id)
+        .await?
+        .with_context(|| format!("Girl before skin not found {:?}", before_skin_id))?;
     girl.slots.insert(5, skin_id);
     database.items.update_one(girl.clone()).await?;
 
