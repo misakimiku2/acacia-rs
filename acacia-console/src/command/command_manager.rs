@@ -7,7 +7,7 @@ use crate::command::{
     command_base::{CommandItem, CommandItemAction},
     commands::{
         CommandKind,
-        account::{account::AccountCommand, account_create::AccountCreateCommand},
+        account::{account::AccountCommand, account_create::AccountCreateCommand, account_delete::AccountDeleteCommand},
         slash::SlashCommand,
     },
 };
@@ -46,7 +46,11 @@ impl CommandManager {
                 self.cached_kind = CommandKind::AccountCreate;
                 self.cached_items = AccountCreateCommand::items();
             }
-            keyword = AccountCreateCommand::keyword(text);
+        } else if AccountDeleteCommand::is_match(text) {
+            if self.cached_kind != CommandKind::AccountDelete {
+                self.cached_kind = CommandKind::AccountDelete;
+                self.cached_items = AccountDeleteCommand::items();
+            }
         } else {
             self.cached_kind = CommandKind::None;
             self.cached_items = Vec::new();

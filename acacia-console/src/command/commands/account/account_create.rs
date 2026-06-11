@@ -26,7 +26,7 @@ static STATIC_ITEMS: LazyLock<Vec<CommandItem>> = LazyLock::new(|| {
 const COMMAND_PATTERN: &str = r"^/account\s+create\s+";
 static COMMAND_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(COMMAND_PATTERN).unwrap());
 
-const KEYWORD_PATTERN: &str = r"^/account\s+create\s+(\S*)$";
+const KEYWORD_PATTERN: &str = r"^/account\s+create\s+(\S*)";
 static KEYWORD_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(KEYWORD_PATTERN).unwrap());
 
 #[derive(Clone)]
