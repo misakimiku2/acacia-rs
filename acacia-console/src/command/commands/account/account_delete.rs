@@ -1,7 +1,11 @@
 use regex::Regex;
+use serde_json::json;
 use std::sync::LazyLock;
 
-use crate::command::command_base::{CommandItem, CommandItemAction};
+use crate::{
+    base::api::AcaciaApi,
+    command::command_base::{CommandItem, CommandItemAction},
+};
 
 static STATIC_ITEMS: LazyLock<Vec<CommandItem>> = LazyLock::new(|| {
     vec![
@@ -45,14 +49,16 @@ impl AccountDeleteCommand {
 
     pub fn items() -> Vec<CommandItem> {
         let mut items = STATIC_ITEMS.to_vec();
-        items.push(CommandItem {
-            name: Some("10000".to_string()),
-            desc: Some("existing uid".to_string()),
-            action: CommandItemAction::Insert("/account delete 10000 ".to_string()),
-        });
+        if let Ok(uids) = AcaciaApi::get::<Vec<u64>>("/account/list") {
+            items.extend(uids.into_iter().map(|uid| CommandItem {
+                name: Some(uid.to_string()),
+                desc: Some("existing uid".to_string()),
+                action: CommandItemAction::Insert(format!("/account delete {uid} ")),
+            }));
+        }
         items
     }
-    
+
     pub fn is_execute(text: &str) -> bool {
         EXECUTE_REGEX.is_match(text)
     }
@@ -65,6 +71,9 @@ impl AccountDeleteCommand {
         let Ok(uid) = uid.parse::<u64>() else {
             return format!("[ERR] uid must be u64, but got '{uid}'.");
         };
-        crate::acacia_api_post!("/account/delete", {"pid": uid})
+        match AcaciaApi::post::<serde_json::Value>("/account/delete", json!({"pid": uid}).to_string()) {
+            Ok(_) => format!("Account deleted successfully."),
+            Err(error) => format!("[ERR] {error}"),
+        }
     }
 }

@@ -1,6 +1,8 @@
 use regex::Regex;
 use std::sync::LazyLock;
 
+use crate::base::api::AcaciaApi;
+
 const EXECUTE_PATTERN: &str = r"^/hello";
 static EXECUTE_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(EXECUTE_PATTERN).unwrap());
 
@@ -13,6 +15,9 @@ impl HelloCommand {
     }
 
     pub fn execute() -> String {
-        crate::acacia_api_get!("/")
+        match AcaciaApi::get::<String>("/") {
+            Ok(body) => body,
+            Err(error) => format!("[ERR] {error}"),
+        }
     }
 }

@@ -12,8 +12,8 @@ use crate::ui::{
     pages::{Page, PopupPage},
 };
 use crate::{
-    base::utils::strip_ansi,
     base::game_server::game_server_base::{GameServerEvent, GameServerMessage},
+    base::utils::strip_ansi,
     ui::pages::game_server_log::GameServerLogPopupPage,
 };
 

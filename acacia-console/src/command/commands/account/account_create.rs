@@ -1,7 +1,11 @@
 use regex::Regex;
+use serde_json::json;
 use std::sync::LazyLock;
 
-use crate::command::command_base::{CommandItem, CommandItemAction};
+use crate::{
+    base::api::AcaciaApi,
+    command::command_base::{CommandItem, CommandItemAction},
+};
 
 static STATIC_ITEMS: LazyLock<Vec<CommandItem>> = LazyLock::new(|| {
     vec![
@@ -66,6 +70,9 @@ impl AccountCreateCommand {
         };
 
         let _token = caps.get(2).map(|m| m.as_str()).unwrap_or("");
-        crate::acacia_api_post!("/account/create", {"pid": uid})
+        match AcaciaApi::post::<serde_json::Value>("/account/create", json!({"pid": uid}).to_string()) {
+            Ok(_) => format!("Account created successfully."),
+            Err(error) => format!("[ERR] {error}"),
+        }
     }
 }

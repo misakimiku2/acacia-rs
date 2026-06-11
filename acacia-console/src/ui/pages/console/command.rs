@@ -67,7 +67,16 @@ impl ConsoleCommandLayout {
             .map(|(relative_index, item)| {
                 let index = self.scroll_offset + relative_index;
                 let selected = self.selected == Some(index);
-                let line = Self::command_item_to_line(item, title_width, normal_text_color, muted_text_color, selected_text_color, selected_background_color, selected, list_area.width);
+                let line = Self::command_item_to_line(
+                    item,
+                    title_width,
+                    normal_text_color,
+                    muted_text_color,
+                    selected_text_color,
+                    selected_background_color,
+                    selected,
+                    list_area.width,
+                );
                 if selected {
                     ListItem::new(line).style(Style::default().fg(selected_text_color).bg(selected_background_color))
                 } else {
