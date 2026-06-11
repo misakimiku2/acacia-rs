@@ -45,8 +45,8 @@ impl ExitPopupPage {
     }
 
     fn render_choices(&self, frame: &mut Frame, content_area: Rect) {
-        let selected_background_color = style::selected_item_background(false);
-        let selected_text_color = style::selected_item_text_color(false);
+        let selected_background_color = style::item_selected_background_color(false);
+        let selected_text_color = style::item_selected_text_color(false);
         let items = [(ExitConfirmChoice::Ok, "OK"), (ExitConfirmChoice::Cancel, "Cancel")]
             .into_iter()
             .map(|(choice, label)| {

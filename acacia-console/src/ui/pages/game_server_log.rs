@@ -8,7 +8,10 @@ use ratatui::{
 };
 
 use crate::{
-    base::{game_server::game_server_base::{GameServerEvent, GameServerMessage}, utils::strip_ansi},
+    base::{
+        game_server::game_server_base::{GameServerEvent, GameServerMessage},
+        utils::strip_ansi,
+    },
     ui::{
         components::{input::InputLayout, popup::PopupLayout, style},
         pages::PopupPage,
@@ -26,7 +29,11 @@ impl GameServerLogPopupPage {
     const FOOTER_HEIGHT: u16 = 2;
 
     pub fn new() -> Self {
-        Self { input: InputLayout::new(), event: GameServerEvent::Line, log_index: 0 }
+        Self {
+            input: InputLayout::new(),
+            event: GameServerEvent::Line,
+            log_index: 0,
+        }
     }
 
     pub fn load_log(&mut self, index: usize, logs: &[GameServerMessage]) {
@@ -94,7 +101,7 @@ impl GameServerLogPopupPage {
         let line = Line::from(vec![
             Span::styled(level, Style::default().fg(self.event_color()).add_modifier(Modifier::BOLD)),
             Span::raw(" ".repeat(gap)),
-            Span::styled(action, Style::default().fg(style::overlay_hint_color())),
+            Span::styled(action, Style::default().fg(style::muted_text_color(false))),
         ]);
 
         let line_area = Rect {

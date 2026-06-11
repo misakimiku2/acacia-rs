@@ -41,11 +41,11 @@ impl ConsoleCommandLayout {
     }
 
     pub fn render(&self, frame: &mut Frame, area: Rect, has_popup: bool) {
-        let normal_background_color = style::block_backgrounds(has_popup).1;
-        let selected_background_color = style::selected_item_background(has_popup);
-        let selected_text_color = style::selected_item_text_color(has_popup);
-        let normal_color: Color = style::normal_text_color(has_popup);
-        let muted_color = style::muted_text_color(has_popup);
+        let normal_text_color = style::normal_text_color(has_popup);
+        let muted_text_color = style::muted_text_color(has_popup);
+        let normal_background_color = style::normal_background_active_color(has_popup);
+        let selected_text_color = style::item_selected_text_color(has_popup);
+        let selected_background_color = style::item_selected_background_color(has_popup);
 
         let list_area = self.list_area(area);
         let items = &self.command_items;
@@ -67,7 +67,7 @@ impl ConsoleCommandLayout {
             .map(|(relative_index, item)| {
                 let index = self.scroll_offset + relative_index;
                 let selected = self.selected == Some(index);
-                let line = Self::command_item_to_line(item, title_width, normal_color, muted_color, selected_text_color, selected_background_color, selected, list_area.width);
+                let line = Self::command_item_to_line(item, title_width, normal_text_color, muted_text_color, selected_text_color, selected_background_color, selected, list_area.width);
                 if selected {
                     ListItem::new(line).style(Style::default().fg(selected_text_color).bg(selected_background_color))
                 } else {
@@ -81,22 +81,22 @@ impl ConsoleCommandLayout {
     }
 
     fn render_background(&self, area: Rect, has_popup: bool) -> Vec<Line<'static>> {
-        let accent_color = style::command_popup_accent(has_popup);
-        let normal_color = style::normal_text_color(has_popup);
-        let (_, background_color) = style::block_backgrounds(has_popup);
-        let background_style = Style::default().fg(normal_color).bg(background_color);
+        let accent_color = style::item_accent_color(has_popup);
+        let normal_text_color = style::normal_text_color(has_popup);
+        let normal_background_color = style::normal_background_active_color(has_popup);
+        let normal_style = Style::default().fg(normal_text_color).bg(normal_background_color);
 
-        (0..area.height).map(|_| Self::render_background_line(area.width, accent_color, background_style)).collect()
+        (0..area.height).map(|_| Self::render_background_line(area.width, accent_color, normal_style)).collect()
     }
 
-    fn render_background_line(area_width: u16, accent_color: Color, background_style: Style) -> Line<'static> {
+    fn render_background_line(area_width: u16, accent_color: Color, normal_style: Style) -> Line<'static> {
         let left_margin = " ".repeat(Self::BORDER_MARGIN as usize);
         let rest_width = area_width.saturating_sub(Self::BORDER_MARGIN * 2 + 1) as usize;
         let right_margin = " ".repeat(Self::BORDER_MARGIN as usize);
         Line::from(vec![
             Span::raw(left_margin),
             Span::styled(ACCENT_BAR, Style::default().fg(accent_color)),
-            Span::styled(" ".repeat(rest_width), background_style),
+            Span::styled(" ".repeat(rest_width), normal_style),
             Span::raw(right_margin),
         ])
     }

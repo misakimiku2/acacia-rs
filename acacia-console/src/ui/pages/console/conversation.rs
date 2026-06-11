@@ -99,9 +99,10 @@ impl ConsoleConversationLayout {
         let message_lines = self.messages_visual_lines(area.width);
         let selection = self.selection.map(|selection| selection.range()).filter(|(start, end)| start != end);
 
-        let accent = style::accent_color(has_popup);
+        let accent = style::normal_accent_color(has_popup);
         let normal = style::normal_text_color(has_popup);
-        let (user_block_bg, active_block_bg) = style::block_backgrounds(has_popup);
+        let user_block_bg = style::normal_background_color(has_popup);
+        let active_block_bg = style::normal_background_active_color(has_popup);
 
         let mut lines = Vec::with_capacity(message_lines.len());
         let mut char_index = 0usize;
@@ -226,7 +227,7 @@ impl ConsoleConversationLayout {
 
     fn entry_hint_line(line: &str, has_popup: bool, line_start: usize, selection: Option<(usize, usize)>) -> Line<'static> {
         let text = format!("{}{}", " ".repeat(ConsoleMessageLine::TEXT_PADDING), line);
-        let (_, accent) = style::block_backgrounds(has_popup);
+        let accent = style::muted_accent_color(has_popup);
         let mut spans = vec![Span::raw(" ".repeat(ConsoleMessageLine::BORDER_MARGIN)), Span::styled(ACCENT_BAR, Style::default().fg(accent))];
         spans.extend(Self::selectable_spans(
             &text,

@@ -7,10 +7,7 @@ use ratatui::{
     widgets::{Block, Clear, Paragraph},
 };
 
-use crate::ui::{
-    components::style::{OVERLAY_POPUP_BACKGROUND, overlay_hint_color},
-    pages::PopupPage,
-};
+use crate::ui::{components::style, pages::PopupPage};
 
 pub struct PopupLayout {}
 
@@ -37,7 +34,7 @@ impl PopupLayout {
 
     pub fn render(frame: &mut Frame, window_area: Rect, title: &str) {
         frame.render_widget(Clear, window_area);
-        frame.render_widget(Block::default().style(Style::default().bg(OVERLAY_POPUP_BACKGROUND)), window_area);
+        frame.render_widget(Block::default().style(Style::default().bg(style::normal_background_color(false))), window_area);
 
         if window_area.height > 1 {
             let title_area = Rect {
@@ -55,7 +52,7 @@ impl PopupLayout {
                 width: 3,
                 height: 1,
             };
-            let escape_message = Paragraph::new(Line::styled("esc", Style::default().fg(overlay_hint_color())));
+            let escape_message = Paragraph::new(Line::styled("esc", Style::default().fg(style::muted_text_color(false))));
             frame.render_widget(escape_message, escape_area);
         }
     }

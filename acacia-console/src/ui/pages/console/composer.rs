@@ -28,10 +28,10 @@ impl ConsoleComposerLayout {
     }
 
     pub fn render_background(&self, area_width: u16, input_height: u16, has_popup: bool) -> Vec<Line<'static>> {
-        let accent_color = style::accent_color(has_popup);
-        let normal_color = style::normal_text_color(has_popup);
-        let (_, background_color) = style::block_backgrounds(has_popup);
-        let background_style = Style::default().fg(normal_color).bg(background_color);
+        let accent_color = style::normal_accent_color(has_popup);
+        let text_color = style::normal_text_color(has_popup);
+        let background_color = style::normal_background_active_color(has_popup);
+        let background_style = Style::default().fg(text_color).bg(background_color);
 
         let mut lines = Vec::new();
         lines.push(Self::render_background_line(area_width, accent_color, background_style));
