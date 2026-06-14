@@ -1,5 +1,3 @@
-use crate::base::config::CONFIG;
-
 mod base {
     pub mod dispatcher {
         mod callgs_handler;
@@ -7,7 +5,6 @@ mod base {
         pub use callgs_handler::{CALLGS_DISPATCHER, CallGsHandlerRegistration};
         pub use msg_handler::{DISPATCHER, HandlerRegistration};
     }
-    pub mod config;
     pub mod conn;
     pub mod packet;
     pub mod time;
@@ -42,23 +39,21 @@ mod routes {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    use acacia_commons::config::CONFIG;
+
     tracing_subscriber::fmt()
         .with_target(false)
         .without_time()
         .compact()
-        .with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&base::config::CONFIG.log)))
+        .with_env_filter(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(&CONFIG.log)))
         .init();
 
     acacia_data::init_data::load_init_data()?;
     acacia_data::tables::load_tables()?;
 
-    if base::config::CONFIG.database.mode == "remote" {
-        acacia_database::db::init_db_by_auth(
-            &base::config::CONFIG.database.address,
-            base::config::CONFIG.database.username.clone(),
-            base::config::CONFIG.database.password.clone(),
-        )
-        .await?;
+    let use_remote_database = CONFIG.database.mode == "remote" || (CONFIG.database.mode == "default" && !cfg!(feature = "full"));
+    if use_remote_database {
+        acacia_database::db::init_db_by_auth(&CONFIG.database.address, CONFIG.database.username.clone(), CONFIG.database.password.clone()).await?;
     } else {
         acacia_database::db::init_db("surrealkv://data/database").await?;
     }

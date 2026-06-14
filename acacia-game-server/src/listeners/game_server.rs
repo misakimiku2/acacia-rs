@@ -1,7 +1,7 @@
 use tokio::net::TcpStream;
 use tracing::info;
+use acacia_commons::config::CONFIG;
 
-use crate::base::config::CONFIG;
 use crate::base::conn::{CONNS, Conn};
 
 pub async fn listen_game_server() {

@@ -1,4 +1,5 @@
-use crate::base::config::CONFIG;
+use acacia_commons::config::CONFIG;
+
 use crate::routes::api;
 
 pub async fn listen_api_server() {

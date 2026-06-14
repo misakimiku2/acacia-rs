@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
+use acacia_commons::config::CONFIG;
 
-use crate::base::config::CONFIG;
 use crate::routes::gm;
 
 pub async fn listen_gm_server() {

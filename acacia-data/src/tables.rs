@@ -1,4 +1,4 @@
-use crate::schemas::{self, BosspvpBossChallengeData, SupportAffixPoolData};
+use crate::schemas;
 use std::sync::OnceLock;
 
 static TABLES: OnceLock<Tables> = OnceLock::new();

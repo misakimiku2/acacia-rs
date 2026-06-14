@@ -9,7 +9,7 @@ time_offset = 0
 enable = true
 
 [database]
-mode = "remote"                 # "local" | "remote"
+mode = "default"                # "default" | "local" | "remote"
 address = "ws://127.0.0.1:8000" # "remote" mode only
 username = "acacia-root"        # "remote" mode only
 password = "acacia-secret"      # "remote" mode only

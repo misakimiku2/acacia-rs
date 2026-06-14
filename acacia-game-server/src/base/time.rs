@@ -1,7 +1,6 @@
+use acacia_commons::config::CONFIG;
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use std::time::{SystemTime, UNIX_EPOCH};
-
-use crate::base::config::CONFIG;
 
 pub struct ServerTime;
 
