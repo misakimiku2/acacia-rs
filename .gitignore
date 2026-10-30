@@ -2,3 +2,5 @@
 /acacia-game-msg/generated
 /acacia-game-server/gameserver.toml
 /data
+# local build logs
+build*.log
