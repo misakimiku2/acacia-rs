@@ -24,8 +24,13 @@ impl<T: DeserializeOwned + Clone> DataTable<T> {
         let path = ["data/settings", "../data/settings"]
             .iter()
             .map(|base| PathBuf::from(base).join(table_name))
-            .find(|p| p.exists())
-            .ok_or_else(|| anyhow!("Cannot find table: {table_name}"))?;
+            .find(|p| p.exists());
+        // 【本地私服改造】数据表缺失时返回空表（警告而非退出），
+        // 便于尚未从游戏客户端提取数据表时先行启动服务器。
+        let Some(path) = path else {
+            tracing::warn!("data table missing (fallback to empty): {table_name}");
+            return Ok(Self { data: Vec::new(), indexes: HashMap::new() });
+        };
     
         let data: Vec<T> = tsv::load_tsv(&path).with_context(|| format!("Failed to load table: data/settings/{table_name}"))?;
         Ok(Self { data, indexes: HashMap::new() })

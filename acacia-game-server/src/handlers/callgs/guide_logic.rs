@@ -21,3 +21,11 @@ async fn set_beginner(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> 
     conn.send_msg(Pf::NtfScript, &rsp, 0).await?;
     Ok(())
 }
+
+/// 客户端引导日志上报。官方服会持久化，本地服记录日志即可（引导完成状态
+/// 由登录时的 ensure_guide_bootstrap 直接写满）。
+#[callgs_reg("GuideLogic_WriteGuideLog")]
+async fn write_guide_log(conn: Arc<Conn>, _: protocol::ReqCallGs, param: Value) -> anyhow::Result<()> {
+    tracing::info!("GuideLogic_WriteGuideLog: {}", param);
+    Ok(())
+}

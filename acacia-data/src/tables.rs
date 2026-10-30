@@ -182,6 +182,38 @@ crate::define_tables! {
         #[index("id_1", id)]
         pub chapter_level: DataTable<schemas::ChapterLevelData>,
 
+        #[path="daily/level.txt"]
+        #[index("id_1", id)]
+        pub daily_level: DataTable<schemas::ChapterLevelData>,
+
+        #[path="chapter/chapter_main.txt"]
+        #[index("id_difficult_1", id, difficult)]
+        pub chapter_main: DataTable<schemas::ChapterData>,
+
+        #[path="dlc/rogue3d/server_01_difficult.txt"]
+        #[index("difficult_id_1", difficult_id)]
+        pub rogue3d_difficult: DataTable<schemas::Rogue3dDifficultData>,
+
+        #[path="challenge/climbtower/climb_tower_time.txt"]
+        #[index("id_1", id)]
+        pub climb_tower_time: DataTable<schemas::ClimbTowerTimeData>,
+
+        #[path="challenge/climbtower/climb_tower_diff.txt"]
+        #[index("id_1", id)]
+        pub climb_tower_diff: DataTable<schemas::ClimbTowerDiffData>,
+
+        #[path="challenge/climbtower/climb_tower_award.txt"]
+        #[index("id_1", id)]
+        pub climb_tower_award: DataTable<schemas::ClimbTowerAwardData>,
+
+        #[path="challenge/climbtower/climb_tower_levelorder.txt"]
+        #[index("id_1", id)]
+        pub climb_tower_levelorder: DataTable<schemas::ClimbTowerLevelOrderData>,
+
+        #[path="shop/goods.txt"]
+        #[index("shop_id_1", shop_id)]
+        pub shop_goods: DataTable<schemas::ShopGoodsData>,
+
         #[path="drop/drop.txt"]
         #[index("id_1", id)]
         pub drop: DataTable<schemas::DropData>,

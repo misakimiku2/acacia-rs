@@ -1,0 +1,10 @@
+[package]
+name = "acacia-dbdump"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+tokio.workspace = true
+acacia-database.workspace = true
+acacia-commons.workspace = true

@@ -61,6 +61,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "acacia-dbdump"
+version = "1.0.0"
+dependencies = [
+ "acacia-commons",
+ "acacia-database",
+ "anyhow",
+ "tokio",
+]
+
+[[package]]
 name = "acacia-derive"
 version = "1.0.0"
 dependencies = [

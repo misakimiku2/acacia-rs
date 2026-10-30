@@ -13,13 +13,28 @@ use acacia_game_msg::{core, protocol, protocol::Pf};
 
 #[func_reg(Pf::ReqLogin)]
 async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Result<()> {
-    let Some(player_config) = PlayerConfigRepository::find_one_by_token(msgdata.token.clone()).await? else {
-        let rsp = protocol::RspLogin {
-            error_code: 304,
-            ..Default::default()
-        };
-        conn.send_msg(Pf::RspLogin, &rsp, 0).await?;
-        return Ok(());
+    // 【本地私服改造】宽松登录：官方 XGSDK token 每次登录都变化，
+    // 未匹配到已注册 token 时，自动落到默认账号 (pid=10001)
+    let player_config = match PlayerConfigRepository::find_one_by_token(msgdata.token.clone()).await? {
+        Some(existing) => existing,
+        None => {
+            let default_pid: u64 = 10001;
+            let repo = PlayerConfigRepository::new(default_pid);
+            match repo.find_one().await? {
+                Some(existing) => existing,
+                None => {
+                    let config = acacia_database::models::PlayerConfig {
+                        pid: default_pid,
+                        ptoken: msgdata.token.clone(),
+                        ..Default::default()
+                    };
+                    repo.update_one(config).await?;
+                    repo.find_one()
+                        .await?
+                        .with_context(|| "failed to create default player config".to_string())?
+                }
+            }
+        }
     };
     conn.bind_uid(player_config.pid).await;
     init_userdata(&conn).await?;
@@ -52,16 +67,43 @@ async fn req_login(conn: Arc<Conn>, msgdata: protocol::ReqLogin) -> anyhow::Resu
     };
 
     if let Some(ref client_profile) = msgdata.client_profile {
-        if !client_profile.resource_version.starts_with("3.5.") {
-            // rsp.error_code = 108;
-        }
+        tracing::info!("client resource_version: {}", client_profile.resource_version);
     } else {
-        rsp.error_code = 304;
+        tracing::warn!("client_profile is None (continuing anyway)");
     }
 
     conn.send_msg(Pf::RspLogin, &rsp, 0).await?;
     conn.send_script("NtfWorldChatHostUrl", json!({"HostUrl": "https://snowbreak-ea-chat.amazingseasuncdn.com/chat/"}))
         .await?;
+    Ok(())
+}
+
+/// 引导完成状态引导（参考 MikuSB BuildLobbyBootstrapAttrs）：
+/// 客户端 GuideLogic 用属性 gid 4 判断每个引导的进度，值大于配置步数
+/// （999 足够）视为已完成；gid 4 sid 0 是新手引导总开关（5 = 全部完成）。
+/// 该状态缺失时客户端每次登录都会从序章 50174（开场白）重新进入新手引导。
+/// 幂等：检测到 4.0 != 5 时才整体补写。
+async fn ensure_guide_bootstrap(me: &mut crate::logic::player::PlayerManager) -> anyhow::Result<()> {
+    if me.get_attribute(4, 0).await? == 5 {
+        return Ok(());
+    }
+    tracing::info!("guide bootstrap: marking all guides as completed (gid 4)");
+    me.set_attribute(4, 0, 5).await?;
+    for guide_id in 1u32..=150 {
+        me.set_attribute(4, guide_id, 999).await?;
+    }
+    for guide_id in 10000u32..=10300 {
+        me.set_attribute(4, guide_id, 999).await?;
+    }
+    for guide_id in 11000u32..=11300 {
+        me.set_attribute(4, guide_id, 999).await?;
+    }
+    for guide_id in 12000u32..=12100 {
+        me.set_attribute(4, guide_id, 999).await?;
+    }
+    for guide_id in 22000u32..=22100 {
+        me.set_attribute(4, guide_id, 999).await?;
+    }
     Ok(())
 }
 
@@ -89,6 +131,8 @@ async fn init_userdata(conn: &Arc<Conn>) -> anyhow::Result<()> {
         // database.items.update_many(init_data().items.iter().cloned()).await?;
         // database.attrs.set_attr(4, 0, 5).await?;
     }
+
+    ensure_guide_bootstrap(&mut me).await?;
 
     let now_month = ServerTime::month_u32();
     if now_month != me.get_attribute(0, 2).await? {

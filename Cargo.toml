@@ -1,9 +1,10 @@
-[workspace]
+﻿[workspace]
 members = [
     "acacia-commons",
     "acacia-console",
     "acacia-data",
     "acacia-database",
+    "acacia-dbdump",
     "acacia-derive",
     "acacia-game-msg",
     "acacia-game-server",
@@ -49,6 +50,7 @@ syn = { version = "2.0.114", features = ["full"] }
 acacia-commons = { path = "acacia-commons" }
 acacia-data = { path = "acacia-data" }
 acacia-database = { path = "acacia-database" }
+acacia-dbdump = { path = "acacia-dbdump" }
 acacia-derive = { path = "acacia-derive" }
 acacia-game-msg = { path = "acacia-game-msg" }
 

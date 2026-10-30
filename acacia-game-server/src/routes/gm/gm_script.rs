@@ -13,6 +13,7 @@ mod house;
 mod riki;
 mod un_lock_all_level;
 mod un_lock_level;
+mod utility;
 
 use activity::*;
 use add::*;
@@ -22,6 +23,7 @@ use house::*;
 use riki::*;
 use un_lock_all_level::*;
 use un_lock_level::*;
+use utility::*;
 
 #[derive(Debug)]
 pub enum GMScript {
@@ -33,6 +35,9 @@ pub enum GMScript {
     House(House),
     Activity(Activity),
     Riki(Riki),
+    SetAttr(SetAttr),
+    PassGuide(PassGuide),
+    MaxAllGirl(MaxAllGirl),
 }
 
 impl GMScript {
@@ -67,6 +72,9 @@ impl GMScript {
                 }
             }
             "GM.Riki.GMUnLockRiki" => Self::Riki(Riki::GMUnLockRiki(RikiGMUnLockRiki::from_args(&args))),
+            "GM.SetAttr" => Self::SetAttr(SetAttr::from_args(&args)),
+            "GM.PassGuide" => Self::PassGuide(PassGuide {}),
+            "GM.MaxAllGirl" => Self::MaxAllGirl(MaxAllGirl::from_args(&args)),
             _ => {
                 warn!("Unknown Code: {} {}", func_name, raw_args);
                 return None;
@@ -85,6 +93,9 @@ impl GMScript {
             Self::House(s) => s.run(conn).await,
             Self::Activity(s) => s.run(conn).await,
             Self::Riki(s) => s.run(conn).await,
+            Self::SetAttr(s) => s.run(conn).await,
+            Self::PassGuide(s) => s.run(conn).await,
+            Self::MaxAllGirl(s) => s.run(conn).await,
         }
     }
 }
