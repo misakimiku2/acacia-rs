@@ -137,6 +137,15 @@ impl AddAllItem {
             let l = template_data.level;
             me.set_item_count(g, d, p, l, 9999999).await?;
         }
+        // 【本地私服补全】宿舍礼物 / 家具（Genre=8）。原先漏了这张表，
+        // 导致「嵌入式展示柜」这类必须靠送礼推进的宿舍教程任务永远卡住。
+        for template_data in tables().dorm_gift_template.all() {
+            let g = template_data.genre;
+            let d = template_data.detail;
+            let p = template_data.particular;
+            let l = template_data.level;
+            me.set_item_count(g, d, p, l, 99).await?;
+        }
         conn.send_msg(Pf::NtfSyncattr, &me.as_sync_player(), 0).await?;
         Ok(())
     }

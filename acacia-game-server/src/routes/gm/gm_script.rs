@@ -8,6 +8,7 @@ use acacia_commons::lua_utils::lua_func;
 mod activity;
 mod add;
 mod add_all_item;
+mod complete_all;
 mod gacha;
 mod house;
 mod riki;
@@ -18,6 +19,7 @@ mod utility;
 use activity::*;
 use add::*;
 use add_all_item::*;
+use complete_all::*;
 use gacha::*;
 use house::*;
 use riki::*;
@@ -38,6 +40,12 @@ pub enum GMScript {
     SetAttr(SetAttr),
     PassGuide(PassGuide),
     MaxAllGirl(MaxAllGirl),
+    PassAll(PassAll),
+    ClaimAll(ClaimAll),
+    CompleteAll(CompleteAll),
+    HouseUnlockAll(HouseUnlockAll),
+    HouseSkipTaskGuide(HouseSkipTaskGuide),
+    HouseGiveAllFurniture(HouseGiveAllFurniture),
 }
 
 impl GMScript {
@@ -75,6 +83,12 @@ impl GMScript {
             "GM.SetAttr" => Self::SetAttr(SetAttr::from_args(&args)),
             "GM.PassGuide" => Self::PassGuide(PassGuide {}),
             "GM.MaxAllGirl" => Self::MaxAllGirl(MaxAllGirl::from_args(&args)),
+            "GM.PassAll" => Self::PassAll(PassAll::from_args(&args)),
+            "GM.ClaimAll" => Self::ClaimAll(ClaimAll {}),
+            "GM.CompleteAll" => Self::CompleteAll(CompleteAll {}),
+            "GM.House.UnlockAll" => Self::HouseUnlockAll(HouseUnlockAll {}),
+            "GM.House.SkipTaskGuide" => Self::HouseSkipTaskGuide(HouseSkipTaskGuide::from_args(&args)),
+            "GM.House.GiveAllFurniture" => Self::HouseGiveAllFurniture(HouseGiveAllFurniture::from_args(&args)),
             _ => {
                 warn!("Unknown Code: {} {}", func_name, raw_args);
                 return None;
@@ -96,6 +110,12 @@ impl GMScript {
             Self::SetAttr(s) => s.run(conn).await,
             Self::PassGuide(s) => s.run(conn).await,
             Self::MaxAllGirl(s) => s.run(conn).await,
+            Self::PassAll(s) => s.run(conn).await,
+            Self::ClaimAll(s) => s.run(conn).await,
+            Self::CompleteAll(s) => s.run(conn).await,
+            Self::HouseUnlockAll(s) => s.run(conn).await,
+            Self::HouseSkipTaskGuide(s) => s.run(conn).await,
+            Self::HouseGiveAllFurniture(s) => s.run(conn).await,
         }
     }
 }
@@ -107,13 +127,45 @@ pub struct GmScriptPayload {
     code: String,
 }
 
-pub async fn handle_gm_script(ConnectInfo(addr): ConnectInfo<SocketAddr>, Json(payload): Json<GmScriptPayload>) -> (StatusCode, &'static str) {
+/// GM 执行结果。启动器靠这个区分「真的执行了」和「玩家不在线 / 命令不认识」——
+/// 旧版无论哪种情况都回 200 "success"，网页控制台一律提示成功，排查时非常误导。
+#[derive(Debug, serde::Serialize)]
+pub struct GmScriptResult {
+    pub ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ms: Option<u128>,
+}
+
+impl GmScriptResult {
+    fn fail(error: impl Into<String>) -> Self {
+        Self { ok: false, error: Some(error.into()), ms: None }
+    }
+}
+
+pub async fn handle_gm_script(ConnectInfo(addr): ConnectInfo<SocketAddr>, Json(payload): Json<GmScriptPayload>) -> (StatusCode, Json<GmScriptResult>) {
     let _client_ip = addr.ip();
-    if let Some(conn) = CONNS.get_by_uid(payload.pid) {
-        if let Some(gm_script) = GMScript::from_code(&payload.code) {
-            debug!("GMScript: {:?} {:?}", conn.uid(), gm_script);
-            gm_script.run(conn).await.expect("Failed to run GMScript");
+    let started = std::time::Instant::now();
+
+    let Some(conn) = CONNS.get_by_uid(payload.pid) else {
+        warn!("GM script skipped: player {} is not online (code: {})", payload.pid, payload.code);
+        return (StatusCode::OK, Json(GmScriptResult::fail(format!("player-offline:{}", payload.pid))));
+    };
+
+    let Some(gm_script) = GMScript::from_code(&payload.code) else {
+        warn!("GM script rejected: unknown code {}", payload.code);
+        return (StatusCode::OK, Json(GmScriptResult::fail(format!("unknown-command:{}", payload.code))));
+    };
+
+    debug!("GMScript: {:?} {:?}", conn.uid(), gm_script);
+    let result = gm_script.run(conn).await;
+    let ms = Some(started.elapsed().as_millis());
+    match result {
+        Ok(_) => (StatusCode::OK, Json(GmScriptResult { ok: true, error: None, ms })),
+        Err(e) => {
+            warn!("GM script failed: {} -> {}", payload.code, e);
+            (StatusCode::OK, Json(GmScriptResult { ok: false, error: Some(format!("run-failed:{e}")), ms }))
         }
     }
-    (StatusCode::OK, "success")
 }
